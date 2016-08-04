@@ -19,9 +19,10 @@ import java.util.ResourceBundle;
 
 import javax.servlet.http.HttpServletRequest;
 
-import net.sf.json.JSONObject;
-
 import org.junit.Test;
+
+import net.sf.json.JSON;
+import net.sf.json.JSONObject;
 
 public class ConfigTest {
 
@@ -37,20 +38,20 @@ public class ConfigTest {
 
 		ModuleConfigurationProvider provider1 = mock(ModuleConfigurationProvider.class);
 		when(
-				provider1.getConfigurationMap(
+				provider1.getConfigMap(
 						any(PortalRequestConfiguration.class),
 						any(HttpServletRequest.class))).thenReturn(
 				buildMap("myModule", conf1));
 		ModuleConfigurationProvider provider2 = mock(ModuleConfigurationProvider.class);
 		when(
-				provider2.getConfigurationMap(
+				provider2.getConfigMap(
 						any(PortalRequestConfiguration.class),
 						any(HttpServletRequest.class))).thenReturn(
 				buildMap("myModule", conf2));
 		config.addModuleConfigurationProvider(provider1);
 		config.addModuleConfigurationProvider(provider2);
 
-		JSONObject pluginConf = config.getPluginConfiguration(
+		JSONObject pluginConf = (JSONObject) config.getPluginConfig(
 				Locale.getDefault(), mock(HttpServletRequest.class)).get(
 				"myModule");
 
@@ -62,8 +63,8 @@ public class ConfigTest {
 		assertTrue(pluginConf.get("a") == "a" || pluginConf.get("a") == "z");
 	}
 
-	private Map<String, JSONObject> buildMap(String pluginName, JSONObject conf) {
-		Map<String, JSONObject> ret = new HashMap<String, JSONObject>();
+	private Map<String, JSON> buildMap(String pluginName, JSONObject conf) {
+		Map<String, JSON> ret = new HashMap<String, JSON>();
 		ret.put(pluginName, conf);
 		return ret;
 	}
@@ -150,22 +151,22 @@ public class ConfigTest {
 		ModuleConfigurationProvider configurationProvider = mock(ModuleConfigurationProvider.class);
 		when(configurationProvider.canBeCached()).thenReturn(canBeCached);
 		when(
-				configurationProvider.getConfigurationMap(
+				configurationProvider.getConfigMap(
 						any(PortalRequestConfiguration.class),
 						any(HttpServletRequest.class))).thenReturn(
-				new HashMap<String, JSONObject>());
+				new HashMap<String, JSON>());
 
 		Config config = new DefaultConfig(mock(ConfigFolder.class), useCache);
 		config.addModuleConfigurationProvider(configurationProvider);
 
 		// Call twice
-		config.getPluginConfiguration(Locale.getDefault(),
+		config.getPluginConfig(Locale.getDefault(),
 				mock(HttpServletRequest.class));
-		config.getPluginConfiguration(Locale.getDefault(),
+		config.getPluginConfig(Locale.getDefault(),
 				mock(HttpServletRequest.class));
 
 		// Check num calls
-		verify(configurationProvider, times(numCalls)).getConfigurationMap(
+		verify(configurationProvider, times(numCalls)).getConfigMap(
 				any(PortalRequestConfiguration.class),
 				any(HttpServletRequest.class));
 	}
@@ -175,7 +176,7 @@ public class ConfigTest {
 		Config config = new DefaultConfig(new ConfigFolder("doesnotexist",
 				"doesnotexist"), false);
 		assertNotNull(config.getDir());
-		assertNotNull(config.getPluginConfiguration(Locale.getDefault(),
+		assertNotNull(config.getPluginConfig(Locale.getDefault(),
 				mock(HttpServletRequest.class)));
 		assertNotNull(config.getProperties());
 		assertNotNull(config.getMessages(Locale.getDefault()));
@@ -188,12 +189,12 @@ public class ConfigTest {
 				"doesnotexist"), false);
 		ModuleConfigurationProvider provider = mock(ModuleConfigurationProvider.class);
 		when(
-				provider.getConfigurationMap(
+				provider.getConfigMap(
 						any(PortalRequestConfiguration.class),
 						any(HttpServletRequest.class))).thenThrow(
 				new IOException("mock"));
 		config.addModuleConfigurationProvider(provider);
-		assertNotNull(config.getPluginConfiguration(Locale.getDefault(),
+		assertNotNull(config.getPluginConfig(Locale.getDefault(),
 				mock(HttpServletRequest.class)));
 	}
 }

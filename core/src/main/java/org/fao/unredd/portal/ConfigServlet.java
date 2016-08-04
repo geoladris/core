@@ -18,6 +18,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import net.sf.json.JSON;
 import net.sf.json.JSONObject;
 import net.sf.json.JSONSerializer;
 
@@ -53,16 +54,16 @@ public class ConfigServlet extends HttpServlet {
 		 * potential means (by default, by portal plugin-conf.json)
 		 */
 		@SuppressWarnings("unchecked")
-		Map<String, JSONObject> pluginConfiguration = (Map<String, JSONObject>) getServletContext()
+		Map<String, JSON> pluginConfiguration = (Map<String, JSON>) getServletContext()
 				.getAttribute("plugin-configuration");
-		Map<String, JSONObject> pluginConfigurationOverride = config
-				.getPluginConfiguration(locale, req);
+		Map<String, JSON> pluginConfigurationOverride = config
+				.getPluginConfig(locale, req);
 		for (String configurationItem : pluginConfigurationOverride.keySet()) {
 			moduleConfig.element(configurationItem,
 					pluginConfigurationOverride.get(configurationItem));
 		}
 		for (String configurationItem : pluginConfiguration.keySet()) {
-			JSONObject defaultConfiguration = pluginConfiguration
+			JSON defaultConfiguration = pluginConfiguration
 					.get(configurationItem);
 			if (!pluginConfigurationOverride.containsKey(configurationItem)) {
 				moduleConfig.element(configurationItem, defaultConfiguration);

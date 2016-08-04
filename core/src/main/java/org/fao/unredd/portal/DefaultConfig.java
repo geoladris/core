@@ -18,9 +18,10 @@ import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 
-import net.sf.json.JSONObject;
-
 import org.apache.log4j.Logger;
+
+import net.sf.json.JSON;
+import net.sf.json.JSONObject;
 
 /**
  * Utility class to access the custom resources placed in PORTAL_CONFIG_DIR.
@@ -38,7 +39,7 @@ public class DefaultConfig implements Config {
 	private ConfigFolder folder;
 	private boolean useCache;
 	private HashMap<Locale, ResourceBundle> localeBundles = new HashMap<Locale, ResourceBundle>();
-	private Map<ModuleConfigurationProvider, Map<String, JSONObject>> pluginConfigurations = new HashMap<ModuleConfigurationProvider, Map<String, JSONObject>>();
+	private Map<ModuleConfigurationProvider, Map<String, JSON>> pluginConfigurations = new HashMap<ModuleConfigurationProvider, Map<String, JSON>>();
 	private ArrayList<ModuleConfigurationProvider> moduleConfigurationProviders = new ArrayList<ModuleConfigurationProvider>();
 
 	public DefaultConfig(ConfigFolder folder, boolean useCache) {
@@ -171,20 +172,13 @@ public class DefaultConfig implements Config {
 		for (ModuleConfigurationProvider provider : moduleConfigurationProviders) {
 
 			// Get the configuration
-			Map<String, JSONObject> moduleConfigurations = pluginConfigurations
-					.get(provider);
-			if (moduleConfigurations == null || !useCache
-					|| !provider.canBeCached()) {
-				try {
-					moduleConfigurations = provider
-							.getConfigurationMap(
-									new PortalConfigurationContextImpl(locale),
-									request);
-					pluginConfigurations.put(provider, moduleConfigurations);
-				} catch (IOException e) {
-					logger.info("Provider failed to contribute configuration: "
-							+ provider.getClass());
-				}
+			Map<String, JSONObject> moduleConfigurations = null;
+			try {
+				moduleConfigurations = provider.getConfigurationMap(
+						new PortalConfigurationContextImpl(locale), request);
+			} catch (IOException e) {
+				logger.info("Provider failed to contribute configuration: "
+						+ provider.getClass());
 			}
 
 			// Merge the configuration in the result
@@ -208,13 +202,59 @@ public class DefaultConfig implements Config {
 	}
 
 	@Override
+	public Map<String, JSON> getPluginConfig(Locale locale,
+			HttpServletRequest request) {
+		Map<String, JSON> ret = new HashMap<String, JSON>();
+		for (ModuleConfigurationProvider provider : moduleConfigurationProviders) {
+			// Get the configuration
+			Map<String, JSON> moduleConfigurations = pluginConfigurations
+					.get(provider);
+			if (moduleConfigurations == null || !useCache
+					|| !provider.canBeCached()) {
+				try {
+					moduleConfigurations = provider.getConfigMap(
+							new PortalConfigurationContextImpl(locale),
+							request);
+					pluginConfigurations.put(provider, moduleConfigurations);
+				} catch (IOException e) {
+					logger.info("Provider failed to contribute configuration: "
+							+ provider.getClass());
+				}
+			}
+
+			// Merge the configuration in the result
+			if (moduleConfigurations != null) {
+				Set<String> moduleNames = moduleConfigurations.keySet();
+				for (String moduleName : moduleNames) {
+					JSON moduleConfiguration = ret.get(moduleName);
+					JSON moduleConfigurationToMerge = moduleConfigurations
+							.get(moduleName);
+					if (moduleConfiguration instanceof JSONObject
+							&& moduleConfigurationToMerge instanceof JSONObject) {
+						JSONObject moduleConfObj = (JSONObject) moduleConfiguration;
+						JSONObject moduleConfToMergeObj = (JSONObject) moduleConfigurationToMerge;
+						moduleConfObj.putAll(moduleConfToMergeObj);
+					} else if (moduleConfigurationToMerge != null) {
+						ret.put(moduleName, moduleConfigurationToMerge);
+					} else if (moduleConfiguration == null) {
+						ret.put(moduleName, new JSONObject());
+					}
+				}
+			}
+
+		}
+		return ret;
+	}
+
+	@Override
 	public void addModuleConfigurationProvider(
 			ModuleConfigurationProvider provider) {
 		moduleConfigurationProviders.add(provider);
 	}
 
-	private class PortalConfigurationContextImpl implements
-			PortalRequestConfiguration {
+	private class PortalConfigurationContextImpl
+			implements
+				PortalRequestConfiguration {
 
 		private Locale locale;
 

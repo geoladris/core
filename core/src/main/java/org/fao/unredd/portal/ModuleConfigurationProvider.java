@@ -5,9 +5,27 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
+import net.sf.json.JSON;
 import net.sf.json.JSONObject;
 
 public interface ModuleConfigurationProvider {
+
+	/**
+	 * Returns a map where the keys are the names of the modules and the
+	 * JSONObjects are the configuration of each module
+	 *
+	 * @param configurationContext
+	 * @param request
+	 *            Request that loads the application
+	 * @deprecated Use
+	 *             {@link #getConfigMap(PortalRequestConfiguration, HttpServletRequest)}.
+	 *
+	 * @return
+	 * @throws IOException
+	 */
+	Map<String, JSONObject> getConfigurationMap(
+			PortalRequestConfiguration configurationContext,
+			HttpServletRequest request) throws IOException;
 
 	/**
 	 * Returns a map where the keys are the names of the modules and the
@@ -20,7 +38,7 @@ public interface ModuleConfigurationProvider {
 	 * @return
 	 * @throws IOException
 	 */
-	Map<String, JSONObject> getConfigurationMap(
+	Map<String, JSON> getConfigMap(
 			PortalRequestConfiguration configurationContext,
 			HttpServletRequest request) throws IOException;
 

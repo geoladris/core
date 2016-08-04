@@ -4,9 +4,14 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import net.sf.json.JSON;
 import net.sf.json.JSONObject;
 import net.sf.json.JSONSerializer;
 
+/**
+ * @author vicgonco
+ *
+ */
 public class PluginDescriptor {
 
 	private JSONObject requireJS;
@@ -53,17 +58,31 @@ public class PluginDescriptor {
 		return ret;
 	}
 
+	/**
+	 * @deprecated Use {@link #getConfigMap()}.
+	 */
 	public Map<String, JSONObject> getConfigurationMap() {
 		Map<String, JSONObject> configurationMap = new HashMap<String, JSONObject>();
+		fillConfigMap(configurationMap);
+		return configurationMap;
+	}
+
+	public Map<String, JSON> getConfigMap() {
+		Map<String, JSON> configurationMap = new HashMap<String, JSON>();
+		fillConfigMap(configurationMap);
+		return configurationMap;
+	}
+
+	@SuppressWarnings("unchecked")
+	private <T extends JSON> void fillConfigMap(
+			Map<String, T> configurationMap) {
 		if (configuration != null) {
 			@SuppressWarnings("rawtypes")
 			Iterator iterator = configuration.keys();
 			while (iterator.hasNext()) {
 				String key = (String) iterator.next();
-				configurationMap.put(key, configuration.getJSONObject(key));
+				configurationMap.put(key, (T) configuration.get(key));
 			}
 		}
-		return configurationMap;
 	}
-
 }

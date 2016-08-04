@@ -14,8 +14,6 @@ import java.util.Map;
 import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
 
-import net.sf.json.JSONObject;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.TrueFileFilter;
@@ -23,6 +21,9 @@ import org.apache.commons.io.input.BoundedInputStream;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import net.sf.json.JSON;
+import net.sf.json.JSONObject;
 
 public class JEEContextAnalyzerTest {
 	private static File libFolder = new File(
@@ -71,12 +72,14 @@ public class JEEContextAnalyzerTest {
 		checkMapKeys(context.getNonRequirePathMap(), "jquery-ui", "fancy-box",
 				"openlayers", "mustache");
 		checkMapKeys(context.getNonRequireShimMap(), "fancy-box", "mustache");
-		Map<String, JSONObject> confElements = context
-				.getConfigurationElements();
-		assertEquals("29px",
-				confElements.get("layout").getString("banner-size"));
-		assertEquals(true, confElements.get("legend").getBoolean("show-title"));
-		assertEquals(14, confElements.get("layer-list").getInt("top"));
+		Map<String, JSON> confElements = context.getConfigElements();
+		JSONObject layout = (JSONObject) confElements.get("layout");
+		JSONObject legend = (JSONObject) confElements.get("legend");
+		JSONObject layerList = (JSONObject) confElements.get("layer-list");
+
+		assertEquals("29px", layout.getString("banner-size"));
+		assertEquals(true, legend.getBoolean("show-title"));
+		assertEquals(14, layerList.getInt("top"));
 	}
 
 	@Test

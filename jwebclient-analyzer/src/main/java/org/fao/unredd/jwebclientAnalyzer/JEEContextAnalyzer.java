@@ -20,6 +20,7 @@ import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.log4j.Logger;
 
+import net.sf.json.JSON;
 import net.sf.json.JSONObject;
 
 public class JEEContextAnalyzer {
@@ -29,7 +30,9 @@ public class JEEContextAnalyzer {
 	private ArrayList<String> css = new ArrayList<String>();
 	private Map<String, String> requirejsPaths = new HashMap<String, String>();
 	private Map<String, String> requirejsShims = new HashMap<String, String>();
-	private Map<String, JSONObject> configurationMap = new HashMap<String, JSONObject>();
+	private Map<String, JSON> configurationMap = new HashMap<String, JSON>();
+	@Deprecated
+	private Map<String, JSONObject> configurationMapDeprecated = new HashMap<String, JSONObject>();
 
 	public JEEContextAnalyzer(Context context) {
 		this(context, "nfms", "nfms");
@@ -144,7 +147,14 @@ public class JEEContextAnalyzer {
 		return requirejsShims;
 	}
 
+	/**
+	 * @deprecated Use {@link #getConfigElements()}.
+	 */
 	public Map<String, JSONObject> getConfigurationElements() {
+		return configurationMapDeprecated;
+	}
+
+	public Map<String, JSON> getConfigElements() {
 		return configurationMap;
 	}
 
@@ -190,7 +200,9 @@ public class JEEContextAnalyzer {
 						contentReader.getContent());
 				requirejsPaths.putAll(pluginDescriptor.getRequireJSPathsMap());
 				requirejsShims.putAll(pluginDescriptor.getRequireJSShims());
-				configurationMap.putAll(pluginDescriptor.getConfigurationMap());
+				configurationMap.putAll(pluginDescriptor.getConfigMap());
+				configurationMapDeprecated
+						.putAll(pluginDescriptor.getConfigurationMap());
 			}
 		}
 	}
