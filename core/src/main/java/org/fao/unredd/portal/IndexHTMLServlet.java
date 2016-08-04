@@ -4,7 +4,8 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Collections;
+import java.util.Comparator;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
@@ -39,8 +40,8 @@ public class IndexHTMLServlet extends HttpServlet {
 		engine.init();
 		VelocityContext context = new VelocityContext();
 
-		boolean minifiedjs = Boolean.parseBoolean(System
-				.getProperty("MINIFIED_JS"));
+		boolean minifiedjs = Boolean
+				.parseBoolean(System.getProperty("MINIFIED_JS"));
 		ServletContext servletContext = getServletContext();
 		Config config = (Config) getServletContext().getAttribute("config");
 		ArrayList<String> styleSheets = new ArrayList<String>();
@@ -50,7 +51,20 @@ public class IndexHTMLServlet extends HttpServlet {
 			@SuppressWarnings("unchecked")
 			ArrayList<String> classPathStylesheets = (ArrayList<String>) servletContext
 					.getAttribute("css-paths");
-			styleSheets.addAll(sortCSS(classPathStylesheets));
+			Collections.sort(classPathStylesheets, new Comparator<String>() {
+				@Override
+				public int compare(String o1, String o2) {
+					if (o1.startsWith("theme") || o2.startsWith("styles")) {
+						return 1;
+					} else if (o1.startsWith("styles")
+							|| o2.startsWith("theme")) {
+						return -1;
+					} else {
+						return 0;
+					}
+				}
+			});
+			styleSheets.addAll(classPathStylesheets);
 			styleSheets.addAll(getStyleSheets(config, "modules"));
 		}
 		context.put("styleSheets", styleSheets);
@@ -70,8 +84,8 @@ public class IndexHTMLServlet extends HttpServlet {
 
 		StringResourceRepository repo = StringResourceLoader.getRepository();
 		String templateName = "/index.html";
-		BufferedInputStream bis = new BufferedInputStream(this.getClass()
-				.getResourceAsStream("/index.html"));
+		BufferedInputStream bis = new BufferedInputStream(
+				this.getClass().getResourceAsStream("/index.html"));
 		String indexContent = IOUtils.toString(bis);
 		bis.close();
 		repo.putStringResource(templateName, indexContent);
@@ -80,24 +94,6 @@ public class IndexHTMLServlet extends HttpServlet {
 		resp.setCharacterEncoding("UTF-8");
 		Template t = engine.getTemplate("/index.html");
 		t.merge(context, resp.getWriter());
-	}
-
-	/**
-	 * Put the module CSS in last position
-	 * 
-	 * @param cssRelativePaths
-	 * @return
-	 */
-	private List<String> sortCSS(List<String> cssRelativePaths) {
-		List<String> ret = new ArrayList<String>();
-		for (String cssPath : cssRelativePaths) {
-			if (cssPath.startsWith("modules")) {
-				ret.add(cssPath);
-			} else {
-				ret.add(0, cssPath);
-			}
-		}
-		return ret;
 	}
 
 	private ArrayList<String> getStyleSheets(Config config, String path) {

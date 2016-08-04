@@ -60,8 +60,8 @@ public class JEEContextAnalyzerTest {
 
 	@Test
 	public void checkTest1() {
-		JEEContextAnalyzer context = new JEEContextAnalyzer(new FileContext(
-				"src/test/resources/test1"));
+		JEEContextAnalyzer context = new JEEContextAnalyzer(
+				new FileContext("src/test/resources/test1"));
 
 		checkList(context.getRequireJSModuleNames(), "module1", "module2",
 				"module3");
@@ -73,8 +73,8 @@ public class JEEContextAnalyzerTest {
 		checkMapKeys(context.getNonRequireShimMap(), "fancy-box", "mustache");
 		Map<String, JSONObject> confElements = context
 				.getConfigurationElements();
-		assertEquals("29px", confElements.get("layout")
-				.getString("banner-size"));
+		assertEquals("29px",
+				confElements.get("layout").getString("banner-size"));
 		assertEquals(true, confElements.get("legend").getBoolean("show-title"));
 		assertEquals(14, confElements.get("layer-list").getInt("top"));
 	}
@@ -93,8 +93,8 @@ public class JEEContextAnalyzerTest {
 
 	@Test
 	public void checkCustomPluginConfDir() {
-		JEEContextAnalyzer context = new JEEContextAnalyzer(new FileContext(
-				"src/test/resources/test3"), "conf", "webapp");
+		JEEContextAnalyzer context = new JEEContextAnalyzer(
+				new FileContext("src/test/resources/test3"), "conf", "webapp");
 
 		checkMapKeys(context.getNonRequirePathMap(), "jquery-ui", "fancy-box",
 				"openlayers");
@@ -103,12 +103,21 @@ public class JEEContextAnalyzerTest {
 
 	@Test
 	public void checkCustomWebResourcesDir() {
-		JEEContextAnalyzer context = new JEEContextAnalyzer(new FileContext(
-				"src/test/resources/test3"), "conf", "webapp");
+		JEEContextAnalyzer context = new JEEContextAnalyzer(
+				new FileContext("src/test/resources/test3"), "conf", "webapp");
 
 		checkList(context.getRequireJSModuleNames(), "module1", "module2");
 		checkList(context.getCSSRelativePaths(), "styles/general.css",
 				"modules/module2.css");
+	}
+
+	@Test
+	public void checkThemePath() {
+		JEEContextAnalyzer context = new JEEContextAnalyzer(
+				new FileContext("src/test/resources/test_theme"));
+
+		checkList(context.getCSSRelativePaths(), "styles/general.css",
+				"theme/theme.css");
 	}
 
 	private void checkList(List<String> result, String... testEntries) {

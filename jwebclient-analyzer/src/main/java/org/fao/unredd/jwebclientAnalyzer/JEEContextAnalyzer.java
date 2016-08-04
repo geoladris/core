@@ -14,13 +14,13 @@ import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import net.sf.json.JSONObject;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.log4j.Logger;
+
+import net.sf.json.JSONObject;
 
 public class JEEContextAnalyzer {
 	private static Logger logger = Logger.getLogger(JEEContextAnalyzer.class);
@@ -207,6 +207,7 @@ public class JEEContextAnalyzer {
 				throws IOException {
 			String stylesPrefix = dir + File.separator + "styles";
 			String modulesPrefix = dir + File.separator + "modules";
+			String themePrefix = dir + File.separator + "theme";
 			File pathFile = new File(path);
 			if (path.startsWith(modulesPrefix)) {
 				if (path.endsWith(".css")) {
@@ -218,11 +219,10 @@ public class JEEContextAnalyzer {
 					name = name.substring(0, name.length() - 3);
 					js.add(name);
 				}
-			} else {
-				if (path.startsWith(stylesPrefix) && path.endsWith(".css")) {
-					String output = path.substring(dir.length() + 1);
-					css.add(output);
-				}
+			} else if ((path.startsWith(stylesPrefix)
+					|| path.startsWith(themePrefix)) && path.endsWith(".css")) {
+				String output = path.substring(dir.length() + 1);
+				css.add(output);
 			}
 		}
 	}
