@@ -12,7 +12,6 @@ import org.fao.unredd.jwebclientAnalyzer.Context;
 import org.fao.unredd.jwebclientAnalyzer.JEEContextAnalyzer;
 import org.fao.unredd.portal.ConfigFolder;
 import org.fao.unredd.portal.DefaultConfig;
-import org.fao.unredd.portal.LayersModuleConfigurationProvider;
 import org.fao.unredd.portal.PluginJSONConfigurationProvider;
 
 public class AppContextListener implements ServletContextListener {
@@ -23,16 +22,16 @@ public class AppContextListener implements ServletContextListener {
 		String rootPath = servletContext.getRealPath("/");
 		String configInitParameter = servletContext
 				.getInitParameter("PORTAL_CONFIG_DIR");
-		boolean configCache = Boolean.parseBoolean(System
-				.getenv("NFMS_CONFIG_CACHE"));
-		DefaultConfig config = new DefaultConfig(new ConfigFolder(rootPath,
-				configInitParameter), configCache);
-		config.addModuleConfigurationProvider(new PluginJSONConfigurationProvider());
-		config.addModuleConfigurationProvider(new LayersModuleConfigurationProvider());
+		boolean configCache = Boolean
+				.parseBoolean(System.getenv("NFMS_CONFIG_CACHE"));
+		DefaultConfig config = new DefaultConfig(
+				new ConfigFolder(rootPath, configInitParameter), configCache);
+		config.addModuleConfigurationProvider(
+				new PluginJSONConfigurationProvider());
 		servletContext.setAttribute("config", config);
 
-		JEEContextAnalyzer context = new JEEContextAnalyzer(new JEEContext(
-				servletContext));
+		JEEContextAnalyzer context = new JEEContextAnalyzer(
+				new JEEContext(servletContext));
 		servletContext.setAttribute("js-paths",
 				context.getRequireJSModuleNames());
 		servletContext.setAttribute("css-paths", context.getCSSRelativePaths());
