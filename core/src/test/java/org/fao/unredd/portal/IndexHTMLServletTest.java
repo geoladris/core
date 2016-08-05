@@ -1,10 +1,12 @@
 package org.fao.unredd.portal;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -15,6 +17,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -42,6 +45,11 @@ public class IndexHTMLServletTest {
 		this.servlet.init(servletConfig);
 	}
 
+	@After
+	public void teardown() {
+		System.getProperties().remove(IndexHTMLServlet.PROP_MINIFIED_JS);
+	}
+
 	@Test
 	public void cssOrder() throws Exception {
 		List<String> css = new ArrayList<String>();
@@ -65,5 +73,59 @@ public class IndexHTMLServletTest {
 		assertTrue(i1 < i2);
 		assertTrue(i1 < i3);
 		assertTrue(i2 < i3);
+	}
+
+	@Test
+	public void notMinifiedIfDebugParamTrue() throws Exception {
+		mockDebugParam("true");
+
+		this.servlet.doGet(this.request, this.response);
+
+		String css = IndexHTMLServlet.OPTIMIZED_FOLDER + "/portal-style.css";
+		assertFalse(responseContent().contains(css));
+	}
+
+	@Test
+	public void minifiedIfDebugParamInvalid() throws Exception {
+		mockDebugParam("invalid_value");
+
+		this.servlet.doGet(this.request, this.response);
+
+		String css = IndexHTMLServlet.OPTIMIZED_FOLDER + "/portal-style.css";
+		assertTrue(responseContent().contains(css));
+	}
+
+	@Test
+	public void minifiedIfDebugParamMissing() throws Exception {
+		mockDebugParam(null);
+
+		this.servlet.doGet(this.request, this.response);
+
+		String css = IndexHTMLServlet.OPTIMIZED_FOLDER + "/portal-style.css";
+		assertTrue(responseContent().contains(css));
+	}
+
+	/**
+	 * Minimum ServletContext attributes,
+	 * {@link IndexHTMLServlet#PROP_MINIFIED_JS} set to true and debug param in
+	 * {@link #request} as given.
+	 * 
+	 * @param debugParam
+	 */
+	private void mockDebugParam(String debugParam) {
+		when(this.servletContext.getAttribute("config"))
+				.thenReturn(mock(Config.class));
+		when(this.servletContext.getAttribute("css-paths"))
+				.thenReturn(new ArrayList<String>());
+
+		System.setProperty(IndexHTMLServlet.PROP_MINIFIED_JS, "true");
+		when(this.request.getParameter(IndexHTMLServlet.HTTP_PARAM_DEBUG))
+				.thenReturn(debugParam);
+	}
+
+	private String responseContent() throws IOException {
+		this.response.getWriter().flush();
+		this.bos.flush();
+		return this.bos.toString();
 	}
 }

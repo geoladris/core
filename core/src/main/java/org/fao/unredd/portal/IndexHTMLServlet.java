@@ -21,7 +21,12 @@ import org.apache.velocity.runtime.resource.loader.StringResourceLoader;
 import org.apache.velocity.runtime.resource.util.StringResourceRepository;
 
 public class IndexHTMLServlet extends HttpServlet {
-	private static final String OPTIMIZED_FOLDER = "optimized";
+	public static final String HTTP_PARAM_DEBUG = "debug";
+
+	public static final String PROP_MINIFIED_JS = "MINIFIED_JS";
+
+	public static final String OPTIMIZED_FOLDER = "optimized";
+
 	private static final long serialVersionUID = 1L;
 
 	@Override
@@ -40,8 +45,16 @@ public class IndexHTMLServlet extends HttpServlet {
 		engine.init();
 		VelocityContext context = new VelocityContext();
 
-		boolean minifiedjs = Boolean
-				.parseBoolean(System.getProperty("MINIFIED_JS"));
+		String debug = req.getParameter(HTTP_PARAM_DEBUG);
+		boolean minifiedjs;
+
+		if (debug != null && Boolean.parseBoolean(debug)) {
+			minifiedjs = false;
+		} else {
+			minifiedjs = Boolean
+					.parseBoolean(System.getProperty(PROP_MINIFIED_JS));
+		}
+
 		ServletContext servletContext = getServletContext();
 		Config config = (Config) getServletContext().getAttribute("config");
 		ArrayList<String> styleSheets = new ArrayList<String>();
