@@ -10,6 +10,6 @@
 		},
 		"shim" : {
 			"mustache": [ "jquery" ]
-		},
+		}
 	}
 }
