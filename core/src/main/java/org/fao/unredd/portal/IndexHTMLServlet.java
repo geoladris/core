@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Properties;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
@@ -23,7 +24,11 @@ import org.apache.velocity.runtime.resource.util.StringResourceRepository;
 public class IndexHTMLServlet extends HttpServlet {
 	public static final String HTTP_PARAM_DEBUG = "debug";
 
+	// System properties
 	public static final String PROP_MINIFIED_JS = "MINIFIED_JS";
+
+	// portal.properties
+	public static final String PROP_TITLE = "title";
 
 	public static final String OPTIMIZED_FOLDER = "optimized";
 
@@ -94,6 +99,13 @@ public class IndexHTMLServlet extends HttpServlet {
 		} else {
 			context.put("mainModulePath", "modules/main");
 		}
+
+		Properties props = config.getProperties();
+		String title = "";
+		if (props != null && props.containsKey(PROP_TITLE)) {
+			title = "<title>" + props.getProperty(PROP_TITLE) + "</title>";
+		}
+		context.put("title", title);
 
 		StringResourceRepository repo = StringResourceLoader.getRepository();
 		String templateName = "/index.html";
