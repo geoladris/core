@@ -13,6 +13,7 @@ import org.fao.unredd.jwebclientAnalyzer.JEEContextAnalyzer;
 import org.fao.unredd.portal.ConfigFolder;
 import org.fao.unredd.portal.DefaultConfig;
 import org.fao.unredd.portal.PluginJSONConfigurationProvider;
+import org.fao.unredd.portal.RoleConfigurationProvider;
 
 public class AppContextListener implements ServletContextListener {
 
@@ -28,6 +29,8 @@ public class AppContextListener implements ServletContextListener {
 				new ConfigFolder(rootPath, configInitParameter), configCache);
 		config.addModuleConfigurationProvider(
 				new PluginJSONConfigurationProvider());
+		config.addModuleConfigurationProvider(
+				new RoleConfigurationProvider(config.getDir()));
 		servletContext.setAttribute("config", config);
 
 		JEEContextAnalyzer context = new JEEContextAnalyzer(

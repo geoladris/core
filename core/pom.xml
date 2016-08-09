@@ -10,6 +10,13 @@
 	<name>UNREDD NFMS portal core</name>
 	<artifactId>core</artifactId>
 
+	<repositories>
+		<repository>
+			<id>csgis-releases</id>
+			<url>http://service-sandbox.csgis.de:8081/mvn/releases/</url>
+		</repository>
+	</repositories>
+
 	<properties>
 		<jasmine.version>2.1</jasmine.version>
 		<saga.version>1.5.5</saga.version>
@@ -83,6 +90,11 @@
 			<groupId>org.fao.unredd</groupId>
 			<artifactId>jwebclient-analyzer</artifactId>
 			<version>4.0.2</version>
+		</dependency>
+		<dependency>
+			<groupId>de.csgis.commons</groupId>
+			<artifactId>lib-json</artifactId>
+			<version>1.0.0</version>
 		</dependency>
 	</dependencies>
 	<build>
