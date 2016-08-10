@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +32,14 @@ public class JEEContextAnalyzer {
 	private Map<String, String> requirejsPaths = new HashMap<String, String>();
 	private Map<String, String> requirejsShims = new HashMap<String, String>();
 	private Map<String, JSON> configurationMap = new HashMap<String, JSON>();
+
+	/**
+	 * Modules from plugins with configurations that should be merged instead of
+	 * replaced (see {@link PluginDescriptor#getMergeConf()}).
+	 */
+	@Deprecated
+	private Set<String> mergeConfModules = new HashSet<String>();
+
 	@Deprecated
 	private Map<String, JSONObject> configurationMapDeprecated = new HashMap<String, JSONObject>();
 
@@ -158,6 +167,13 @@ public class JEEContextAnalyzer {
 		return configurationMap;
 	}
 
+	/**
+	 * @deprecated See {@link PluginDescriptor#getMergeConf()}
+	 */
+	public Set<String> getMergeConfModules() {
+		return mergeConfModules;
+	}
+
 	private interface ContextEntryListener {
 
 		void accept(String path, ContextEntryReader contentReader)
@@ -200,7 +216,11 @@ public class JEEContextAnalyzer {
 						contentReader.getContent());
 				requirejsPaths.putAll(pluginDescriptor.getRequireJSPathsMap());
 				requirejsShims.putAll(pluginDescriptor.getRequireJSShims());
-				configurationMap.putAll(pluginDescriptor.getConfigMap());
+				Map<String, JSON> config = pluginDescriptor.getConfigMap();
+				configurationMap.putAll(config);
+				if (pluginDescriptor.getMergeConf()) {
+					mergeConfModules.addAll(config.keySet());
+				}
 				configurationMapDeprecated
 						.putAll(pluginDescriptor.getConfigurationMap());
 			}

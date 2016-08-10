@@ -10,13 +10,17 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 
+import org.fao.unredd.AppContextListener;
+
 public class LangFilter implements Filter {
+	public static final String ATTR_LOCALE = "locale";
+
 	private Config config;
 
 	@Override
 	public void init(FilterConfig filterConfig) throws ServletException {
-		config = (Config) filterConfig.getServletContext().getAttribute(
-				"config");
+		config = (Config) filterConfig.getServletContext()
+				.getAttribute(AppContextListener.ATTR_CONFIG);
 	}
 
 	@Override
@@ -33,7 +37,7 @@ public class LangFilter implements Filter {
 		} else {
 			locale = request.getLocale();
 		}
-		request.setAttribute("locale", locale);
+		request.setAttribute(ATTR_LOCALE, locale);
 		chain.doFilter(request, response);
 	}
 

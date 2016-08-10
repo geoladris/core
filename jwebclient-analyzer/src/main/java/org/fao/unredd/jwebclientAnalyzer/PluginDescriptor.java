@@ -13,20 +13,29 @@ import net.sf.json.JSONSerializer;
  *
  */
 public class PluginDescriptor {
+	public static final String PROP_MERGE_CONF = "merge-conf";
+	public static final String PROP_DEFAULT_CONF = "default-conf";
+	public static final String PROP_REQUIREJS = "requirejs";
 
 	private JSONObject requireJS;
 	private JSONObject configuration;
+	/**
+	 * @deprecated
+	 */
+	private boolean mergeConf;
 
 	public PluginDescriptor(String content) {
 		JSONObject jsonRoot = (JSONObject) JSONSerializer.toJSON(content);
 
-		if (jsonRoot.has("requirejs")) {
-			requireJS = jsonRoot.getJSONObject("requirejs");
+		if (jsonRoot.has(PROP_REQUIREJS)) {
+			requireJS = jsonRoot.getJSONObject(PROP_REQUIREJS);
 		}
-		if (jsonRoot.has("default-conf")) {
-			configuration = jsonRoot.getJSONObject("default-conf");
+		if (jsonRoot.has(PROP_DEFAULT_CONF)) {
+			configuration = jsonRoot.getJSONObject(PROP_DEFAULT_CONF);
 		}
 
+		this.mergeConf = jsonRoot.has(PROP_MERGE_CONF)
+				&& jsonRoot.getBoolean(PROP_MERGE_CONF);
 	}
 
 	public Map<String, String> getRequireJSPathsMap() {
@@ -56,6 +65,19 @@ public class PluginDescriptor {
 			fill(ret, (JSONObject) requireJS.get("shim"));
 		}
 		return ret;
+	}
+
+	/**
+	 * Determines whether the plugin configuration should be merged
+	 * (<code>true</code>) or replaced (<code>false</code>) when applying other
+	 * configuration from different sources.
+	 * 
+	 * @deprecated In the future this option will always be <code>true</code>.
+	 * @return <code>true</code> if the plugin configuration should be merged,
+	 *         <code>false</code> otherwise.
+	 */
+	public boolean getMergeConf() {
+		return mergeConf;
 	}
 
 	/**

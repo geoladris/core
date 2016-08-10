@@ -20,6 +20,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.log4j.Logger;
 
+import de.csgis.commons.JSONUtils;
 import net.sf.json.JSON;
 import net.sf.json.JSONObject;
 
@@ -229,16 +230,20 @@ public class DefaultConfig implements Config {
 					JSON moduleConfiguration = ret.get(moduleName);
 					JSON moduleConfigurationToMerge = moduleConfigurations
 							.get(moduleName);
+					JSON merged;
 					if (moduleConfiguration instanceof JSONObject
 							&& moduleConfigurationToMerge instanceof JSONObject) {
-						JSONObject moduleConfObj = (JSONObject) moduleConfiguration;
-						JSONObject moduleConfToMergeObj = (JSONObject) moduleConfigurationToMerge;
-						moduleConfObj.putAll(moduleConfToMergeObj);
+						merged = JSONUtils.merge(
+								(JSONObject) moduleConfiguration,
+								(JSONObject) moduleConfigurationToMerge);
 					} else if (moduleConfigurationToMerge != null) {
-						ret.put(moduleName, moduleConfigurationToMerge);
-					} else if (moduleConfiguration == null) {
-						ret.put(moduleName, new JSONObject());
+						merged = moduleConfigurationToMerge;
+					} else if (moduleConfiguration != null) {
+						merged = moduleConfiguration;
+					} else {
+						merged = new JSONObject();
 					}
+					ret.put(moduleName, merged);
 				}
 			}
 

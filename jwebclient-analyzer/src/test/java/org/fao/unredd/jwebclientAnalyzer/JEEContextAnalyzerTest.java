@@ -11,6 +11,7 @@ import java.io.InputStream;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
 
@@ -121,6 +122,18 @@ public class JEEContextAnalyzerTest {
 
 		checkList(context.getCSSRelativePaths(), "styles/general.css",
 				"theme/theme.css");
+	}
+
+	@Test
+	public void checkMergeConf() {
+		JEEContextAnalyzer context = new JEEContextAnalyzer(
+				new FileContext("src/test/resources/test_merge_conf"), "conf",
+				"webapp");
+
+		Set<String> set = context.getMergeConfModules();
+		assertEquals(2, set.size());
+		assertTrue(set.contains("module1"));
+		assertTrue(set.contains("module2"));
 	}
 
 	private void checkList(List<String> result, String... testEntries) {

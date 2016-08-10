@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.Properties;
 import java.util.ResourceBundle;
+import java.util.Set;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
@@ -18,6 +19,9 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.fao.unredd.AppContextListener;
+
+import de.csgis.commons.JSONUtils;
 import net.sf.json.JSON;
 import net.sf.json.JSONObject;
 import net.sf.json.JSONSerializer;
@@ -28,8 +32,15 @@ public class ConfigServlet extends HttpServlet {
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
-		Config config = (Config) getServletContext().getAttribute("config");
-		Locale locale = (Locale) req.getAttribute("locale");
+		doGet(req, resp, getServletContext());
+	}
+
+	@SuppressWarnings("unchecked")
+	void doGet(HttpServletRequest req, HttpServletResponse resp,
+			ServletContext context) throws IOException {
+		Config config = (Config) context
+				.getAttribute(AppContextListener.ATTR_CONFIG);
+		Locale locale = (Locale) req.getAttribute(LangFilter.ATTR_LOCALE);
 
 		ResourceBundle bundle = config.getMessages(locale);
 
@@ -42,10 +53,8 @@ public class ConfigServlet extends HttpServlet {
 
 		JSONObject moduleConfig = new JSONObject();
 		// Fixed elements
-		moduleConfig.element(
-				"customization",
-				buildCustomizationObject(getServletContext(), config, locale,
-						title));
+		moduleConfig.element("customization",
+				buildCustomizationObject(context, config, locale, title));
 		moduleConfig.element("i18n", buildI18NObject(bundle));
 		moduleConfig.element("url-parameters",
 				JSONSerializer.toJSON(req.getParameterMap()));
@@ -53,14 +62,22 @@ public class ConfigServlet extends HttpServlet {
 		 * Plugin configuration. default plugin conf and overridden by multiple
 		 * potential means (by default, by portal plugin-conf.json)
 		 */
-		@SuppressWarnings("unchecked")
-		Map<String, JSON> pluginConfiguration = (Map<String, JSON>) getServletContext()
-				.getAttribute("plugin-configuration");
+		Map<String, JSON> pluginConfiguration = (Map<String, JSON>) context
+				.getAttribute(AppContextListener.ATTR_PLUGIN_CONFIGURATION);
+		Set<String> mergeConfModules = (Set<String>) context
+				.getAttribute(AppContextListener.ATTR_MERGE_CONF_MODULES);
 		Map<String, JSON> pluginConfigurationOverride = config
 				.getPluginConfig(locale, req);
 		for (String configurationItem : pluginConfigurationOverride.keySet()) {
-			moduleConfig.element(configurationItem,
-					pluginConfigurationOverride.get(configurationItem));
+			JSON cfg = pluginConfigurationOverride.get(configurationItem);
+			Object defaultCfg = pluginConfiguration.get(configurationItem);
+			if (mergeConfModules.contains(configurationItem)
+					&& cfg instanceof JSONObject
+					&& defaultCfg instanceof JSONObject) {
+				cfg = JSONUtils.merge((JSONObject) defaultCfg,
+						(JSONObject) cfg);
+			}
+			moduleConfig.element(configurationItem, cfg);
 		}
 		for (String configurationItem : pluginConfiguration.keySet()) {
 			JSON defaultConfiguration = pluginConfiguration
@@ -120,7 +137,7 @@ public class ConfigServlet extends HttpServlet {
 		}
 		@SuppressWarnings("unchecked")
 		ArrayList<String> classPathModules = (ArrayList<String>) servletContext
-				.getAttribute("js-paths");
+				.getAttribute(AppContextListener.ATTR_JS_PATHS);
 		modules.addAll(classPathModules);
 		obj.element("modules", modules);
 

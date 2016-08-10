@@ -59,8 +59,8 @@ public class ConfigTest {
 				&& pluginConf.has("c"));
 		assertEquals("c", pluginConf.get("c"));
 		assertEquals("b", pluginConf.get("b"));
-		// No defined priority when two providers have the same element
-		assertTrue(pluginConf.get("a") == "a" || pluginConf.get("a") == "z");
+		// Providers should be applied in order
+		assertTrue(pluginConf.get("a") == "z");
 	}
 
 	private Map<String, JSON> buildMap(String pluginName, JSONObject conf) {
