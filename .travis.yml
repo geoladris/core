@@ -3,4 +3,5 @@ language: java
 notifications:
   email:
     - geoladris@googlegroups.com
+  on_success: always
 
