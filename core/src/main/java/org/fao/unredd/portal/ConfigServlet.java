@@ -5,11 +5,9 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.MissingResourceException;
-import java.util.Properties;
 import java.util.ResourceBundle;
 
 import javax.servlet.ServletContext;
@@ -89,27 +87,14 @@ public class ConfigServlet extends HttpServlet {
 
 	private JSONObject buildCustomizationObject(ServletContext servletContext,
 			Config config, Locale locale, String title) {
-		// These properties will be handled manually at the end of the method
-		HashSet<String> manuallyHandled = new HashSet<String>();
-		Collections.addAll(manuallyHandled, Config.PROPERTY_CLIENT_MODULES,
-				Config.PROPERTY_MAP_CENTER, Config.PROPERTY_LANGUAGES);
-
-		// We put here all the properties except for the manually handled
-		Properties properties = config.getProperties();
 		JSONObject obj = new JSONObject();
-		for (Object keyObj : properties.keySet()) {
-			String key = keyObj.toString();
-			if (!manuallyHandled.contains(key)) {
-				obj.element(key, properties.getProperty(key));
-			}
-		}
-
-		// We put the manually handled properties
 		obj.element("title", title);
 		obj.element(Config.PROPERTY_LANGUAGES, config.getLanguages());
 		obj.element("languageCode", locale.getLanguage());
 		obj.element(Config.PROPERTY_MAP_CENTER,
 				config.getPropertyAsArray(Config.PROPERTY_MAP_CENTER));
+		obj.element("map.initialZoomLevel",
+				config.getProperties().get("map.initialZoomLevel"));
 
 		ArrayList<String> modules = new ArrayList<String>();
 		String[] extraModules = config
