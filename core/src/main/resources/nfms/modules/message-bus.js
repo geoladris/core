@@ -33,7 +33,7 @@ define([ "jquery" ], function($) {
 	}
 
 	/**
-	 * Removes a listener of the specified message. 
+	 * Removes a listener of the specified message.
 	 * 
 	 * @param {string}
 	 *            name - The name of the message.
@@ -44,9 +44,14 @@ define([ "jquery" ], function($) {
 		messageBus.unbind(name, callBack);
 	}
 
+	function stopListenAll() {
+		messageBus.unbind();
+	}
+
 	return {
 		send : send,
 		listen : listen,
-		stopListen : stopListen
+		stopListen : stopListen,
+		stopListenAll : stopListenAll
 	};
 });
