@@ -3,7 +3,6 @@ language: java
 notifications:
   email:
     recipients:
-      - geoladris@googlegroups.com
       - victor.gonzalez@geomati.co
   on_success: always
 
