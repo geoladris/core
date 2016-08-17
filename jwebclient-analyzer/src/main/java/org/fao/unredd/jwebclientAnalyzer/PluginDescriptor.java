@@ -24,31 +24,36 @@ public class PluginDescriptor {
 
 	}
 
-	public Map<String, String> getRequireJSPathsMap() {
+	public Map<String, String> getRequireJSPathsMap(String pluginName) {
 		Map<String, String> ret = new HashMap<String, String>();
 
 		if (requireJS != null) {
-			fill(ret, (JSONObject) requireJS.get("paths"));
+			fill(ret, pluginName, (JSONObject) requireJS.get("paths"));
 		}
 		return ret;
 	}
 
-	private void fill(Map<String, String> map, JSONObject jsonMap) {
+	private void fill(Map<String, String> map, String pluginName,
+			JSONObject jsonMap) {
 		if (jsonMap == null) {
 			return;
 		}
 
 		for (Object key : jsonMap.keySet()) {
 			Object value = jsonMap.get(key.toString());
-			map.put(key.toString(), value.toString());
+			map.put(key.toString(), buildJSLibURL(pluginName, value.toString()));
 		}
 	}
 
-	public Map<String, String> getRequireJSShims() {
+	private String buildJSLibURL(String pluginName, String jsLibPath) {
+		return jsLibPath.replace("jslib/", "jslib/" + pluginName + "/");
+	}
+
+	public Map<String, String> getRequireJSShims(String pluginName) {
 		Map<String, String> ret = new HashMap<String, String>();
 
 		if (requireJS != null) {
-			fill(ret, (JSONObject) requireJS.get("shim"));
+			fill(ret, pluginName, (JSONObject) requireJS.get("shim"));
 		}
 		return ret;
 	}

@@ -63,11 +63,11 @@ public class JEEContextAnalyzerTest {
 		JEEContextAnalyzer context = new JEEContextAnalyzer(new FileContext(
 				"src/test/resources/test1"));
 
-		checkList(context.getRequireJSModuleNames(), "module1", "module2",
-				"module3");
-		checkList(context.getCSSRelativePaths(), "styles/general.css",
-				"modules/module2.css", "modules/module3.css",
-				"styles/general2.css");
+		checkList(context.getRequireJSModuleNames(), "j/module1", "j/module2",
+				"j/module3");
+		checkList(context.getCSSRelativePaths(), "styles/j/general.css",
+				"modules/j/module2.css", "modules/j/module3.css",
+				"styles/j/general2.css");
 		checkMapKeys(context.getNonRequirePathMap(), "jquery-ui", "fancy-box",
 				"openlayers", "mustache");
 		checkMapKeys(context.getNonRequireShimMap(), "fancy-box", "mustache");
@@ -84,9 +84,9 @@ public class JEEContextAnalyzerTest {
 		JEEContextAnalyzer context = new JEEContextAnalyzer(
 				new ExpandedClientContext("src/test/resources/test2"));
 
-		checkList(context.getRequireJSModuleNames(), "module3");
-		checkList(context.getCSSRelativePaths(), "modules/module3.css",
-				"styles/general2.css");
+		checkList(context.getRequireJSModuleNames(), "j/module3");
+		checkList(context.getCSSRelativePaths(), "modules/j/module3.css",
+				"styles/j/general2.css");
 		checkMapKeys(context.getNonRequirePathMap(), "mustache");
 		checkMapKeys(context.getNonRequireShimMap(), "mustache");
 	}
@@ -106,14 +106,47 @@ public class JEEContextAnalyzerTest {
 		JEEContextAnalyzer context = new JEEContextAnalyzer(new FileContext(
 				"src/test/resources/test3"), "conf", "webapp");
 
-		checkList(context.getRequireJSModuleNames(), "module1", "module2");
-		checkList(context.getCSSRelativePaths(), "styles/general.css",
-				"modules/module2.css");
+		checkList(context.getRequireJSModuleNames(), "j/module1", "j/module2");
+		checkList(context.getCSSRelativePaths(), "styles/j/general.css",
+				"modules/j/module2.css");
+	}
+
+	@Test
+	public void scanNoJavaPlugins() {
+		JEEContextAnalyzer context = new JEEContextAnalyzer(new FileContext(
+				"src/test/resources/testNoJava"), "nfms", "nfms");
+		checkList(context.getRequireJSModuleNames(), //
+				"j/module-java",//
+				"plugin1/a",//
+				"plugin1/b",//
+				"plugin2/c");
+		checkList(context.getCSSRelativePaths(),//
+				"styles/j/style-java.css",//
+				"styles/plugin1/a.css",//
+				"styles/plugin2/b.css",//
+				"styles/plugin2/c.css",//
+				"modules/plugin1/d.css",//
+				"modules/j/module-style-java.css");
+
+		Map<String, String> nonRequirePaths = context.getNonRequirePathMap();
+		assertEquals("../jslib/plugin1/lib-a", nonRequirePaths.get("lib-a"));
+		assertEquals("../jslib/plugin1/lib-b", nonRequirePaths.get("lib-b"));
+		assertEquals("../jslib/plugin2/lib-c", nonRequirePaths.get("lib-c"));
+		assertEquals("../jslib/j/lib-java1", nonRequirePaths.get("lib-java1"));
+		assertEquals("../jslib/j/lib-java2", nonRequirePaths.get("lib-java2"));
+		assertEquals(5, nonRequirePaths.size());
+
+		Map<String, String> nonRequireShims = context.getNonRequireShimMap();
+		assertEquals("[\"lib-a\",\"lib-b\",\"lib-c\"]",
+				nonRequireShims.get("lib-java"));
+		assertEquals("[\"lib-a\"]", nonRequireShims.get("lib-b"));
+		assertEquals("[\"lib-a\",\"lib-b\"]", nonRequireShims.get("lib-c"));
+		assertEquals(3, nonRequireShims.size());
 	}
 
 	private void checkList(List<String> result, String... testEntries) {
 		for (String entry : testEntries) {
-			assertTrue(entry, result.remove(entry));
+			assertTrue(entry + " not in " + result, result.remove(entry));
 		}
 
 		assertTrue(result.size() == 0);

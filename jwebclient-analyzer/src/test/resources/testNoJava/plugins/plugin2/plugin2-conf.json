@@ -1,0 +1,10 @@
+{
+	"requirejs" : {
+		"paths" : {
+			"lib-c" : "../jslib/lib-c"
+		},
+		"shim" : {
+			"lib-c" : [ "lib-a", "lib-b" ]
+		},
+	}
+}

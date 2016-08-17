@@ -23,6 +23,8 @@ import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.log4j.Logger;
 
 public class JEEContextAnalyzer {
+	public static final String JAVA_CLASSPATH_PLUGIN_NAME = "j";
+
 	private static Logger logger = Logger.getLogger(JEEContextAnalyzer.class);
 
 	private ArrayList<String> js = new ArrayList<String>();
@@ -38,32 +40,61 @@ public class JEEContextAnalyzer {
 	public JEEContextAnalyzer(Context context, String pluginConfDir,
 			String webResourcesDir) {
 		PluginConfigEntryListener pluginConfListener = new PluginConfigEntryListener(
-				pluginConfDir);
+				JAVA_CLASSPATH_PLUGIN_NAME, pluginConfDir + File.separator);
 		WebResourcesEntryListener webResourcesListener = new WebResourcesEntryListener(
-				webResourcesDir);
-		scanClasses(context, pluginConfListener, webResourcesListener);
+				JAVA_CLASSPATH_PLUGIN_NAME, webResourcesDir + File.separator);
+		scanClasses(context, pluginConfListener, webResourcesListener,
+				new ClassesPluginLayout(context.getClientRoot(), pluginConfDir,
+						webResourcesDir));
 		scanJars(context, pluginConfListener, webResourcesListener);
+
+		scanNoJava(context);
+	}
+
+	private void scanNoJava(Context context) {
+		File rootFolder = context.getNoJavaRoot();
+		if (rootFolder != null) {
+			File[] plugins = rootFolder.listFiles();
+			if (plugins != null) {
+				for (File pluginRoot : plugins) {
+					PluginConfigEntryListener noJavaPluginConfListener = new PluginConfigEntryListener(
+							pluginRoot.getName(), "");
+					WebResourcesEntryListener noJavaWebResourcesListener = new WebResourcesEntryListener(
+							pluginRoot.getName(), "");
+					extractInfo(context, noJavaPluginConfListener,
+							noJavaWebResourcesListener, new NoJavaPluginLayout(
+									pluginRoot));
+				}
+			}
+		}
 	}
 
 	private void scanClasses(Context context,
 			PluginConfigEntryListener pluginConfListener,
-			WebResourcesEntryListener webResourcesListener) {
-		File rootFolder = context.getClientRoot();
-		if (rootFolder.exists()) {
-			scanDir(context, new File(rootFolder, pluginConfListener.dir),
-					pluginConfListener);
-			scanDir(context, new File(rootFolder, webResourcesListener.dir),
-					webResourcesListener);
+			WebResourcesEntryListener webResourcesListener,
+			PluginLayout pluginLayout) {
+		if (pluginLayout.rootFolderExists()) {
+			extractInfo(context, pluginConfListener, webResourcesListener,
+					pluginLayout);
 		}
 	}
 
+	private void extractInfo(Context context,
+			PluginConfigEntryListener pluginConfListener,
+			WebResourcesEntryListener webResourcesListener,
+			PluginLayout pluginLayout) {
+		scanDir(context, pluginLayout.getConfigurationRoot(),
+				pluginLayout.getReferenceFolder(), pluginConfListener);
+		scanDir(context, pluginLayout.getWebResourcesRoot(),
+				pluginLayout.getReferenceFolder(), webResourcesListener);
+	}
+
 	private void scanDir(Context context, final File dir,
-			ContextEntryListener listener) {
+			final File referenceFolder, ContextEntryListener listener) {
 		if (dir.isDirectory()) {
 			Iterator<File> allFiles = FileUtils.iterateFiles(dir,
 					relevantExtensions, TrueFileFilter.INSTANCE);
 
-			final File referenceFolder = dir.getParentFile();
 			int rootPathLength = referenceFolder.getAbsolutePath().length() + 1;
 			while (allFiles.hasNext()) {
 				File file = allFiles.next();
@@ -175,55 +206,70 @@ public class JEEContextAnalyzer {
 	};
 
 	private class PluginConfigEntryListener implements ContextEntryListener {
-		private String dir;
+		private String pathPrefix;
+		private String pluginName;
 
-		public PluginConfigEntryListener(String dir) {
-			this.dir = dir;
+		public PluginConfigEntryListener(String pluginName, String entryRoot) {
+			this.pluginName = pluginName;
+			this.pathPrefix = entryRoot;
 		}
 
 		@Override
 		public void accept(String path, ContextEntryReader contentReader)
 				throws IOException {
-			if (path.matches("\\Q" + dir + File.separator
-					+ "\\E[\\w-]+\\Q-conf.json\\E")) {
+			if (path.matches("\\Q" + pathPrefix + "\\E[\\w-]+\\Q-conf.json\\E")) {
 				PluginDescriptor pluginDescriptor = new PluginDescriptor(
 						contentReader.getContent());
-				requirejsPaths.putAll(pluginDescriptor.getRequireJSPathsMap());
-				requirejsShims.putAll(pluginDescriptor.getRequireJSShims());
+				requirejsPaths.putAll(pluginDescriptor
+						.getRequireJSPathsMap(pluginName));
+				requirejsShims.putAll(pluginDescriptor
+						.getRequireJSShims(pluginName));
 				configurationMap.putAll(pluginDescriptor.getConfigurationMap());
 			}
 		}
+
 	}
 
 	private class WebResourcesEntryListener implements ContextEntryListener {
-		private String dir;
+		private String pathPrefix;
+		private String pluginName;
 
-		public WebResourcesEntryListener(String dir) {
-			this.dir = dir;
+		public WebResourcesEntryListener(String pluginName, String pathPrefix) {
+			this.pathPrefix = pathPrefix;
+			this.pluginName = pluginName;
 		}
 
 		@Override
 		public void accept(String path, ContextEntryReader contentReader)
 				throws IOException {
-			String stylesPrefix = dir + File.separator + "styles";
-			String modulesPrefix = dir + File.separator + "modules";
-			File pathFile = new File(path);
+			String styles = "styles";
+			String stylesPrefix = pathPrefix + styles;
+			String modules = "modules";
+			String modulesPrefix = pathPrefix + modules;
 			if (path.startsWith(modulesPrefix)) {
 				if (path.endsWith(".css")) {
-					String output = path.substring(dir.length() + 1);
+					String output = buildCSSURL(path, modules);
 					css.add(output);
 				}
 				if (path.endsWith(".js")) {
+					File pathFile = new File(path);
 					String name = pathFile.getName();
 					name = name.substring(0, name.length() - 3);
+					name = pluginName != null ? pluginName + "/" + name : name;
 					js.add(name);
 				}
 			} else {
 				if (path.startsWith(stylesPrefix) && path.endsWith(".css")) {
-					String output = path.substring(dir.length() + 1);
+					String output = buildCSSURL(path, styles);
 					css.add(output);
 				}
 			}
 		}
+
+		private String buildCSSURL(String path, String folderName) {
+			return path.substring(pathPrefix.length()).replace(
+					folderName + "/", folderName + "/" + pluginName + "/");
+		}
+
 	}
 }

@@ -28,4 +28,9 @@ public class ExpandedClientContext implements Context {
 		return new File(jeeContextFolder);
 	}
 
+	@Override
+	public File getNoJavaRoot() {
+		return null;
+	}
+
 }
