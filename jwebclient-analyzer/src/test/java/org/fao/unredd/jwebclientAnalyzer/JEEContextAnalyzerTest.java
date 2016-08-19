@@ -5,6 +5,7 @@ import static junit.framework.Assert.assertTrue;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,18 +26,31 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class JEEContextAnalyzerTest {
-	private static File libFolder = new File(
+	private static File test1LibFolder = new File(
 			"src/test/resources/test1/WEB-INF/lib");
+	private static File testOnlyLibFolder = new File(
+			"src/test/resources/testOnlyLib/WEB-INF/lib");
 
 	@BeforeClass
-	public static void packTest2AsJar() throws IOException {
-		assertTrue(libFolder.exists() || libFolder.mkdirs());
+	public static void packAsJar() throws IOException {
+		packageAsJar("test2", ".", test1LibFolder);
 
-		File jarFile = new File(libFolder, "test2.jar");
+		packageAsJar("test2", ".", testOnlyLibFolder);
+		packageAsJar("testJavaNonRootModules", "WEB-INF/classes",
+				testOnlyLibFolder);
+	}
+
+	private static void packageAsJar(String testCaseToPack,
+			String pluginContentsRoot, File jslib)
+			throws FileNotFoundException, IOException {
+		assertTrue(jslib.exists() || jslib.mkdirs());
+
+		File jarFile = new File(jslib, testCaseToPack + ".jar");
 		assertTrue(!jarFile.exists() || jarFile.delete());
 
 		FileOutputStream stream = new FileOutputStream(jarFile);
-		File jarContentRoot = new File("src/test/resources/test2");
+		File jarContentRoot = new File("src/test/resources/", testCaseToPack
+				+ File.separator + pluginContentsRoot);
 		Collection<File> files = FileUtils.listFiles(jarContentRoot,
 				TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE);
 		JarOutputStream out = new JarOutputStream(stream);
@@ -55,7 +69,8 @@ public class JEEContextAnalyzerTest {
 
 	@AfterClass
 	public static void removeTest2Jar() throws IOException {
-		FileUtils.deleteDirectory(libFolder);
+		FileUtils.deleteDirectory(test1LibFolder);
+		FileUtils.deleteDirectory(testOnlyLibFolder.getParentFile());
 	}
 
 	@Test
@@ -63,11 +78,11 @@ public class JEEContextAnalyzerTest {
 		JEEContextAnalyzer context = new JEEContextAnalyzer(new FileContext(
 				"src/test/resources/test1"));
 
-		checkList(context.getRequireJSModuleNames(), "j/module1", "j/module2",
-				"j/module3");
-		checkList(context.getCSSRelativePaths(), "styles/j/general.css",
-				"modules/j/module2.css", "modules/j/module3.css",
-				"styles/j/general2.css");
+		checkList(context.getRequireJSModuleNames(), "module1", "module2",
+				"module3");
+		checkList(context.getCSSRelativePaths(), "styles/general.css",
+				"modules/module2.css", "modules/module3.css",
+				"styles/general2.css");
 		checkMapKeys(context.getNonRequirePathMap(), "jquery-ui", "fancy-box",
 				"openlayers", "mustache");
 		checkMapKeys(context.getNonRequireShimMap(), "fancy-box", "mustache");
@@ -84,9 +99,9 @@ public class JEEContextAnalyzerTest {
 		JEEContextAnalyzer context = new JEEContextAnalyzer(
 				new ExpandedClientContext("src/test/resources/test2"));
 
-		checkList(context.getRequireJSModuleNames(), "j/module3");
-		checkList(context.getCSSRelativePaths(), "modules/j/module3.css",
-				"styles/j/general2.css");
+		checkList(context.getRequireJSModuleNames(), "module3");
+		checkList(context.getCSSRelativePaths(), "modules/module3.css",
+				"styles/general2.css");
 		checkMapKeys(context.getNonRequirePathMap(), "mustache");
 		checkMapKeys(context.getNonRequireShimMap(), "mustache");
 	}
@@ -106,9 +121,9 @@ public class JEEContextAnalyzerTest {
 		JEEContextAnalyzer context = new JEEContextAnalyzer(new FileContext(
 				"src/test/resources/test3"), "conf", "webapp");
 
-		checkList(context.getRequireJSModuleNames(), "j/module1", "j/module2");
-		checkList(context.getCSSRelativePaths(), "styles/j/general.css",
-				"modules/j/module2.css");
+		checkList(context.getRequireJSModuleNames(), "module1", "module2");
+		checkList(context.getCSSRelativePaths(), "styles/general.css",
+				"modules/module2.css");
 	}
 
 	@Test
@@ -142,6 +157,39 @@ public class JEEContextAnalyzerTest {
 		assertEquals("[\"lib-a\"]", nonRequireShims.get("lib-b"));
 		assertEquals("[\"lib-a\",\"lib-b\"]", nonRequireShims.get("lib-c"));
 		assertEquals(3, nonRequireShims.size());
+	}
+
+	@Test
+	public void scanJavaNonRootModules() {
+		JEEContextAnalyzer context = new JEEContextAnalyzer(new FileContext(
+				"src/test/resources/testJavaNonRootModules"), "nfms", "nfms");
+		checkList(context.getRequireJSModuleNames(), "j/module1");
+		checkList(context.getCSSRelativePaths(), "styles/j/style1.css",
+				"modules/j/module1.css");
+		Map<String, String> nonRequirePaths = context.getNonRequirePathMap();
+		assertEquals("../jslib/j/lib", nonRequirePaths.get("lib"));
+		assertEquals(1, nonRequirePaths.size());
+	}
+
+	@Test
+	public void scanJavaNonRootModulesAsJar() {
+		JEEContextAnalyzer context = new JEEContextAnalyzer(new FileContext(
+				"src/test/resources/testOnlyLib"), "nfms", "nfms");
+		checkList(context.getRequireJSModuleNames(),//
+				"j/module1",//
+				"module3"//
+		);
+		checkList(context.getCSSRelativePaths(), //
+				"styles/j/style1.css",//
+				"modules/j/module1.css",//
+				"styles/general2.css",//
+				"modules/module3.css"//
+		);
+		Map<String, String> nonRequirePaths = context.getNonRequirePathMap();
+		assertEquals("../jslib/j/lib", nonRequirePaths.get("lib"));
+		assertEquals("../jslib/jquery.mustache",
+				nonRequirePaths.get("mustache"));
+		assertEquals(2, nonRequirePaths.size());
 	}
 
 	private void checkList(List<String> result, String... testEntries) {

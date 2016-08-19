@@ -43,16 +43,19 @@ public class ClientContentServletTest {
 	@Before
 	public void setup() {
 		MockitoAnnotations.initMocks(this);
+	}
+
+	public void setupConfigurationFolder(String folder) {
 
 		AppContextListener listener = new AppContextListener();
 		ServletContextEvent servletContextEvent = mock(ServletContextEvent.class);
 		ServletContext servletContext = mock(ServletContext.class);
 		when(servletContext.getInitParameter("PORTAL_CONFIG_DIR")).thenReturn(
-				"src/test/resources/testNoJavaPlugins");
+				folder);
 		when(servletContext.getResourcePaths("/WEB-INF/lib")).thenReturn(
 				new HashSet<String>());
 		when(servletContext.getRealPath("/WEB-INF/classes/")).thenReturn(
-				"src/test/resources/testNoJavaPlugins/WEB-INF/classes");
+				folder + "/WEB-INF/classes");
 		when(servletContextEvent.getServletContext())
 				.thenReturn(servletContext);
 		listener.contextInitialized(servletContextEvent);
@@ -69,31 +72,49 @@ public class ClientContentServletTest {
 
 	@Test
 	public void scanNoJavaPlugins() throws ServletException, IOException {
+		setupConfigurationFolder("src/test/resources/testNoJavaPlugins");
+		requirePaths("/testNoJavaPlugins");
+	}
+
+	@Test
+	public void scanJavaRootModules() throws ServletException, IOException {
+		setupConfigurationFolder("src/test/resources/testJavaNonRootModules");
+		requirePaths("/testJavaNonRootModules");
+	}
+
+	@Test
+	public void scanJavaRootSubfolders() throws ServletException, IOException {
+		setupConfigurationFolder("src/test/resources/testJavaRootSubfolders");
+		requirePaths("/testJavaRootSubfolders");
+	}
+
+	private void requirePaths(String classpathPrefix) throws ServletException,
+			IOException {
 		Config config = configCaptor.getValue();
 		List<String> paths = jsPathsCaptor.getValue();
 		for (int i = 0; i < paths.size(); i++) {
 			paths.set(i, "/modules/" + paths.get(i) + ".js");
 		}
-		testRequest(config, paths);
+		testRequest(config, paths, classpathPrefix);
 
 		paths = new ArrayList<String>(nonRequirePaths.getValue().values());
 		for (int i = 0; i < paths.size(); i++) {
 			paths.set(i, paths.get(i).substring(2) + ".js");
 		}
-		testRequest(config, paths);
+		testRequest(config, paths, classpathPrefix);
 
 		paths = new ArrayList<String>(cssPathsCaptor.getValue());
 		for (int i = 0; i < paths.size(); i++) {
 			paths.set(i, "/" + paths.get(i));
 		}
-		testRequest(config, paths);
+		testRequest(config, paths, classpathPrefix);
 	}
 
-	private void testRequest(Config config, Collection<String> collection)
-			throws ServletException, IOException {
+	private void testRequest(Config config, Collection<String> collection,
+			String classpathPrefix) throws ServletException, IOException {
 
 		ClientContentServlet servlet = new ClientContentServlet();
-		servlet.setTestingClasspathRoot("/testNoJavaPlugins/WEB-INF/classes/");
+		servlet.setTestingClasspathRoot(classpathPrefix + "/WEB-INF/classes/");
 		ServletConfig servletConfig = mock(ServletConfig.class);
 		ServletContext servletContext = mock(ServletContext.class);
 		when(servletContext.getAttribute("config")).thenReturn(config);
@@ -117,6 +138,8 @@ public class ClientContentServletTest {
 
 	@Test
 	public void test404() throws ServletException, IOException {
+		setupConfigurationFolder("src/test/resources/testNoJavaPlugins");
+
 		ClientContentServlet servlet = new ClientContentServlet();
 		servlet.setTestingClasspathRoot("/testNoJavaPlugins/WEB-INF/classes/");
 		ServletConfig servletConfig = mock(ServletConfig.class);

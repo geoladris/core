@@ -40,20 +40,36 @@ public class ClientContentServlet extends HttpServlet {
 		if (confStaticFile.isFile()) {
 			file = confStaticFile;
 		} else {
-			// Is it a java client resource?
 			String[] parts = pathInfo.substring(1).split(Pattern.quote("/"));
-			if (parts.length >= 3) {
+
+			{// is it in the root plugin?
+				String resourcePath = testingClasspathRoot
+						+ "/nfms"
+						+ File.separator
+						+ parts[0]
+						+ File.separator
+						+ StringUtils.join(parts, File.separator, 1,
+								parts.length);
+				InputStream classPathResource = this.getClass()
+						.getResourceAsStream(resourcePath);
+				if (classPathResource != null) {
+					stream = new BufferedInputStream(classPathResource);
+				}
+			}
+			if (stream == null && parts.length >= 3) {
 				String modulesOrStylesOrJsLib = parts[0];
 				String pluginName = parts[1];
 				String path = StringUtils.join(parts, File.separator, 2,
 						parts.length);
+
+				// Is it in the java plugin space?
 				if (parts[1]
 						.equals(JEEContextAnalyzer.JAVA_CLASSPATH_PLUGIN_NAME)) {
-					String classpathResource = testingClasspathRoot + "/nfms"
+					String resourcePath = testingClasspathRoot + "/nfms"
 							+ File.separator + modulesOrStylesOrJsLib
 							+ File.separator + path;
 					InputStream classPathResource = this.getClass()
-							.getResourceAsStream(classpathResource);
+							.getResourceAsStream(resourcePath);
 					if (classPathResource != null) {
 						stream = new BufferedInputStream(classPathResource);
 					}

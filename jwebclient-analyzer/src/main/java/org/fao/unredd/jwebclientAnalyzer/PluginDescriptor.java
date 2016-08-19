@@ -11,6 +11,7 @@ public class PluginDescriptor {
 
 	private JSONObject requireJS;
 	private JSONObject configuration;
+	private Boolean installInRoot = null;
 
 	public PluginDescriptor(String content) {
 		JSONObject jsonRoot = (JSONObject) JSONSerializer.toJSON(content);
@@ -21,7 +22,9 @@ public class PluginDescriptor {
 		if (jsonRoot.has("default-conf")) {
 			configuration = jsonRoot.getJSONObject("default-conf");
 		}
-
+		if (jsonRoot.has("installInRoot")) {
+			installInRoot = jsonRoot.getBoolean("installInRoot");
+		}
 	}
 
 	public Map<String, String> getRequireJSPathsMap(String pluginName) {
@@ -46,7 +49,11 @@ public class PluginDescriptor {
 	}
 
 	private String buildJSLibURL(String pluginName, String jsLibPath) {
-		return jsLibPath.replace("jslib/", "jslib/" + pluginName + "/");
+		if (pluginName == null) {
+			return jsLibPath;
+		} else {
+			return jsLibPath.replace("jslib/", "jslib/" + pluginName + "/");
+		}
 	}
 
 	public Map<String, String> getRequireJSShims(String pluginName) {
@@ -71,4 +78,7 @@ public class PluginDescriptor {
 		return configurationMap;
 	}
 
+	public Boolean isInstallInRoot() {
+		return installInRoot;
+	}
 }

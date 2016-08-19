@@ -39,26 +39,19 @@ public class JEEContextAnalyzer {
 
 	public JEEContextAnalyzer(Context context, String pluginConfDir,
 			String webResourcesDir) {
-		PluginConfigEntryListener pluginConfListener = new PluginConfigEntryListener(
-				JAVA_CLASSPATH_PLUGIN_NAME, pluginConfDir + File.separator);
-		WebResourcesEntryListener webResourcesListener = new WebResourcesEntryListener(
-				JAVA_CLASSPATH_PLUGIN_NAME, webResourcesDir + File.separator);
-		scanClasses(context, pluginConfListener, webResourcesListener,
-				new ClassesPluginLayout(context.getClientRoot(), pluginConfDir,
-						webResourcesDir));
-		scanJars(context, pluginConfListener, webResourcesListener);
-
-		scanNoJava(context);
+		scanClasses(context, pluginConfDir, webResourcesDir, true);
+		scanJars(context, pluginConfDir, webResourcesDir, true);
+		scanNoJava(context, false);
 	}
 
-	private void scanNoJava(Context context) {
+	private void scanNoJava(Context context, boolean installInRoot) {
 		File rootFolder = context.getNoJavaRoot();
 		if (rootFolder != null) {
 			File[] plugins = rootFolder.listFiles();
 			if (plugins != null) {
 				for (File pluginRoot : plugins) {
 					PluginConfigEntryListener noJavaPluginConfListener = new PluginConfigEntryListener(
-							pluginRoot.getName(), "");
+							pluginRoot.getName(), "", installInRoot);
 					WebResourcesEntryListener noJavaWebResourcesListener = new WebResourcesEntryListener(
 							pluginRoot.getName(), "");
 					extractInfo(context, noJavaPluginConfListener,
@@ -69,10 +62,15 @@ public class JEEContextAnalyzer {
 		}
 	}
 
-	private void scanClasses(Context context,
-			PluginConfigEntryListener pluginConfListener,
-			WebResourcesEntryListener webResourcesListener,
-			PluginLayout pluginLayout) {
+	private void scanClasses(Context context, String pluginConfDir,
+			String webResourcesDir, boolean installInRoot) {
+		PluginConfigEntryListener pluginConfListener = new PluginConfigEntryListener(
+				JAVA_CLASSPATH_PLUGIN_NAME, pluginConfDir + File.separator,
+				installInRoot);
+		WebResourcesEntryListener webResourcesListener = new WebResourcesEntryListener(
+				JAVA_CLASSPATH_PLUGIN_NAME, webResourcesDir + File.separator);
+		ClassesPluginLayout pluginLayout = new ClassesPluginLayout(
+				context.getClientRoot(), pluginConfDir, webResourcesDir);
 		if (pluginLayout.rootFolderExists()) {
 			extractInfo(context, pluginConfListener, webResourcesListener,
 					pluginLayout);
@@ -85,6 +83,7 @@ public class JEEContextAnalyzer {
 			PluginLayout pluginLayout) {
 		scanDir(context, pluginLayout.getConfigurationRoot(),
 				pluginLayout.getReferenceFolder(), pluginConfListener);
+		webResourcesListener.setInstallInRoot(pluginConfListener.installInRoot);
 		scanDir(context, pluginLayout.getWebResourcesRoot(),
 				pluginLayout.getReferenceFolder(), webResourcesListener);
 	}
@@ -122,40 +121,52 @@ public class JEEContextAnalyzer {
 		}
 	}
 
-	private void scanJars(Context context,
-			ContextEntryListener... contextEntryListeners) {
+	private void scanJars(Context context, String pluginConfDir,
+			String webResourcesDir, boolean installInRoot) {
 		Set<String> libJars = context.getLibPaths();
 		for (Object jar : libJars) {
-			InputStream jarStream = context.getLibAsStream(jar.toString());
-			final ZipInputStream zis = new ZipInputStream(
-					new BufferedInputStream(jarStream));
-			ZipEntry entry;
-			try {
-				while ((entry = zis.getNextEntry()) != null) {
-					String entryPath = entry.getName();
-					if (relevantExtensions.accept(new File(entryPath))) {
-						ContextEntryReader contentReader = new ContextEntryReader() {
+			PluginConfigEntryListener pluginConfListener = new PluginConfigEntryListener(
+					JAVA_CLASSPATH_PLUGIN_NAME, pluginConfDir + File.separator,
+					installInRoot);
+			WebResourcesEntryListener webResourcesListener = new WebResourcesEntryListener(
+					JAVA_CLASSPATH_PLUGIN_NAME, webResourcesDir
+							+ File.separator);
 
-							@Override
-							public String getContent() throws IOException {
-								return IOUtils.toString(zis);
-							}
-						};
+			processJar(context, jar, pluginConfListener);
+			webResourcesListener
+					.setInstallInRoot(pluginConfListener.installInRoot);
+			processJar(context, jar, webResourcesListener);
+		}
+	}
 
-						for (ContextEntryListener listener : contextEntryListeners) {
-							listener.accept(entryPath, contentReader);
+	private void processJar(Context context, Object jar,
+			ContextEntryListener listener) {
+		InputStream jarStream = context.getLibAsStream(jar.toString());
+		final ZipInputStream zis = new ZipInputStream(new BufferedInputStream(
+				jarStream));
+		ZipEntry entry;
+		try {
+			while ((entry = zis.getNextEntry()) != null) {
+				String entryPath = entry.getName();
+				if (relevantExtensions.accept(new File(entryPath))) {
+					ContextEntryReader contentReader = new ContextEntryReader() {
+
+						@Override
+						public String getContent() throws IOException {
+							return IOUtils.toString(zis);
 						}
-					}
-				}
-			} catch (IOException e) {
-				throw new RuntimeException("Cannot start the application", e);
-			} finally {
-				try {
-					zis.close();
-				} catch (IOException e) {
+					};
+
+					listener.accept(entryPath, contentReader);
 				}
 			}
-
+		} catch (IOException e) {
+			throw new RuntimeException("Cannot start the application", e);
+		} finally {
+			try {
+				zis.close();
+			} catch (IOException e) {
+			}
 		}
 	}
 
@@ -208,10 +219,13 @@ public class JEEContextAnalyzer {
 	private class PluginConfigEntryListener implements ContextEntryListener {
 		private String pathPrefix;
 		private String pluginName;
+		private boolean installInRoot;
 
-		public PluginConfigEntryListener(String pluginName, String entryRoot) {
+		public PluginConfigEntryListener(String pluginName, String entryRoot,
+				boolean installInRoot) {
 			this.pluginName = pluginName;
 			this.pathPrefix = entryRoot;
+			this.installInRoot = installInRoot;
 		}
 
 		@Override
@@ -220,10 +234,20 @@ public class JEEContextAnalyzer {
 			if (path.matches("\\Q" + pathPrefix + "\\E[\\w-]+\\Q-conf.json\\E")) {
 				PluginDescriptor pluginDescriptor = new PluginDescriptor(
 						contentReader.getContent());
+				Boolean installInRoot = pluginDescriptor.isInstallInRoot();
+				if (installInRoot != null) {
+					this.installInRoot = installInRoot;
+				}
+				String pluginNamePrefix;
+				if (this.installInRoot) {
+					pluginNamePrefix = null;
+				} else {
+					pluginNamePrefix = pluginName;
+				}
 				requirejsPaths.putAll(pluginDescriptor
-						.getRequireJSPathsMap(pluginName));
+						.getRequireJSPathsMap(pluginNamePrefix));
 				requirejsShims.putAll(pluginDescriptor
-						.getRequireJSShims(pluginName));
+						.getRequireJSShims(pluginNamePrefix));
 				configurationMap.putAll(pluginDescriptor.getConfigurationMap());
 			}
 		}
@@ -233,10 +257,15 @@ public class JEEContextAnalyzer {
 	private class WebResourcesEntryListener implements ContextEntryListener {
 		private String pathPrefix;
 		private String pluginName;
+		private boolean installInRoot = false;
 
 		public WebResourcesEntryListener(String pluginName, String pathPrefix) {
 			this.pathPrefix = pathPrefix;
 			this.pluginName = pluginName;
+		}
+
+		public void setInstallInRoot(boolean installInRoot) {
+			this.installInRoot = installInRoot;
 		}
 
 		@Override
@@ -255,7 +284,10 @@ public class JEEContextAnalyzer {
 					File pathFile = new File(path);
 					String name = pathFile.getName();
 					name = name.substring(0, name.length() - 3);
-					name = pluginName != null ? pluginName + "/" + name : name;
+					if (!installInRoot) {
+						name = pluginName != null ? pluginName + "/" + name
+								: name;
+					}
 					js.add(name);
 				}
 			} else {
@@ -267,8 +299,13 @@ public class JEEContextAnalyzer {
 		}
 
 		private String buildCSSURL(String path, String folderName) {
-			return path.substring(pathPrefix.length()).replace(
-					folderName + "/", folderName + "/" + pluginName + "/");
+			String urlPath = path.substring(pathPrefix.length());
+			if (!installInRoot) {
+				return urlPath.replace(folderName + "/", folderName + "/"
+						+ pluginName + "/");
+			} else {
+				return urlPath;
+			}
 		}
 
 	}
