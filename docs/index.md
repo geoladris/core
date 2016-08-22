@@ -4,6 +4,7 @@
 * [Configuration directory](conf_dir.md)
 * [Plugin descriptor](plugin_descriptor.md)
 * [`portal.properties`](portal_properties.md)
+* [Deprecated](deprecated.md)
 
 # User
 
