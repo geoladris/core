@@ -2,6 +2,8 @@ package org.fao.unredd.jwebclientAnalyzer;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -23,7 +25,6 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import net.sf.json.JSON;
 import net.sf.json.JSONObject;
 
 public class JEEContextAnalyzerTest {
@@ -73,10 +74,11 @@ public class JEEContextAnalyzerTest {
 		checkMapKeys(context.getNonRequirePathMap(), "jquery-ui", "fancy-box",
 				"openlayers", "mustache");
 		checkMapKeys(context.getNonRequireShimMap(), "fancy-box", "mustache");
-		Map<String, JSON> confElements = context.getConfigElements();
-		JSONObject layout = (JSONObject) confElements.get("layout");
-		JSONObject legend = (JSONObject) confElements.get("legend");
-		JSONObject layerList = (JSONObject) confElements.get("layer-list");
+		Map<String, JSONObject> confElements = context
+				.getConfigurationElements();
+		JSONObject layout = confElements.get("layout");
+		JSONObject legend = confElements.get("legend");
+		JSONObject layerList = confElements.get("layer-list");
 
 		assertEquals("29px", layout.getString("banner-size"));
 		assertEquals(true, legend.getBoolean("show-title"));
@@ -125,15 +127,54 @@ public class JEEContextAnalyzerTest {
 	}
 
 	@Test
-	public void checkMergeConf() {
+	public void checkPluginDescriptors() {
 		JEEContextAnalyzer context = new JEEContextAnalyzer(
-				new FileContext("src/test/resources/test_merge_conf"), "conf",
-				"webapp");
+				new FileContext("src/test/resources/test1"));
 
-		Set<String> set = context.getMergeConfModules();
-		assertEquals(2, set.size());
-		assertTrue(set.contains("module1"));
-		assertTrue(set.contains("module2"));
+		Set<PluginDescriptor> plugins = context.getPluginDescriptors();
+		assertEquals(2, plugins.size());
+
+		for (PluginDescriptor plugin : plugins) {
+			Set<String> modules = plugin.getModules();
+			Set<String> styles = plugin.getStylesheets();
+			JSONObject defaultConf = plugin.getDefaultConf();
+			Map<String, String> requirejsPaths = plugin.getRequireJSPathsMap();
+			Map<String, String> requirejsShims = plugin.getRequireJSShims();
+			if ("test1".equals(plugin.getName())) {
+				assertEquals(2, modules.size());
+				assertTrue(modules.contains("module1"));
+				assertTrue(modules.contains("module2"));
+				assertEquals(2, styles.size());
+				assertTrue(styles.contains("modules/module2.css"));
+				assertTrue(styles.contains("styles/general.css"));
+				assertTrue(defaultConf.containsKey("layout"));
+				assertTrue(defaultConf.containsKey("legend"));
+				assertFalse(defaultConf.containsKey("layer-list"));
+				assertTrue(requirejsPaths.containsKey("fancy-box"));
+				assertTrue(requirejsPaths.containsKey("jquery-ui"));
+				assertTrue(requirejsPaths.containsKey("openlayers"));
+				assertFalse(requirejsPaths.containsKey("mustache"));
+				assertTrue(requirejsShims.containsKey("fancy-box"));
+				assertFalse(requirejsShims.containsKey("mustache"));
+			} else if ("test2".equals(plugin.getName())) {
+				assertEquals(1, modules.size());
+				assertTrue(modules.contains("module3"));
+				assertEquals(2, styles.size());
+				assertTrue(styles.contains("modules/module3.css"));
+				assertTrue(styles.contains("styles/general2.css"));
+				assertFalse(defaultConf.containsKey("layout"));
+				assertFalse(defaultConf.containsKey("legend"));
+				assertTrue(defaultConf.containsKey("layer-list"));
+				assertFalse(requirejsPaths.containsKey("fancy-box"));
+				assertFalse(requirejsPaths.containsKey("jquery-ui"));
+				assertFalse(requirejsPaths.containsKey("openlayers"));
+				assertTrue(requirejsPaths.containsKey("mustache"));
+				assertFalse(requirejsShims.containsKey("fancy-box"));
+				assertTrue(requirejsShims.containsKey("mustache"));
+			} else {
+				fail();
+			}
+		}
 	}
 
 	private void checkList(List<String> result, String... testEntries) {

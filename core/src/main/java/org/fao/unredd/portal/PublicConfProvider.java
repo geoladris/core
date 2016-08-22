@@ -13,29 +13,27 @@ import net.sf.json.JSONObject;
 
 /**
  * <p>
- * ModuleConfigurationProvider that returns the configuration that is specific
- * to a role. The role configurations are taken from
- * <code>&lt;config_dir&gt;/</code>{@value #ROLE_DIR}<code>/&lt;role&gt;.json</code>
- * files.
- * </p>
- * 
- * <p>
- * The active role is taken from the {@link Constants#SESSION_ATTR_ROLE} session
- * attribute.
+ * {@link ModuleConfigurationProvider} that returns the configuration from
+ * <code>&lt;config_dir&gt;/public-conf.json</code>.
  * </p>
  * 
  * @author victorzinho
  */
-public class RoleConfigurationProvider implements ModuleConfigurationProvider {
+public class PublicConfProvider implements ModuleConfigurationProvider {
+	public static final String FILE_BASE = "public-conf";
+	public static final String FILE = FILE_BASE + ".json";
+
 	public static final String ROLE_DIR = "role_conf";
 
 	private ConfigurationProviderHelper helper;
+	private File file;
 
-	public RoleConfigurationProvider(File configDir,
+	public PublicConfProvider(File configDir,
 			Map<String, PluginDescriptor> plugins) {
-		String roleDir = new File(configDir, ROLE_DIR).getAbsolutePath();
-		this.helper = new ConfigurationProviderHelper(
-				new JSONContentProvider(roleDir), plugins);
+		JSONContentProvider contents = new JSONContentProvider(
+				configDir.getAbsolutePath());
+		this.helper = new ConfigurationProviderHelper(contents, plugins);
+		this.file = new File(configDir, FILE);
 	}
 
 	@Override
@@ -51,22 +49,11 @@ public class RoleConfigurationProvider implements ModuleConfigurationProvider {
 	public Map<PluginDescriptor, JSONObject> getPluginConfig(
 			PortalRequestConfiguration configurationContext,
 			HttpServletRequest request) throws IOException {
-		String role = getRole(request);
-		return role != null ? this.helper.getPluginConfig(role) : null;
-	}
-
-	private String getRole(HttpServletRequest request) {
-		Object attr = request.getSession()
-				.getAttribute(Constants.SESSION_ATTR_ROLE);
-		if (attr == null) {
-			return null;
-		}
-
-		return attr.toString();
+		return file.exists() ? helper.getPluginConfig(FILE_BASE) : null;
 	}
 
 	@Override
 	public boolean canBeCached() {
-		return false;
+		return true;
 	}
 }

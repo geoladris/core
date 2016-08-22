@@ -1,10 +1,11 @@
 package org.fao.unredd.jwebclientAnalyzer;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
-import net.sf.json.JSON;
 import net.sf.json.JSONObject;
 import net.sf.json.JSONSerializer;
 
@@ -13,18 +14,26 @@ import net.sf.json.JSONSerializer;
  *
  */
 public class PluginDescriptor {
-	public static final String PROP_MERGE_CONF = "merge-conf";
 	public static final String PROP_DEFAULT_CONF = "default-conf";
 	public static final String PROP_REQUIREJS = "requirejs";
 
 	private JSONObject requireJS;
 	private JSONObject configuration;
-	/**
-	 * @deprecated
-	 */
-	private boolean mergeConf;
+	private Set<String> modules, stylesheets;
+	private String name;
+
+	public PluginDescriptor() {
+		this.modules = new HashSet<>();
+		this.stylesheets = new HashSet<>();
+	}
 
 	public PluginDescriptor(String content) {
+		this.modules = new HashSet<>();
+		this.stylesheets = new HashSet<>();
+		setConfiguration(content);
+	}
+
+	public void setConfiguration(String content) {
 		JSONObject jsonRoot = (JSONObject) JSONSerializer.toJSON(content);
 
 		if (jsonRoot.has(PROP_REQUIREJS)) {
@@ -33,9 +42,6 @@ public class PluginDescriptor {
 		if (jsonRoot.has(PROP_DEFAULT_CONF)) {
 			configuration = jsonRoot.getJSONObject(PROP_DEFAULT_CONF);
 		}
-
-		this.mergeConf = jsonRoot.has(PROP_MERGE_CONF)
-				&& jsonRoot.getBoolean(PROP_MERGE_CONF);
 	}
 
 	public Map<String, String> getRequireJSPathsMap() {
@@ -68,43 +74,76 @@ public class PluginDescriptor {
 	}
 
 	/**
-	 * Determines whether the plugin configuration should be merged
-	 * (<code>true</code>) or replaced (<code>false</code>) when applying other
-	 * configuration from different sources.
-	 * 
-	 * @deprecated In the future this option will always be <code>true</code>.
-	 * @return <code>true</code> if the plugin configuration should be merged,
-	 *         <code>false</code> otherwise.
-	 */
-	public boolean getMergeConf() {
-		return mergeConf;
-	}
-
-	/**
-	 * @deprecated Use {@link #getConfigMap()}.
+	 * @deprecated Use {@link #getDefaultConf()}.
 	 */
 	public Map<String, JSONObject> getConfigurationMap() {
 		Map<String, JSONObject> configurationMap = new HashMap<String, JSONObject>();
-		fillConfigMap(configurationMap);
-		return configurationMap;
-	}
-
-	public Map<String, JSON> getConfigMap() {
-		Map<String, JSON> configurationMap = new HashMap<String, JSON>();
-		fillConfigMap(configurationMap);
-		return configurationMap;
-	}
-
-	@SuppressWarnings("unchecked")
-	private <T extends JSON> void fillConfigMap(
-			Map<String, T> configurationMap) {
 		if (configuration != null) {
 			@SuppressWarnings("rawtypes")
 			Iterator iterator = configuration.keys();
 			while (iterator.hasNext()) {
 				String key = (String) iterator.next();
-				configurationMap.put(key, (T) configuration.get(key));
+				configurationMap.put(key, configuration.getJSONObject(key));
 			}
 		}
+		return configurationMap;
+	}
+
+	public JSONObject getDefaultConf() {
+		return configuration;
+	}
+
+	public Set<String> getModules() {
+		return modules;
+	}
+
+	public Set<String> getStylesheets() {
+		return stylesheets;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+
+		if (!(obj instanceof PluginDescriptor)) {
+			return false;
+		}
+
+		PluginDescriptor p = (PluginDescriptor) obj;
+
+		boolean equals = this.name != null
+				? this.name.equals(p.name)
+				: p.name == null;
+		equals &= this.configuration != null
+				? this.configuration.equals(p.configuration)
+				: p.configuration == null;
+		equals &= this.requireJS != null
+				? this.requireJS.equals(p.requireJS)
+				: p.requireJS == null;
+		return equals && p.modules.equals(this.modules)
+				&& p.stylesheets.equals(this.stylesheets);
+	}
+
+	@Override
+	public int hashCode() {
+		int hash = name != null ? name.hashCode() : 0;
+		hash += configuration != null ? configuration.hashCode() : 0;
+		hash += requireJS != null ? requireJS.hashCode() : 0;
+		return hash + modules.hashCode() + stylesheets.hashCode();
+	}
+
+	@Override
+	public String toString() {
+		return name;
 	}
 }

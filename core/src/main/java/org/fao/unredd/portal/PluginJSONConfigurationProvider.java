@@ -13,9 +13,12 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.io.IOUtils;
 import org.fao.unredd.jwebclientAnalyzer.PluginDescriptor;
 
-import net.sf.json.JSON;
 import net.sf.json.JSONObject;
 
+/**
+ * @deprecated Use {@link PublicConfProvider} instead.
+ * @author victorzinho
+ */
 public class PluginJSONConfigurationProvider
 		implements
 			ModuleConfigurationProvider {
@@ -32,15 +35,20 @@ public class PluginJSONConfigurationProvider
 	}
 
 	@Override
-	public Map<String, JSON> getConfigMap(
+	public Map<PluginDescriptor, JSONObject> getPluginConfig(
 			PortalRequestConfiguration configurationContext,
 			HttpServletRequest request) throws IOException {
+		// We create return a pseudo-plugin descriptor containing all the
+		// configuration to override/merge
+		// The modules, stylesheets and RequireJS data is empty since it is
+		// taken from all the other real plugins.
 		PluginDescriptor pluginDescriptor = getPluginDescriptor(
 				configurationContext, request);
-
-		return pluginDescriptor != null
-				? pluginDescriptor.getConfigMap()
-				: new HashMap<String, JSON>();
+		Map<PluginDescriptor, JSONObject> ret = new HashMap<>();
+		if (pluginDescriptor != null) {
+			ret.put(pluginDescriptor, pluginDescriptor.getDefaultConf());
+		}
+		return ret;
 	}
 
 	private PluginDescriptor getPluginDescriptor(
@@ -65,5 +73,4 @@ public class PluginJSONConfigurationProvider
 	public boolean canBeCached() {
 		return true;
 	}
-
 }

@@ -20,9 +20,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.fao.unredd.AppContextListener;
+import org.fao.unredd.jwebclientAnalyzer.PluginDescriptor;
 
-import de.csgis.commons.JSONUtils;
-import net.sf.json.JSON;
 import net.sf.json.JSONObject;
 import net.sf.json.JSONSerializer;
 
@@ -35,7 +34,6 @@ public class ConfigServlet extends HttpServlet {
 		doGet(req, resp, getServletContext());
 	}
 
-	@SuppressWarnings("unchecked")
 	void doGet(HttpServletRequest req, HttpServletResponse resp,
 			ServletContext context) throws IOException {
 		Config config = (Config) context
@@ -51,39 +49,20 @@ public class ConfigServlet extends HttpServlet {
 			title = "Untitled";
 		}
 
+		Map<PluginDescriptor, JSONObject> pluginConfs = config
+				.getPluginConfig(locale, req);
+
 		JSONObject moduleConfig = new JSONObject();
 		// Fixed elements
-		moduleConfig.element("customization",
-				buildCustomizationObject(context, config, locale, title));
+		moduleConfig.element("customization", buildCustomizationObject(context,
+				config, locale, title, pluginConfs.keySet()));
 		moduleConfig.element("i18n", buildI18NObject(bundle));
 		moduleConfig.element("url-parameters",
 				JSONSerializer.toJSON(req.getParameterMap()));
-		/*
-		 * Plugin configuration. default plugin conf and overridden by multiple
-		 * potential means (by default, by portal plugin-conf.json)
-		 */
-		Map<String, JSON> pluginConfiguration = (Map<String, JSON>) context
-				.getAttribute(AppContextListener.ATTR_PLUGIN_CONFIGURATION);
-		Set<String> mergeConfModules = (Set<String>) context
-				.getAttribute(AppContextListener.ATTR_MERGE_CONF_MODULES);
-		Map<String, JSON> pluginConfigurationOverride = config
-				.getPluginConfig(locale, req);
-		for (String configurationItem : pluginConfigurationOverride.keySet()) {
-			JSON cfg = pluginConfigurationOverride.get(configurationItem);
-			Object defaultCfg = pluginConfiguration.get(configurationItem);
-			if (mergeConfModules.contains(configurationItem)
-					&& cfg instanceof JSONObject
-					&& defaultCfg instanceof JSONObject) {
-				cfg = JSONUtils.merge((JSONObject) defaultCfg,
-						(JSONObject) cfg);
-			}
-			moduleConfig.element(configurationItem, cfg);
-		}
-		for (String configurationItem : pluginConfiguration.keySet()) {
-			JSON defaultConfiguration = pluginConfiguration
-					.get(configurationItem);
-			if (!pluginConfigurationOverride.containsKey(configurationItem)) {
-				moduleConfig.element(configurationItem, defaultConfiguration);
+
+		for (JSONObject conf : pluginConfs.values()) {
+			if (conf != null) {
+				moduleConfig.putAll(conf);
 			}
 		}
 
@@ -106,7 +85,8 @@ public class ConfigServlet extends HttpServlet {
 	}
 
 	private JSONObject buildCustomizationObject(ServletContext servletContext,
-			Config config, Locale locale, String title) {
+			Config config, Locale locale, String title,
+			Set<PluginDescriptor> plugins) {
 		// These properties will be handled manually at the end of the method
 		HashSet<String> manuallyHandled = new HashSet<String>();
 		Collections.addAll(manuallyHandled, Config.PROPERTY_CLIENT_MODULES,
@@ -135,10 +115,9 @@ public class ConfigServlet extends HttpServlet {
 		if (extraModules != null) {
 			Collections.addAll(modules, extraModules);
 		}
-		@SuppressWarnings("unchecked")
-		ArrayList<String> classPathModules = (ArrayList<String>) servletContext
-				.getAttribute(AppContextListener.ATTR_JS_PATHS);
-		modules.addAll(classPathModules);
+		for (PluginDescriptor plugin : plugins) {
+			modules.addAll(plugin.getModules());
+		}
 		obj.element("modules", modules);
 
 		return obj;

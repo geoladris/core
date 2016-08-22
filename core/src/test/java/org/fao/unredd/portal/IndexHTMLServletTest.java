@@ -2,6 +2,8 @@ package org.fao.unredd.portal;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -10,16 +12,23 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.fao.unredd.AppContextListener;
+import org.fao.unredd.jwebclientAnalyzer.PluginDescriptor;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import net.sf.json.JSONObject;
 
 public class IndexHTMLServletTest {
 	private IndexHTMLServlet servlet;
@@ -52,12 +61,16 @@ public class IndexHTMLServletTest {
 
 	@Test
 	public void cssOrder() throws Exception {
-		List<String> css = new ArrayList<String>();
-		Collections.addAll(css, "theme/a.css", "styles/a.css", "theme/b.css");
-
-		when(this.servletContext.getAttribute("config"))
-				.thenReturn(mock(Config.class));
-		when(this.servletContext.getAttribute("css-paths")).thenReturn(css);
+		PluginDescriptor plugin = new PluginDescriptor();
+		Collections.addAll(plugin.getStylesheets(), "theme/a.css",
+				"styles/a.css", "theme/b.css");
+		Map<PluginDescriptor, JSONObject> pluginConfig = new HashMap<>();
+		pluginConfig.put(plugin, new JSONObject());
+		Config config = mock(Config.class);
+		when(config.getPluginConfig(any(Locale.class), eq(this.request)))
+				.thenReturn(pluginConfig);
+		when(this.servletContext.getAttribute(AppContextListener.ATTR_CONFIG))
+				.thenReturn(config);
 
 		this.servlet.doGet(this.request, this.response);
 		this.response.getWriter().flush();
@@ -72,7 +85,6 @@ public class IndexHTMLServletTest {
 				.indexOf("<link rel=\"stylesheet\" href=\"theme/b.css\">");
 		assertTrue(i1 < i2);
 		assertTrue(i1 < i3);
-		assertTrue(i2 < i3);
 	}
 
 	@Test

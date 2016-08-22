@@ -1,7 +1,7 @@
 package org.fao.unredd.portal;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -9,23 +9,23 @@ import static org.mockito.Mockito.when;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Properties;
 import java.util.ResourceBundle;
-import java.util.Set;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.fao.unredd.AppContextListener;
+import org.fao.unredd.jwebclientAnalyzer.PluginDescriptor;
 import org.junit.Before;
 import org.junit.Test;
 
-import net.sf.json.JSON;
+import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
 public class ConfigServletTest {
@@ -51,47 +51,93 @@ public class ConfigServletTest {
 	}
 
 	@Test
-	public void mergesConfIfSpecified() throws Exception {
+	public void usesModulesFromPluginsInConfiguration() throws Exception {
 		Locale locale = Locale.ROOT;
 
-		HashMap<String, JSON> defaultConf = new HashMap<String, JSON>();
-		defaultConf.put("module1", JSONObject.fromObject("{'a' : 1, 'b' : 2}"));
-		defaultConf.put("module2", JSONObject.fromObject("{'c' : 3, 'd' : 4}"));
+		PluginDescriptor plugin1 = new PluginDescriptor();
+		plugin1.setName("plugin1");
+		plugin1.getModules().add("module1");
+		String pluginConf1 = "{module1 : {prop1 : 42, prop2 : true}}";
 
-		HashMap<String, JSON> pluginConf = new HashMap<String, JSON>();
-		pluginConf.put("module1", JSONObject.fromObject("{'a' : 10, 'x' : 9}"));
-		pluginConf.put("module2", JSONObject.fromObject("{'c' : 30}"));
-
-		Set<String> mergeConfModules = new HashSet<String>();
-		mergeConfModules.add("module1");
+		Map<PluginDescriptor, JSONObject> pluginConf = new HashMap<PluginDescriptor, JSONObject>();
+		pluginConf.put(plugin1, JSONObject.fromObject(pluginConf1));
 
 		mockEmptyConfig();
 		when(request.getAttribute(LangFilter.ATTR_LOCALE)).thenReturn(locale);
-		when(context.getAttribute(AppContextListener.ATTR_JS_PATHS))
-				.thenReturn(new ArrayList<String>());
-		when(context.getAttribute(AppContextListener.ATTR_MERGE_CONF_MODULES))
-				.thenReturn(mergeConfModules);
-		when(context.getAttribute(AppContextListener.ATTR_PLUGIN_CONFIGURATION))
-				.thenReturn(defaultConf);
 		when(config.getPluginConfig(locale, request)).thenReturn(pluginConf);
 
 		servlet.doGet(request, response, context);
 
-		String content = content();
+		String content = response();
 		// It starts with var require = {...
 		JSONObject json = JSONObject
-				.fromObject(content().substring(content.indexOf('{')));
-		JSONObject module1 = json.getJSONObject("config")
-				.getJSONObject("module1");
-		System.out.println(module1);
-		assertEquals(10, module1.getInt("a"));
-		assertEquals(2, module1.getInt("b"));
-		assertEquals(9, module1.getInt("x"));
+				.fromObject(response().substring(content.indexOf('{')));
+		JSONArray modules = json.getJSONObject("config")
+				.getJSONObject("customization").getJSONArray("modules");
+		assertEquals(1, modules.size());
+		assertEquals("module1", modules.get(0));
+	}
 
-		JSONObject module2 = json.getJSONObject("config")
-				.getJSONObject("module2");
-		assertEquals(30, module2.getInt("c"));
-		assertFalse(module2.has("d"));
+	@Test
+	public void writesRequireJSConfigurationAsReturnedByConfig()
+			throws Exception {
+		Locale locale = Locale.ROOT;
+
+		PluginDescriptor plugin1 = new PluginDescriptor();
+		plugin1.setName("plugin1");
+		plugin1.getModules().add("module1");
+		PluginDescriptor plugin2 = new PluginDescriptor();
+		plugin2.setName("plugin2");
+		plugin2.getModules().add("module2");
+		plugin2.getModules().add("module3");
+		String pluginConf1 = "{module1 : {prop1 : 42, prop2 : true}}";
+		String pluginConf2 = "{module2 : {prop3 : 'test'},"
+				+ "module3 : [4, 2, 9]}";
+
+		Map<PluginDescriptor, JSONObject> pluginConf = new HashMap<PluginDescriptor, JSONObject>();
+		pluginConf.put(plugin1, JSONObject.fromObject(pluginConf1));
+		pluginConf.put(plugin2, JSONObject.fromObject(pluginConf2));
+
+		mockEmptyConfig();
+		when(request.getAttribute(LangFilter.ATTR_LOCALE)).thenReturn(locale);
+		when(config.getPluginConfig(locale, request)).thenReturn(pluginConf);
+
+		servlet.doGet(request, response, context);
+
+		String content = response();
+		// It starts with var require = {...
+		JSONObject json = JSONObject
+				.fromObject(response().substring(content.indexOf('{')));
+		JSONObject cfg = json.getJSONObject("config");
+		JSONObject module1 = cfg.getJSONObject("module1");
+		JSONObject module2 = cfg.getJSONObject("module2");
+		JSONArray module3 = cfg.getJSONArray("module3");
+
+		assertEquals(42, module1.getInt("prop1"));
+		assertTrue(module1.getBoolean("prop2"));
+		assertEquals("test", module2.getString("prop3"));
+		assertEquals(4, module3.get(0));
+		assertEquals(2, module3.get(1));
+		assertEquals(9, module3.get(2));
+	}
+
+	@Test
+	public void ignoresNullConfigurations() throws Exception {
+		mockEmptyConfig();
+		when(request.getAttribute(LangFilter.ATTR_LOCALE))
+				.thenReturn(Locale.ROOT);
+		when(config.getPluginConfig(Locale.ROOT, request)).thenReturn(
+				Collections.<PluginDescriptor, JSONObject>singletonMap(
+						new PluginDescriptor(), null));
+
+		servlet.doGet(request, response, context);
+
+		// It starts with var require = {...
+		JSONObject json = JSONObject
+				.fromObject(response().substring(response().indexOf('{')));
+		JSONObject cfg = json.getJSONObject("config");
+		// customization, i18n and url-parameters are always there
+		assertEquals(3, cfg.keySet().size());
 	}
 
 	private void mockEmptyConfig() {
@@ -100,7 +146,7 @@ public class ConfigServletTest {
 		when(this.config.getProperties()).thenReturn(new Properties());
 	}
 
-	private String content() throws IOException {
+	private String response() throws IOException {
 		this.response.getWriter().flush();
 		this.response.getWriter().close();
 		this.stream.flush();

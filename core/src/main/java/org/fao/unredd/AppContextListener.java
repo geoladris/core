@@ -2,35 +2,55 @@ package org.fao.unredd;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
+import org.apache.log4j.Logger;
 import org.fao.unredd.jwebclientAnalyzer.Context;
 import org.fao.unredd.jwebclientAnalyzer.JEEContextAnalyzer;
 import org.fao.unredd.jwebclientAnalyzer.PluginDescriptor;
 import org.fao.unredd.portal.ConfigFolder;
+import org.fao.unredd.portal.DefaultConfProvider;
 import org.fao.unredd.portal.DefaultConfig;
+import org.fao.unredd.portal.ModuleConfigurationProvider;
 import org.fao.unredd.portal.PluginJSONConfigurationProvider;
+import org.fao.unredd.portal.PublicConfProvider;
 import org.fao.unredd.portal.RoleConfigurationProvider;
 
 public class AppContextListener implements ServletContextListener {
+	private static final Logger logger = Logger
+			.getLogger(AppContextListener.class);
+
 	public static final String ENV_CONFIG_CACHE = "NFMS_CONFIG_CACHE";
 	public static final String INIT_PARAM_DIR = "PROTAL_CONFIG_DIR";
 
 	public static final String ATTR_CONFIG = "config";
-	public static final String ATTR_JS_PATHS = "js-paths";
-	public static final String ATTR_CSS_PATHS = "css-paths";
-	public static final String ATTR_REQUIREJS_PATHS = "requirejs-paths";
-	public static final String ATTR_REQUIREJS_SHIMS = "requirejs-shims";
-	public static final String ATTR_PLUGIN_CONFIGURATION = "plugin-configuration";
 
 	/**
-	 * @deprecated See {@link PluginDescriptor#getMergeConf()}.
+	 * @deprecated Use {@link #ATTR_CONFIG} instead.
 	 */
-	public static final String ATTR_MERGE_CONF_MODULES = "merge-conf-modules";
+	public static final String ATTR_JS_PATHS = "js-paths";
+	/**
+	 * @deprecated Use {@link #ATTR_CONFIG} instead.
+	 */
+	public static final String ATTR_CSS_PATHS = "css-paths";
+	/**
+	 * @deprecated Use {@link #ATTR_CONFIG} instead.
+	 */
+	public static final String ATTR_REQUIREJS_PATHS = "requirejs-paths";
+	/**
+	 * @deprecated Use {@link #ATTR_CONFIG} instead.
+	 */
+	public static final String ATTR_REQUIREJS_SHIMS = "requirejs-shims";
+	/**
+	 * @deprecated Use {@link #ATTR_CONFIG} instead.
+	 */
+	public static final String ATTR_PLUGIN_CONFIGURATION = "plugin-configuration";
 
 	@Override
 	public void contextInitialized(ServletContextEvent sce) {
@@ -46,12 +66,36 @@ public class AppContextListener implements ServletContextListener {
 				.getInitParameter(INIT_PARAM_DIR);
 		boolean configCache = Boolean
 				.parseBoolean(System.getenv(ENV_CONFIG_CACHE));
-		DefaultConfig config = new DefaultConfig(
-				new ConfigFolder(rootPath, configInitParameter), configCache);
-		config.addModuleConfigurationProvider(
-				new PluginJSONConfigurationProvider());
-		config.addModuleConfigurationProvider(
-				new RoleConfigurationProvider(config.getDir()));
+		ConfigFolder folder = new ConfigFolder(rootPath, configInitParameter);
+
+		Set<PluginDescriptor> plugins = context.getPluginDescriptors();
+		Map<String, PluginDescriptor> pluginNameMap = new HashMap<>();
+		for (PluginDescriptor plugin : plugins) {
+			if (plugin.getName() != null) {
+				pluginNameMap.put(plugin.getName(), plugin);
+			}
+		}
+
+		File publicConf = new File(folder.getFilePath(),
+				PublicConfProvider.FILE);
+		boolean hasPublicConf = publicConf.exists() && publicConf.isFile();
+		ModuleConfigurationProvider confProvider;
+		if (hasPublicConf) {
+			confProvider = new PublicConfProvider(folder.getFilePath(),
+					pluginNameMap);
+		} else {
+			confProvider = new PluginJSONConfigurationProvider();
+			logger.warn("plugin-conf.json file for configuration has been "
+					+ "deprecated. Use public.conf.json instead.");
+
+		}
+
+		DefaultConfig config = new DefaultConfig(folder, plugins,
+				new DefaultConfProvider(plugins), configCache, !hasPublicConf);
+		config.addModuleConfigurationProvider(confProvider);
+		config.addModuleConfigurationProvider(new RoleConfigurationProvider(
+				folder.getFilePath(), pluginNameMap));
+
 		servletContext.setAttribute(ATTR_CONFIG, config);
 		servletContext.setAttribute(ATTR_JS_PATHS,
 				context.getRequireJSModuleNames());
@@ -62,9 +106,7 @@ public class AppContextListener implements ServletContextListener {
 		servletContext.setAttribute(ATTR_REQUIREJS_SHIMS,
 				context.getNonRequireShimMap());
 		servletContext.setAttribute(ATTR_PLUGIN_CONFIGURATION,
-				context.getConfigElements());
-		servletContext.setAttribute(ATTR_MERGE_CONF_MODULES,
-				context.getMergeConfModules());
+				context.getConfigurationElements());
 	}
 
 	@Override
@@ -94,7 +136,5 @@ public class AppContextListener implements ServletContextListener {
 		public File getClientRoot() {
 			return new File(servletContext.getRealPath("/WEB-INF/classes/"));
 		}
-
 	}
-
 }

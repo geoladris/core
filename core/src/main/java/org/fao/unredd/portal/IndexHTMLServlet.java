@@ -6,9 +6,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Properties;
 
-import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -20,6 +22,9 @@ import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.runtime.resource.loader.StringResourceLoader;
 import org.apache.velocity.runtime.resource.util.StringResourceRepository;
+import org.fao.unredd.jwebclientAnalyzer.PluginDescriptor;
+
+import net.sf.json.JSONObject;
 
 public class IndexHTMLServlet extends HttpServlet {
 	public static final String HTTP_PARAM_DEBUG = "debug";
@@ -60,15 +65,19 @@ public class IndexHTMLServlet extends HttpServlet {
 					.parseBoolean(System.getProperty(PROP_MINIFIED_JS));
 		}
 
-		ServletContext servletContext = getServletContext();
 		Config config = (Config) getServletContext().getAttribute("config");
 		ArrayList<String> styleSheets = new ArrayList<String>();
 		if (minifiedjs) {
 			styleSheets.add(OPTIMIZED_FOLDER + "/portal-style.css");
 		} else {
-			@SuppressWarnings("unchecked")
-			ArrayList<String> classPathStylesheets = (ArrayList<String>) servletContext
-					.getAttribute("css-paths");
+			Locale locale = (Locale) req.getAttribute(LangFilter.ATTR_LOCALE);
+			Map<PluginDescriptor, JSONObject> pluginConf = config
+					.getPluginConfig(locale, req);
+			List<String> classPathStylesheets = new ArrayList<>();
+			for (PluginDescriptor plugin : pluginConf.keySet()) {
+				classPathStylesheets.addAll(plugin.getStylesheets());
+			}
+
 			Collections.sort(classPathStylesheets, new Comparator<String>() {
 				@Override
 				public int compare(String o1, String o2) {

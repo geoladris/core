@@ -5,7 +5,8 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
-import net.sf.json.JSON;
+import org.fao.unredd.jwebclientAnalyzer.PluginDescriptor;
+
 import net.sf.json.JSONObject;
 
 public interface ModuleConfigurationProvider {
@@ -28,8 +29,9 @@ public interface ModuleConfigurationProvider {
 			HttpServletRequest request) throws IOException;
 
 	/**
-	 * Returns a map where the keys are the names of the modules and the
-	 * JSONObjects are the configuration of each module
+	 * Returns a map where the keys are the configured plugins and the
+	 * JSONObjects are the configuration for the modules contained in the
+	 * plugin.
 	 * 
 	 * @param configurationContext
 	 * @param request
@@ -38,7 +40,7 @@ public interface ModuleConfigurationProvider {
 	 * @return
 	 * @throws IOException
 	 */
-	Map<String, JSON> getConfigMap(
+	Map<PluginDescriptor, JSONObject> getPluginConfig(
 			PortalRequestConfiguration configurationContext,
 			HttpServletRequest request) throws IOException;
 

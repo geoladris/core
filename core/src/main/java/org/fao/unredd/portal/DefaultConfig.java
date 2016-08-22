@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -19,9 +20,9 @@ import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.log4j.Logger;
+import org.fao.unredd.jwebclientAnalyzer.PluginDescriptor;
 
 import de.csgis.commons.JSONUtils;
-import net.sf.json.JSON;
 import net.sf.json.JSONObject;
 
 /**
@@ -35,17 +36,42 @@ public class DefaultConfig implements Config {
 	private static Logger logger = Logger.getLogger(DefaultConfig.class);
 	private static final String PROPERTY_DEFAULT_LANG = "languages.default";
 
+	private static final String CONF_ENABLED = "_enabled";
+	private static final String CONF_OVERRIDE = "_override";
+
 	private Properties properties;
 
 	private ConfigFolder folder;
-	private boolean useCache;
+	private boolean useCache, allPluginsEnabled;
 	private HashMap<Locale, ResourceBundle> localeBundles = new HashMap<Locale, ResourceBundle>();
-	private Map<ModuleConfigurationProvider, Map<String, JSON>> pluginConfigurations = new HashMap<ModuleConfigurationProvider, Map<String, JSON>>();
-	private ArrayList<ModuleConfigurationProvider> moduleConfigurationProviders = new ArrayList<ModuleConfigurationProvider>();
+	private Map<ModuleConfigurationProvider, Map<PluginDescriptor, JSONObject>> cachedConfigurations = new HashMap<ModuleConfigurationProvider, Map<PluginDescriptor, JSONObject>>();
 
+	/**
+	 * @deprecated Use {@link #cachedConfigurations} instead.
+	 */
+	private Map<ModuleConfigurationProvider, Map<String, JSONObject>> cachedModuleConfigurations = new HashMap<ModuleConfigurationProvider, Map<String, JSONObject>>();
+	private ArrayList<ModuleConfigurationProvider> moduleConfigurationProviders = new ArrayList<ModuleConfigurationProvider>();
+	private DefaultConfProvider defaultConfProvider;
+	private Set<PluginDescriptor> plugins;
+
+	/**
+	 * @deprecated Use {@link #DefaultConfig(ConfigFolder, Set, boolean)}
+	 *             instead.
+	 * @param folder
+	 * @param useCache
+	 */
 	public DefaultConfig(ConfigFolder folder, boolean useCache) {
+		this(folder, null, null, useCache, true);
+	}
+
+	public DefaultConfig(ConfigFolder folder, Set<PluginDescriptor> plugins,
+			DefaultConfProvider defaultConfProvider, boolean useCache,
+			boolean allPluginsEnabled) {
 		this.folder = folder;
+		this.plugins = plugins;
+		this.defaultConfProvider = defaultConfProvider;
 		this.useCache = useCache;
+		this.allPluginsEnabled = allPluginsEnabled;
 	}
 
 	@Override
@@ -173,13 +199,20 @@ public class DefaultConfig implements Config {
 		for (ModuleConfigurationProvider provider : moduleConfigurationProviders) {
 
 			// Get the configuration
-			Map<String, JSONObject> moduleConfigurations = null;
-			try {
-				moduleConfigurations = provider.getConfigurationMap(
-						new PortalConfigurationContextImpl(locale), request);
-			} catch (IOException e) {
-				logger.info("Provider failed to contribute configuration: "
-						+ provider.getClass());
+			Map<String, JSONObject> moduleConfigurations = cachedModuleConfigurations
+					.get(provider);
+			if (moduleConfigurations == null || !useCache
+					|| !provider.canBeCached()) {
+				try {
+					moduleConfigurations = provider.getConfigurationMap(
+							new PortalConfigurationContextImpl(locale),
+							request);
+					cachedModuleConfigurations.put(provider,
+							moduleConfigurations);
+				} catch (IOException e) {
+					logger.info("Provider failed to contribute configuration: "
+							+ provider.getClass());
+				}
 			}
 
 			// Merge the configuration in the result
@@ -203,51 +236,102 @@ public class DefaultConfig implements Config {
 	}
 
 	@Override
-	public Map<String, JSON> getPluginConfig(Locale locale,
+	public Map<PluginDescriptor, JSONObject> getPluginConfig(Locale locale,
 			HttpServletRequest request) {
-		Map<String, JSON> ret = new HashMap<String, JSON>();
+		Map<PluginDescriptor, JSONObject> ret = new HashMap<PluginDescriptor, JSONObject>();
 		for (ModuleConfigurationProvider provider : moduleConfigurationProviders) {
 			// Get the configuration
-			Map<String, JSON> moduleConfigurations = pluginConfigurations
+			Map<PluginDescriptor, JSONObject> pluginConfs = cachedConfigurations
 					.get(provider);
-			if (moduleConfigurations == null || !useCache
-					|| !provider.canBeCached()) {
+			if (pluginConfs == null || !useCache || !provider.canBeCached()) {
 				try {
-					moduleConfigurations = provider.getConfigMap(
+					pluginConfs = provider.getPluginConfig(
 							new PortalConfigurationContextImpl(locale),
 							request);
-					pluginConfigurations.put(provider, moduleConfigurations);
+					cachedConfigurations.put(provider, pluginConfs);
 				} catch (IOException e) {
 					logger.info("Provider failed to contribute configuration: "
 							+ provider.getClass());
 				}
 			}
 
+			if (pluginConfs == null) {
+				continue;
+			}
+
 			// Merge the configuration in the result
-			if (moduleConfigurations != null) {
-				Set<String> moduleNames = moduleConfigurations.keySet();
-				for (String moduleName : moduleNames) {
-					JSON moduleConfiguration = ret.get(moduleName);
-					JSON moduleConfigurationToMerge = moduleConfigurations
-							.get(moduleName);
-					JSON merged;
-					if (moduleConfiguration instanceof JSONObject
-							&& moduleConfigurationToMerge instanceof JSONObject) {
-						merged = JSONUtils.merge(
-								(JSONObject) moduleConfiguration,
-								(JSONObject) moduleConfigurationToMerge);
-					} else if (moduleConfigurationToMerge != null) {
-						merged = moduleConfigurationToMerge;
-					} else if (moduleConfiguration != null) {
-						merged = moduleConfiguration;
-					} else {
-						merged = new JSONObject();
-					}
-					ret.put(moduleName, merged);
+			for (PluginDescriptor plugin : pluginConfs.keySet()) {
+				JSONObject pluginConf = pluginConfs.get(plugin);
+				JSONObject previous = ret.get(plugin);
+				if (previous != null) {
+					pluginConf = JSONUtils.merge(previous, pluginConf);
 				}
+
+				ret.put(plugin, pluginConf);
 			}
 
 		}
+
+		Map<PluginDescriptor, JSONObject> defaultConfs = null;
+		try {
+			if (this.defaultConfProvider != null) {
+				defaultConfs = this.defaultConfProvider.getPluginConfig(
+						new PortalConfigurationContextImpl(locale), request);
+			}
+		} catch (IOException e) {
+			logger.error("Cannot apply default configuration for plugins", e);
+		}
+
+		// Remove disabled plugins
+		Set<PluginDescriptor> toRemove = new HashSet<>();
+		for (PluginDescriptor plugin : ret.keySet()) {
+			JSONObject pluginConf = ret.get(plugin);
+			if (this.allPluginsEnabled || pluginConf.optBoolean(CONF_ENABLED)) {
+				boolean override = !pluginConf.has(CONF_OVERRIDE)
+						|| pluginConf.getBoolean(CONF_OVERRIDE);
+				if (defaultConfs != null && defaultConfs.get(plugin) != null
+						&& !override) {
+					pluginConf = JSONUtils.merge(defaultConfs.get(plugin),
+							pluginConf);
+				} else {
+					// Clone. Otherwise we'll remove the _enabled and _override
+					// properties from cached configuration
+					pluginConf = JSONObject.fromObject(pluginConf);
+				}
+
+				pluginConf.remove(CONF_ENABLED);
+				pluginConf.remove(CONF_OVERRIDE);
+				ret.put(plugin, pluginConf);
+			} else {
+				toRemove.add(plugin);
+			}
+		}
+
+		for (PluginDescriptor p : toRemove) {
+			ret.remove(p);
+		}
+
+		if (this.allPluginsEnabled && defaultConfs != null) {
+			for (PluginDescriptor plugin : defaultConfs.keySet()) {
+				if (ret.containsKey(plugin)) {
+					continue;
+				}
+
+				JSONObject pluginConf = defaultConfs.get(plugin);
+				if (pluginConf != null) {
+					if (pluginConf.has(CONF_OVERRIDE)
+							&& !pluginConf.getBoolean(CONF_OVERRIDE)) {
+						pluginConf = JSONUtils.merge(defaultConfs.get(plugin),
+								pluginConf);
+					}
+					pluginConf.remove(CONF_ENABLED);
+					pluginConf.remove(CONF_OVERRIDE);
+				}
+
+				ret.put(plugin, pluginConf);
+			}
+		}
+
 		return ret;
 	}
 
@@ -255,6 +339,31 @@ public class DefaultConfig implements Config {
 	public void addModuleConfigurationProvider(
 			ModuleConfigurationProvider provider) {
 		moduleConfigurationProviders.add(provider);
+	}
+
+	@Override
+	public PluginDescriptor getPlugin(String name) {
+		for (PluginDescriptor plugin : this.plugins) {
+			if (name.equals(plugin.getName())) {
+				return plugin;
+			}
+		}
+		return null;
+	}
+
+	public boolean hasModuleConfigurationProvider(
+			Class<? extends ModuleConfigurationProvider> clazz) {
+		for (ModuleConfigurationProvider provider : this.moduleConfigurationProviders) {
+			if (clazz.isInstance(provider)) {
+				return true;
+			}
+		}
+
+		return clazz.isInstance(this.defaultConfProvider);
+	}
+
+	public boolean areAllPluginsEnabled() {
+		return this.allPluginsEnabled;
 	}
 
 	private class PortalConfigurationContextImpl
@@ -281,7 +390,5 @@ public class DefaultConfig implements Config {
 		public boolean usingCache() {
 			return useCache;
 		}
-
 	}
-
 }
