@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.FileNameMap;
 import java.net.URLConnection;
+import java.util.regex.Pattern;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -14,12 +15,16 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
+import org.fao.unredd.jwebclientAnalyzer.JEEContextAnalyzer;
 
 public class ClientContentServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 
 	private static Logger logger = Logger.getLogger(ClientContentServlet.class);
+
+	private String testingClasspathRoot = "";
 
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -27,27 +32,72 @@ public class ClientContentServlet extends HttpServlet {
 		Config config = (Config) getServletContext().getAttribute("config");
 
 		String pathInfo = req.getServletPath() + req.getPathInfo();
-		File file = new File(config.getDir(), pathInfo);
-
+		File file = null;
 		InputStream stream = null;
-		if (file.isFile()) {
+
+		// Is this just a file in static folder?
+		File confStaticFile = new File(config.getDir(), pathInfo);
+		if (confStaticFile.isFile()) {
+			file = confStaticFile;
+		} else {
+			String[] parts = pathInfo.substring(1).split(Pattern.quote("/"));
+
+			{// is it in the root plugin?
+				String resourcePath = testingClasspathRoot
+						+ "/nfms"
+						+ File.separator
+						+ parts[0]
+						+ File.separator
+						+ StringUtils.join(parts, File.separator, 1,
+								parts.length);
+				InputStream classPathResource = this.getClass()
+						.getResourceAsStream(resourcePath);
+				if (classPathResource != null) {
+					stream = new BufferedInputStream(classPathResource);
+				}
+			}
+			if (stream == null && parts.length >= 3) {
+				String modulesOrStylesOrJsLib = parts[0];
+				String pluginName = parts[1];
+				String path = StringUtils.join(parts, File.separator, 2,
+						parts.length);
+
+				// Is it in the java plugin space?
+				if (parts[1]
+						.equals(JEEContextAnalyzer.JAVA_CLASSPATH_PLUGIN_NAME)) {
+					String resourcePath = testingClasspathRoot + "/nfms"
+							+ File.separator + modulesOrStylesOrJsLib
+							+ File.separator + path;
+					InputStream classPathResource = this.getClass()
+							.getResourceAsStream(resourcePath);
+					if (classPathResource != null) {
+						stream = new BufferedInputStream(classPathResource);
+					}
+				} else {
+					// Is it a no-java plugin resource?
+					File noJavaPluginFile = new File(
+							config.getNoJavaPluginRoot(), pluginName
+									+ File.separator + modulesOrStylesOrJsLib
+									+ File.separator + path);
+					if (noJavaPluginFile.isFile()) {
+						file = noJavaPluginFile;
+					}
+				}
+			}
+
+		}
+
+		if (file != null) { // it was a file
 			// Manage cache headers: Last-Modified and If-Modified-Since
 			long ifModifiedSince = req.getDateHeader("If-Modified-Since");
-			long lastModified = file.lastModified();
+			long lastModified = confStaticFile.lastModified();
 			if (ifModifiedSince >= (lastModified / 1000 * 1000)) {
 				resp.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
 				return;
 			}
 			resp.setDateHeader("Last-Modified", lastModified);
-			stream = new BufferedInputStream(new FileInputStream(file));
-		} else {
-			String path = "/nfms" + pathInfo;
-			InputStream classPathResource = this.getClass()
-					.getResourceAsStream(path);
-			if (classPathResource != null) {
-				resp.setStatus(HttpServletResponse.SC_OK);
-				stream = new BufferedInputStream(classPathResource);
-			}
+			stream = new BufferedInputStream(
+					new FileInputStream(confStaticFile));
 		}
 
 		// Set content type
@@ -69,12 +119,16 @@ public class ClientContentServlet extends HttpServlet {
 			// Send contents
 			try {
 				IOUtils.copy(stream, resp.getOutputStream());
+				resp.setStatus(HttpServletResponse.SC_OK);
 			} catch (IOException e) {
 				logger.error("Error reading file", e);
 				throw new StatusServletException(500,
 						"Could transfer the resource");
 			}
 		}
+	}
 
+	public void setTestingClasspathRoot(String testingClasspathRoot) {
+		this.testingClasspathRoot = testingClasspathRoot;
 	}
 }

@@ -239,4 +239,9 @@ public class DefaultConfig implements Config {
 
 	}
 
+	@Override
+	public File getNoJavaPluginRoot() {
+		return new File(getDir(), "plugins");
+	}
+
 }

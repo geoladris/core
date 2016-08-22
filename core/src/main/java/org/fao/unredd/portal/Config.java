@@ -82,4 +82,12 @@ public interface Config {
 	 */
 	void addModuleConfigurationProvider(ModuleConfigurationProvider provider);
 
+	/**
+	 * Gets the folder in the configuration directory where no-java plugins are
+	 * to be found
+	 * 
+	 * @return
+	 */
+	File getNoJavaPluginRoot();
+
 }

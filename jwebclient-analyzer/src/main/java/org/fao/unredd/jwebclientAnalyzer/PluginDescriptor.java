@@ -11,6 +11,7 @@ public class PluginDescriptor {
 
 	private JSONObject requireJS;
 	private JSONObject configuration;
+	private Boolean installInRoot = null;
 
 	public PluginDescriptor(String content) {
 		JSONObject jsonRoot = (JSONObject) JSONSerializer.toJSON(content);
@@ -21,34 +22,45 @@ public class PluginDescriptor {
 		if (jsonRoot.has("default-conf")) {
 			configuration = jsonRoot.getJSONObject("default-conf");
 		}
-
+		if (jsonRoot.has("installInRoot")) {
+			installInRoot = jsonRoot.getBoolean("installInRoot");
+		}
 	}
 
-	public Map<String, String> getRequireJSPathsMap() {
+	public Map<String, String> getRequireJSPathsMap(String pluginName) {
 		Map<String, String> ret = new HashMap<String, String>();
 
 		if (requireJS != null) {
-			fill(ret, (JSONObject) requireJS.get("paths"));
+			fill(ret, pluginName, (JSONObject) requireJS.get("paths"));
 		}
 		return ret;
 	}
 
-	private void fill(Map<String, String> map, JSONObject jsonMap) {
+	private void fill(Map<String, String> map, String pluginName,
+			JSONObject jsonMap) {
 		if (jsonMap == null) {
 			return;
 		}
 
 		for (Object key : jsonMap.keySet()) {
 			Object value = jsonMap.get(key.toString());
-			map.put(key.toString(), value.toString());
+			map.put(key.toString(), buildJSLibURL(pluginName, value.toString()));
 		}
 	}
 
-	public Map<String, String> getRequireJSShims() {
+	private String buildJSLibURL(String pluginName, String jsLibPath) {
+		if (pluginName == null) {
+			return jsLibPath;
+		} else {
+			return jsLibPath.replace("jslib/", "jslib/" + pluginName + "/");
+		}
+	}
+
+	public Map<String, String> getRequireJSShims(String pluginName) {
 		Map<String, String> ret = new HashMap<String, String>();
 
 		if (requireJS != null) {
-			fill(ret, (JSONObject) requireJS.get("shim"));
+			fill(ret, pluginName, (JSONObject) requireJS.get("shim"));
 		}
 		return ret;
 	}
@@ -66,4 +78,7 @@ public class PluginDescriptor {
 		return configurationMap;
 	}
 
+	public Boolean isInstallInRoot() {
+		return installInRoot;
+	}
 }

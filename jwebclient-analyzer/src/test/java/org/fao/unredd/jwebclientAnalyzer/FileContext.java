@@ -51,4 +51,9 @@ public class FileContext implements Context {
 		return new File(root, "WEB-INF/classes");
 	}
 
+	@Override
+	public File getNoJavaRoot() {
+		return new File(root, "plugins");
+	}
+
 }

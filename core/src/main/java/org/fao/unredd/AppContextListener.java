@@ -32,7 +32,7 @@ public class AppContextListener implements ServletContextListener {
 		servletContext.setAttribute("config", config);
 
 		JEEContextAnalyzer context = new JEEContextAnalyzer(new JEEContext(
-				servletContext));
+				servletContext, config.getNoJavaPluginRoot()));
 		servletContext.setAttribute("js-paths",
 				context.getRequireJSModuleNames());
 		servletContext.setAttribute("css-paths", context.getCSSRelativePaths());
@@ -51,9 +51,11 @@ public class AppContextListener implements ServletContextListener {
 	private class JEEContext implements Context {
 
 		private ServletContext servletContext;
+		private File noJavaRoot;
 
-		public JEEContext(ServletContext servletContext) {
+		public JEEContext(ServletContext servletContext, File noJavaRoot) {
 			this.servletContext = servletContext;
+			this.noJavaRoot = noJavaRoot;
 		}
 
 		@SuppressWarnings("unchecked")
@@ -70,6 +72,11 @@ public class AppContextListener implements ServletContextListener {
 		@Override
 		public File getClientRoot() {
 			return new File(servletContext.getRealPath("/WEB-INF/classes/"));
+		}
+
+		@Override
+		public File getNoJavaRoot() {
+			return noJavaRoot;
 		}
 
 	}

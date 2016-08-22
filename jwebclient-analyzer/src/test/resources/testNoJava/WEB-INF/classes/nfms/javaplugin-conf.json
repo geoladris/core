@@ -1,0 +1,12 @@
+{
+	"requirejs" : {
+		"paths" : {
+			"lib-java1" : "../jslib/lib-java1",
+			"lib-java2" : "../jslib/lib-java2"
+		},
+		"shim" : {
+			"lib-java" : [ "lib-a", "lib-b", "lib-c" ]
+		},
+	},
+	"installInRoot": false
+}
