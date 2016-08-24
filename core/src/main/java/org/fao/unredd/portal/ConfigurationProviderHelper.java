@@ -34,37 +34,6 @@ public class ConfigurationProviderHelper {
 	}
 
 	/**
-	 * Get the module configuration map from the given plugin configuration.
-	 * 
-	 * @param pluginConfs
-	 *            Plugin configurations as obtained with
-	 *            {@link #getPluginConfig(String)} or
-	 *            {@link ModuleConfigurationProvider#getPluginConfig(PortalRequestConfiguration, javax.servlet.http.HttpServletRequest) }.
-	 * @deprecated
-	 * @return A map containing module configurations. Keys are module names and
-	 *         values are configuration for those module. Note that only JSON
-	 *         objects can be specified as module configurations when calling
-	 *         this method.
-	 */
-	public static Map<String, JSONObject> getConfigurationMap(
-			Map<PluginDescriptor, JSONObject> pluginConfs) {
-		if (pluginConfs == null) {
-			return null;
-		}
-
-		Map<String, JSONObject> ret = new HashMap<>();
-		for (PluginDescriptor plugin : pluginConfs.keySet()) {
-			JSONObject pluginConf = pluginConfs.get(plugin);
-			for (Object key : pluginConf.keySet()) {
-				String module = key.toString();
-				ret.put(module, pluginConf.getJSONObject(module));
-			}
-		}
-
-		return ret;
-	}
-
-	/**
 	 * Get the plugin configurations from the requested <code>.json</code> file.
 	 * <code>.json </code> files have the following format:
 	 * 

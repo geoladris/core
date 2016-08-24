@@ -68,37 +68,4 @@ public class ConfigurationProviderHelperTest {
 		assertEquals(2, conf2.getJSONArray("module3").get(1));
 		assertEquals(9, conf2.getJSONArray("module3").get(2));
 	}
-	@Test
-	public void configurationMapMissingFile() throws IOException {
-		when(contents.get()).thenReturn(new HashMap<String, JSONObject>());
-		assertNull(ConfigurationProviderHelper
-				.getConfigurationMap(helper.getPluginConfig("missing")));
-	}
-
-	@Test
-	public void configurationMapValidJSON() throws IOException {
-		String file = "myfile";
-
-		PluginDescriptor p1 = new PluginDescriptor();
-		p1.setName("plugin1");
-		PluginDescriptor p2 = new PluginDescriptor();
-		p2.setName("plugin2");
-		plugins.put("plugin1", p1);
-		plugins.put("plugin2", p2);
-
-		String pluginConf1 = "{module1 : {prop1 : 42, prop2 : true}}";
-		String pluginConf2 = "{module2 : {prop3 : 'test'}}";
-		JSONObject json = JSONObject.fromObject("{ plugin1 : " + pluginConf1
-				+ ", plugin2 : " + pluginConf2 + "}");
-		HashMap<String, JSONObject> files = new HashMap<String, JSONObject>();
-		files.put(file, json);
-
-		when(contents.get()).thenReturn(files);
-		Map<String, JSONObject> config = ConfigurationProviderHelper
-				.getConfigurationMap(helper.getPluginConfig(file));
-		assertEquals(2, config.size());
-		assertEquals(42, config.get("module1").getInt("prop1"));
-		assertTrue(config.get("module1").getBoolean("prop2"));
-		assertEquals("test", config.get("module2").getString("prop3"));
-	}
 }

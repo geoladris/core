@@ -5,12 +5,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -21,33 +17,10 @@ import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.log4j.Logger;
 
-import net.sf.json.JSONObject;
-
 public class JEEContextAnalyzer {
 	private static Logger logger = Logger.getLogger(JEEContextAnalyzer.class);
 
-	/**
-	 * @deprecated Use {@link #pluginDescriptors} instead.
-	 */
-	private ArrayList<String> js = new ArrayList<String>();
-
-	/**
-	 * @deprecated Use {@link #pluginDescriptors} instead.
-	 */
-	private ArrayList<String> css = new ArrayList<String>();
-	/**
-	 * @deprecated Use {@link #pluginDescriptors} instead.
-	 */
-	private Map<String, String> requirejsPaths = new HashMap<String, String>();
-	/**
-	 * @deprecated Use {@link #pluginDescriptors} instead.
-	 */
-	private Map<String, String> requirejsShims = new HashMap<String, String>();
-
 	private Set<PluginDescriptor> pluginDescriptors = new HashSet<>();
-
-	@Deprecated
-	private Map<String, JSONObject> configurationMapDeprecated = new HashMap<String, JSONObject>();
 
 	public JEEContextAnalyzer(Context context) {
 		this(context, "nfms", "nfms");
@@ -55,28 +28,9 @@ public class JEEContextAnalyzer {
 
 	public JEEContextAnalyzer(Context context, String pluginConfDir,
 			String webResourcesDir) {
-		PluginConfigEntryListener pluginConfListener = new PluginConfigEntryListener(
-				pluginConfDir);
-		WebResourcesEntryListener webResourcesListener = new WebResourcesEntryListener(
-				webResourcesDir);
-
-		scanClasses(context, pluginConfListener, webResourcesListener);
-		scanJars(context, pluginConfListener, webResourcesListener);
 		scanWithPluginDescriptorListener(
 				new PluginDescriptorListener(pluginConfDir, webResourcesDir),
 				context);
-	}
-
-	private void scanClasses(Context context,
-			PluginConfigEntryListener pluginConfListener,
-			WebResourcesEntryListener webResourcesListener) {
-		File rootFolder = context.getClientRoot();
-		if (rootFolder.exists()) {
-			scanDir(context, new File(rootFolder, pluginConfListener.dir),
-					pluginConfListener);
-			scanDir(context, new File(rootFolder, webResourcesListener.dir),
-					webResourcesListener);
-		}
 	}
 
 	private void scanWithPluginDescriptorListener(
@@ -138,14 +92,6 @@ public class JEEContextAnalyzer {
 		}
 	}
 
-	private void scanJars(Context context,
-			ContextEntryListener... contextEntryListeners) {
-		Set<String> libJars = context.getLibPaths();
-		for (Object jar : libJars) {
-			scanJar(jar.toString(), context, contextEntryListeners);
-		}
-	}
-
 	private void scanJar(String jar, Context context,
 			ContextEntryListener... contextEntryListeners) {
 		InputStream jarStream = context.getLibAsStream(jar.toString());
@@ -182,41 +128,6 @@ public class JEEContextAnalyzer {
 		}
 	}
 
-	/**
-	 * @deprecated Use {@link #getPluginDescriptors()} instead.
-	 */
-	public List<String> getRequireJSModuleNames() {
-		return js;
-	}
-
-	/**
-	 * @deprecated Use {@link #getPluginDescriptors()} instead.
-	 */
-	public List<String> getCSSRelativePaths() {
-		return css;
-	}
-
-	/**
-	 * @deprecated Use {@link #getPluginDescriptors()} instead.
-	 */
-	public Map<String, String> getNonRequirePathMap() {
-		return requirejsPaths;
-	}
-
-	/**
-	 * @deprecated Use {@link #getPluginDescriptors()} instead.
-	 */
-	public Map<String, String> getNonRequireShimMap() {
-		return requirejsShims;
-	}
-
-	/**
-	 * @deprecated Use {@link #getPluginDescriptors()} instead.
-	 */
-	public Map<String, JSONObject> getConfigurationElements() {
-		return configurationMapDeprecated;
-	}
-
 	public Set<PluginDescriptor> getPluginDescriptors() {
 		return pluginDescriptors;
 	}
@@ -244,67 +155,6 @@ public class JEEContextAnalyzer {
 					|| lowerCase.endsWith(".json");
 		}
 	};
-
-	/**
-	 * @deprecated Use {@link PluginDescriptorListener} instead.
-	 */
-	private class PluginConfigEntryListener implements ContextEntryListener {
-		private String dir;
-
-		public PluginConfigEntryListener(String dir) {
-			this.dir = dir;
-		}
-
-		@Override
-		public void accept(String path, ContextEntryReader contentReader)
-				throws IOException {
-			if (path.matches("\\Q" + dir + File.separator
-					+ "\\E[\\w-]+\\Q-conf.json\\E")) {
-				PluginDescriptor pluginDescriptor = new PluginDescriptor(
-						contentReader.getContent());
-				requirejsPaths.putAll(pluginDescriptor.getRequireJSPathsMap());
-				requirejsShims.putAll(pluginDescriptor.getRequireJSShims());
-				configurationMapDeprecated
-						.putAll(pluginDescriptor.getConfigurationMap());
-			}
-		}
-	}
-
-	/**
-	 * @deprecated Use {@link PluginDescriptorListener} instead.
-	 */
-	private class WebResourcesEntryListener implements ContextEntryListener {
-
-		private String dir;
-
-		public WebResourcesEntryListener(String dir) {
-			this.dir = dir;
-		}
-
-		@Override
-		public void accept(String path, ContextEntryReader contentReader)
-				throws IOException {
-			String stylesPrefix = dir + File.separator + "styles";
-			String modulesPrefix = dir + File.separator + "modules";
-			String themePrefix = dir + File.separator + "theme";
-			File pathFile = new File(path);
-			if (path.startsWith(modulesPrefix)) {
-				if (path.endsWith(".css")) {
-					String output = path.substring(dir.length() + 1);
-					css.add(output);
-				}
-				if (path.endsWith(".js")) {
-					String name = pathFile.getName();
-					name = name.substring(0, name.length() - 3);
-					js.add(name);
-				}
-			} else if ((path.startsWith(stylesPrefix)
-					|| path.startsWith(themePrefix)) && path.endsWith(".css")) {
-				String output = path.substring(dir.length() + 1);
-				css.add(output);
-			}
-		}
-	}
 
 	private class PluginDescriptorListener implements ContextEntryListener {
 		private PluginDescriptor descriptor;

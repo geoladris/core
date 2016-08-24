@@ -19,14 +19,6 @@ public class DefaultConfProvider implements ModuleConfigurationProvider {
 	}
 
 	@Override
-	public Map<String, JSONObject> getConfigurationMap(
-			PortalRequestConfiguration configurationContext,
-			HttpServletRequest request) throws IOException {
-		return ConfigurationProviderHelper.getConfigurationMap(
-				getPluginConfig(configurationContext, request));
-	}
-
-	@Override
 	public Map<PluginDescriptor, JSONObject> getPluginConfig(
 			PortalRequestConfiguration configurationContext,
 			HttpServletRequest request) throws IOException {

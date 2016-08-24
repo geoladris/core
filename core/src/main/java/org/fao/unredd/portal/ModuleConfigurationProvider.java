@@ -10,24 +10,6 @@ import org.fao.unredd.jwebclientAnalyzer.PluginDescriptor;
 import net.sf.json.JSONObject;
 
 public interface ModuleConfigurationProvider {
-
-	/**
-	 * Returns a map where the keys are the names of the modules and the
-	 * JSONObjects are the configuration of each module
-	 *
-	 * @param configurationContext
-	 * @param request
-	 *            Request that loads the application
-	 * @deprecated Use
-	 *             {@link #getConfigMap(PortalRequestConfiguration, HttpServletRequest)}.
-	 *
-	 * @return
-	 * @throws IOException
-	 */
-	Map<String, JSONObject> getConfigurationMap(
-			PortalRequestConfiguration configurationContext,
-			HttpServletRequest request) throws IOException;
-
 	/**
 	 * Returns a map where the keys are the configured plugins and the
 	 * JSONObjects are the configuration for the modules contained in the

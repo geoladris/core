@@ -2,7 +2,6 @@ package org.fao.unredd.jwebclientAnalyzer;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -71,22 +70,6 @@ public class PluginDescriptor {
 			fill(ret, (JSONObject) requireJS.get("shim"));
 		}
 		return ret;
-	}
-
-	/**
-	 * @deprecated Use {@link #getDefaultConf()}.
-	 */
-	public Map<String, JSONObject> getConfigurationMap() {
-		Map<String, JSONObject> configurationMap = new HashMap<String, JSONObject>();
-		if (configuration != null) {
-			@SuppressWarnings("rawtypes")
-			Iterator iterator = configuration.keys();
-			while (iterator.hasNext()) {
-				String key = (String) iterator.next();
-				configurationMap.put(key, configuration.getJSONObject(key));
-			}
-		}
-		return configurationMap;
 	}
 
 	public JSONObject getDefaultConf() {

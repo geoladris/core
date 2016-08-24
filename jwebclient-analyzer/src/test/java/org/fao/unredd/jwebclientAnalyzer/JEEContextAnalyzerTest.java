@@ -10,7 +10,9 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -66,19 +68,30 @@ public class JEEContextAnalyzerTest {
 		JEEContextAnalyzer context = new JEEContextAnalyzer(
 				new FileContext("src/test/resources/test1"));
 
-		checkList(context.getRequireJSModuleNames(), "module1", "module2",
-				"module3");
-		checkList(context.getCSSRelativePaths(), "styles/general.css",
-				"modules/module2.css", "modules/module3.css",
-				"styles/general2.css");
-		checkMapKeys(context.getNonRequirePathMap(), "jquery-ui", "fancy-box",
-				"openlayers", "mustache");
-		checkMapKeys(context.getNonRequireShimMap(), "fancy-box", "mustache");
-		Map<String, JSONObject> confElements = context
-				.getConfigurationElements();
-		JSONObject layout = confElements.get("layout");
-		JSONObject legend = confElements.get("legend");
-		JSONObject layerList = confElements.get("layer-list");
+		Set<PluginDescriptor> plugins = context.getPluginDescriptors();
+		assertEquals(2, plugins.size());
+
+		List<String> modules = new ArrayList<>();
+		List<String> styles = new ArrayList<>();
+		Map<String, String> paths = new HashMap<>();
+		Map<String, String> shims = new HashMap<>();
+		JSONObject defaultConf = new JSONObject();
+		for (PluginDescriptor plugin : plugins) {
+			modules.addAll(plugin.getModules());
+			styles.addAll(plugin.getStylesheets());
+			paths.putAll(plugin.getRequireJSPathsMap());
+			shims.putAll(plugin.getRequireJSShims());
+			defaultConf.putAll(plugin.getDefaultConf());
+		}
+
+		checkList(modules, "module1", "module2", "module3");
+		checkList(styles, "styles/general.css", "modules/module2.css",
+				"modules/module3.css", "styles/general2.css");
+		checkMapKeys(paths, "jquery-ui", "fancy-box", "openlayers", "mustache");
+		checkMapKeys(shims, "fancy-box", "mustache");
+		JSONObject layout = defaultConf.getJSONObject("layout");
+		JSONObject legend = defaultConf.getJSONObject("legend");
+		JSONObject layerList = defaultConf.getJSONObject("layer-list");
 
 		assertEquals("29px", layout.getString("banner-size"));
 		assertEquals(true, legend.getBoolean("show-title"));
@@ -90,11 +103,13 @@ public class JEEContextAnalyzerTest {
 		JEEContextAnalyzer context = new JEEContextAnalyzer(
 				new ExpandedClientContext("src/test/resources/test2"));
 
-		checkList(context.getRequireJSModuleNames(), "module3");
-		checkList(context.getCSSRelativePaths(), "modules/module3.css",
+		PluginDescriptor plugin = context.getPluginDescriptors().iterator()
+				.next();
+		checkList(plugin.getModules(), "module3");
+		checkList(plugin.getStylesheets(), "modules/module3.css",
 				"styles/general2.css");
-		checkMapKeys(context.getNonRequirePathMap(), "mustache");
-		checkMapKeys(context.getNonRequireShimMap(), "mustache");
+		checkMapKeys(plugin.getRequireJSPathsMap(), "mustache");
+		checkMapKeys(plugin.getRequireJSShims(), "mustache");
 	}
 
 	@Test
@@ -102,9 +117,11 @@ public class JEEContextAnalyzerTest {
 		JEEContextAnalyzer context = new JEEContextAnalyzer(
 				new FileContext("src/test/resources/test3"), "conf", "webapp");
 
-		checkMapKeys(context.getNonRequirePathMap(), "jquery-ui", "fancy-box",
+		PluginDescriptor plugin = context.getPluginDescriptors().iterator()
+				.next();
+		checkMapKeys(plugin.getRequireJSPathsMap(), "jquery-ui", "fancy-box",
 				"openlayers");
-		checkMapKeys(context.getNonRequireShimMap(), "fancy-box");
+		checkMapKeys(plugin.getRequireJSShims(), "fancy-box");
 	}
 
 	@Test
@@ -112,8 +129,10 @@ public class JEEContextAnalyzerTest {
 		JEEContextAnalyzer context = new JEEContextAnalyzer(
 				new FileContext("src/test/resources/test3"), "conf", "webapp");
 
-		checkList(context.getRequireJSModuleNames(), "module1", "module2");
-		checkList(context.getCSSRelativePaths(), "styles/general.css",
+		PluginDescriptor plugin = context.getPluginDescriptors().iterator()
+				.next();
+		checkList(plugin.getModules(), "module1", "module2");
+		checkList(plugin.getStylesheets(), "styles/general.css",
 				"modules/module2.css");
 	}
 
@@ -122,7 +141,9 @@ public class JEEContextAnalyzerTest {
 		JEEContextAnalyzer context = new JEEContextAnalyzer(
 				new FileContext("src/test/resources/test_theme"));
 
-		checkList(context.getCSSRelativePaths(), "styles/general.css",
+		PluginDescriptor plugin = context.getPluginDescriptors().iterator()
+				.next();
+		checkList(plugin.getStylesheets(), "styles/general.css",
 				"theme/theme.css");
 	}
 
@@ -177,7 +198,7 @@ public class JEEContextAnalyzerTest {
 		}
 	}
 
-	private void checkList(List<String> result, String... testEntries) {
+	private void checkList(Collection<String> result, String... testEntries) {
 		for (String entry : testEntries) {
 			assertTrue(entry, result.remove(entry));
 		}

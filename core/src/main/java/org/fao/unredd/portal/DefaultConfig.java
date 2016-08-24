@@ -46,23 +46,9 @@ public class DefaultConfig implements Config {
 	private HashMap<Locale, ResourceBundle> localeBundles = new HashMap<Locale, ResourceBundle>();
 	private Map<ModuleConfigurationProvider, Map<PluginDescriptor, JSONObject>> cachedConfigurations = new HashMap<ModuleConfigurationProvider, Map<PluginDescriptor, JSONObject>>();
 
-	/**
-	 * @deprecated Use {@link #cachedConfigurations} instead.
-	 */
-	private Map<ModuleConfigurationProvider, Map<String, JSONObject>> cachedModuleConfigurations = new HashMap<ModuleConfigurationProvider, Map<String, JSONObject>>();
 	private ArrayList<ModuleConfigurationProvider> moduleConfigurationProviders = new ArrayList<ModuleConfigurationProvider>();
 	private DefaultConfProvider defaultConfProvider;
 	private Set<PluginDescriptor> plugins;
-
-	/**
-	 * @deprecated Use {@link #DefaultConfig(ConfigFolder, Set, boolean)}
-	 *             instead.
-	 * @param folder
-	 * @param useCache
-	 */
-	public DefaultConfig(ConfigFolder folder, boolean useCache) {
-		this(folder, null, null, useCache, true);
-	}
 
 	public DefaultConfig(ConfigFolder folder, Set<PluginDescriptor> plugins,
 			DefaultConfProvider defaultConfProvider, boolean useCache,
@@ -190,49 +176,6 @@ public class DefaultConfig implements Config {
 					+ folder.getFilePath().getAbsolutePath() + ". Contents: "
 					+ props.keySet().size());
 		}
-	}
-
-	@Override
-	public Map<String, JSONObject> getPluginConfiguration(Locale locale,
-			HttpServletRequest request) {
-		Map<String, JSONObject> ret = new HashMap<String, JSONObject>();
-		for (ModuleConfigurationProvider provider : moduleConfigurationProviders) {
-
-			// Get the configuration
-			Map<String, JSONObject> moduleConfigurations = cachedModuleConfigurations
-					.get(provider);
-			if (moduleConfigurations == null || !useCache
-					|| !provider.canBeCached()) {
-				try {
-					moduleConfigurations = provider.getConfigurationMap(
-							new PortalConfigurationContextImpl(locale),
-							request);
-					cachedModuleConfigurations.put(provider,
-							moduleConfigurations);
-				} catch (IOException e) {
-					logger.info("Provider failed to contribute configuration: "
-							+ provider.getClass());
-				}
-			}
-
-			// Merge the configuration in the result
-			if (moduleConfigurations != null) {
-				Set<String> moduleNames = moduleConfigurations.keySet();
-				for (String moduleName : moduleNames) {
-					JSONObject moduleConfiguration = ret.get(moduleName);
-					if (moduleConfiguration == null) {
-						moduleConfiguration = new JSONObject();
-						ret.put(moduleName, moduleConfiguration);
-					}
-
-					JSONObject moduleConfigurationToMerge = moduleConfigurations
-							.get(moduleName);
-					moduleConfiguration.putAll(moduleConfigurationToMerge);
-				}
-			}
-
-		}
-		return ret;
 	}
 
 	@Override

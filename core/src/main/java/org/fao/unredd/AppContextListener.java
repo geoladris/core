@@ -31,27 +31,6 @@ public class AppContextListener implements ServletContextListener {
 
 	public static final String ATTR_CONFIG = "config";
 
-	/**
-	 * @deprecated Use {@link #ATTR_CONFIG} instead.
-	 */
-	public static final String ATTR_JS_PATHS = "js-paths";
-	/**
-	 * @deprecated Use {@link #ATTR_CONFIG} instead.
-	 */
-	public static final String ATTR_CSS_PATHS = "css-paths";
-	/**
-	 * @deprecated Use {@link #ATTR_CONFIG} instead.
-	 */
-	public static final String ATTR_REQUIREJS_PATHS = "requirejs-paths";
-	/**
-	 * @deprecated Use {@link #ATTR_CONFIG} instead.
-	 */
-	public static final String ATTR_REQUIREJS_SHIMS = "requirejs-shims";
-	/**
-	 * @deprecated Use {@link #ATTR_CONFIG} instead.
-	 */
-	public static final String ATTR_PLUGIN_CONFIGURATION = "plugin-configuration";
-
 	@Override
 	public void contextInitialized(ServletContextEvent sce) {
 		ServletContext servletContext = sce.getServletContext();
@@ -97,16 +76,6 @@ public class AppContextListener implements ServletContextListener {
 				folder.getFilePath(), pluginNameMap));
 
 		servletContext.setAttribute(ATTR_CONFIG, config);
-		servletContext.setAttribute(ATTR_JS_PATHS,
-				context.getRequireJSModuleNames());
-		servletContext.setAttribute(ATTR_CSS_PATHS,
-				context.getCSSRelativePaths());
-		servletContext.setAttribute(ATTR_REQUIREJS_PATHS,
-				context.getNonRequirePathMap());
-		servletContext.setAttribute(ATTR_REQUIREJS_SHIMS,
-				context.getNonRequireShimMap());
-		servletContext.setAttribute(ATTR_PLUGIN_CONFIGURATION,
-				context.getConfigurationElements());
 	}
 
 	@Override

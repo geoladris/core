@@ -37,15 +37,6 @@ public class PublicConfProvider implements ModuleConfigurationProvider {
 	}
 
 	@Override
-	public Map<String, JSONObject> getConfigurationMap(
-			PortalRequestConfiguration configurationContext,
-			HttpServletRequest request) throws IOException {
-		Map<PluginDescriptor, JSONObject> config = getPluginConfig(
-				configurationContext, request);
-		return config != null ? helper.getConfigurationMap(config) : null;
-	}
-
-	@Override
 	public Map<PluginDescriptor, JSONObject> getPluginConfig(
 			PortalRequestConfiguration configurationContext,
 			HttpServletRequest request) throws IOException {

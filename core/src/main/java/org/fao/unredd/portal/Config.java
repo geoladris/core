@@ -66,20 +66,6 @@ public interface Config {
 
 	/**
 	 * Plugin configuration provided by the list of
-	 * {@link ModuleConfigurationProvider} By default one provider will read the
-	 * plugin-conf.json file at the portal configuration folder
-	 * 
-	 * @deprecated Use {@link #getPluginConfig(Locale, HttpServletRequest)}.
-	 * 
-	 * @param locale
-	 * @param request
-	 * @return
-	 */
-	Map<String, JSONObject> getPluginConfiguration(Locale locale,
-			HttpServletRequest request);
-
-	/**
-	 * Plugin configuration provided by the list of
 	 * {@link ModuleConfigurationProvider}. Only configuration for the active
 	 * plugins are provided. Any disabled plugins won't be contained in the key
 	 * set of the returning map.

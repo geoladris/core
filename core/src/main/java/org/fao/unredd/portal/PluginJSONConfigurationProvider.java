@@ -24,17 +24,6 @@ public class PluginJSONConfigurationProvider
 			ModuleConfigurationProvider {
 
 	@Override
-	public Map<String, JSONObject> getConfigurationMap(
-			PortalRequestConfiguration configurationContext,
-			HttpServletRequest request) throws IOException {
-		PluginDescriptor pluginDescriptor = getPluginDescriptor(
-				configurationContext, request);
-		return pluginDescriptor != null
-				? pluginDescriptor.getConfigurationMap()
-				: new HashMap<String, JSONObject>();
-	}
-
-	@Override
 	public Map<PluginDescriptor, JSONObject> getPluginConfig(
 			PortalRequestConfiguration configurationContext,
 			HttpServletRequest request) throws IOException {
