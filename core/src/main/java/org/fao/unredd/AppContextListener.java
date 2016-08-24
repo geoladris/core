@@ -70,7 +70,7 @@ public class AppContextListener implements ServletContextListener {
 		}
 
 		DefaultConfig config = new DefaultConfig(folder, plugins,
-				new DefaultConfProvider(plugins), configCache, !hasPublicConf);
+				new DefaultConfProvider(plugins), configCache);
 		config.addModuleConfigurationProvider(confProvider);
 		config.addModuleConfigurationProvider(new RoleConfigurationProvider(
 				folder.getFilePath(), pluginNameMap));

@@ -54,7 +54,7 @@ public class DefaultConfigTest {
 						.thenReturn(Collections.singletonMap(plugin1, conf2));
 
 		Config config = new DefaultConfig(mock(ConfigFolder.class), plugins,
-				null, false, true);
+				null, false);
 
 		config.addModuleConfigurationProvider(provider1);
 		config.addModuleConfigurationProvider(provider2);
@@ -111,7 +111,7 @@ public class DefaultConfigTest {
 			String defaultLang, Locale locale, ResourceBundle resourceBundle,
 			Properties firstProperties) {
 		ConfigFolder folder = mock(ConfigFolder.class);
-		Config config = new DefaultConfig(folder, null, null, useCache, false);
+		Config config = new DefaultConfig(folder, null, null, useCache);
 
 		when(folder.getMessages(locale)).thenReturn(resourceBundle);
 		when(folder.getProperties()).thenReturn(firstProperties);
@@ -155,7 +155,7 @@ public class DefaultConfigTest {
 		when(configurationProvider.canBeCached()).thenReturn(canBeCached);
 
 		Config config = new DefaultConfig(mock(ConfigFolder.class), null, null,
-				useCache, false);
+				useCache);
 		config.addModuleConfigurationProvider(configurationProvider);
 
 		// Call twice
@@ -174,7 +174,7 @@ public class DefaultConfigTest {
 	public void testNoConfigurationFolder() {
 		Config config = new DefaultConfig(
 				new ConfigFolder("doesnotexist", "doesnotexist"), null, null,
-				false, false);
+				false);
 		assertNotNull(config.getDir());
 		assertNotNull(config.getPluginConfig(Locale.getDefault(),
 				mock(HttpServletRequest.class)));
@@ -187,7 +187,7 @@ public class DefaultConfigTest {
 	public void testFailingConfigurationProvider() throws Exception {
 		Config config = new DefaultConfig(
 				new ConfigFolder("doesnotexist", "doesnotexist"), null, null,
-				false, false);
+				false);
 		ModuleConfigurationProvider provider = mock(
 				ModuleConfigurationProvider.class);
 		when(provider.getPluginConfig(any(PortalRequestConfiguration.class),
@@ -207,7 +207,7 @@ public class DefaultConfigTest {
 
 		Config config = new DefaultConfig(
 				new ConfigFolder("doesnotexist", "doesnotexist"), null, null,
-				false, false);
+				false);
 
 		Map<PluginDescriptor, JSONObject> conf = new HashMap<>();
 		conf.put(p1, JSONObject.fromObject("{_enabled : false, "
@@ -230,37 +230,19 @@ public class DefaultConfigTest {
 	}
 
 	@Test
-	public void pluginsDisabledByDefault() throws Exception {
+	public void pluginsEnabledByDefault() throws Exception {
 		PluginDescriptor p1 = new PluginDescriptor();
 
 		ModuleConfigurationProvider p = mockConfProvider(p1,
 				"{ m1 : { a : 1, b : 2}, m2 : { c : 1, d : 2}}");
 		Config config = new DefaultConfig(
 				new ConfigFolder("doesnotexist", "doesnotexist"), null, null,
-				false, false);
-		config.addModuleConfigurationProvider(p);
-
-		Map<PluginDescriptor, JSONObject> pluginConf = config
-				.getPluginConfig(Locale.ROOT, mock(HttpServletRequest.class));
-		assertEquals(0, pluginConf.size());
-	}
-
-	@Test
-	public void ignoresEnabledPseudomoduleIfAllEnabled() throws Exception {
-		PluginDescriptor p1 = new PluginDescriptor();
-
-		ModuleConfigurationProvider p = mockConfProvider(p1,
-				"{ _enabled: false, m1 : { a : 1, b : 2}}");
-		Config config = new DefaultConfig(
-				new ConfigFolder("doesnotexist", "doesnotexist"), null, null,
-				false, true);
+				false);
 		config.addModuleConfigurationProvider(p);
 
 		Map<PluginDescriptor, JSONObject> pluginConf = config
 				.getPluginConfig(Locale.ROOT, mock(HttpServletRequest.class));
 		assertEquals(1, pluginConf.size());
-		assertEquals(1, pluginConf.get(p1).getJSONObject("m1").get("a"));
-		assertEquals(2, pluginConf.get(p1).getJSONObject("m1").get("b"));
 	}
 
 	@Test
@@ -274,7 +256,7 @@ public class DefaultConfigTest {
 
 		Config config = new DefaultConfig(
 				new ConfigFolder("doesnotexist", "doesnotexist"), null,
-				defaultConfProvider, false, false);
+				defaultConfProvider, false);
 		config.addModuleConfigurationProvider(provider);
 
 		Map<PluginDescriptor, JSONObject> pluginConfs = config
@@ -300,7 +282,7 @@ public class DefaultConfigTest {
 
 		Config config = new DefaultConfig(
 				new ConfigFolder("doesnotexist", "doesnotexist"), null,
-				defaultConfProvider, false, false);
+				defaultConfProvider, false);
 		config.addModuleConfigurationProvider(provider);
 
 		Map<PluginDescriptor, JSONObject> pluginConfs = config
@@ -313,7 +295,7 @@ public class DefaultConfigTest {
 	}
 
 	@Test
-	public void defaultConfigurationOverridenByDefault() throws Exception {
+	public void defaultConfigurationMergedByDefault() throws Exception {
 		PluginDescriptor plugin = new PluginDescriptor();
 
 		DefaultConfProvider defaultConfProvider = mockDefaultConfProvider(
@@ -323,7 +305,7 @@ public class DefaultConfigTest {
 
 		Config config = new DefaultConfig(
 				new ConfigFolder("doesnotexist", "doesnotexist"), null,
-				defaultConfProvider, false, false);
+				defaultConfProvider, false);
 		config.addModuleConfigurationProvider(provider);
 
 		Map<PluginDescriptor, JSONObject> pluginConfs = config
@@ -331,8 +313,11 @@ public class DefaultConfigTest {
 
 		assertEquals(1, pluginConfs.size());
 		JSONObject pluginConf = pluginConfs.get(plugin);
-		assertEquals(1, pluginConf.keySet().size());
+		assertEquals(2, pluginConf.keySet().size());
 		assertEquals(10, pluginConf.getJSONObject("m1").get("a"));
+		assertEquals(2, pluginConf.getJSONObject("m1").get("b"));
+		assertEquals(1, pluginConf.getJSONObject("m2").get("c"));
+		assertEquals(2, pluginConf.getJSONObject("m2").get("d"));
 	}
 
 	@Test
@@ -344,7 +329,7 @@ public class DefaultConfigTest {
 
 		Config config = new DefaultConfig(
 				new ConfigFolder("doesnotexist", "doesnotexist"), null, null,
-				false, false);
+				false);
 		config.addModuleConfigurationProvider(provider);
 
 		Map<PluginDescriptor, JSONObject> pluginConfs = config
@@ -370,7 +355,7 @@ public class DefaultConfigTest {
 
 		Config config = new DefaultConfig(
 				new ConfigFolder("doesnotexist", "doesnotexist"), null,
-				defaultConfProvider, false, true);
+				defaultConfProvider, false);
 		config.addModuleConfigurationProvider(provider);
 
 		Map<PluginDescriptor, JSONObject> pluginConfs = config

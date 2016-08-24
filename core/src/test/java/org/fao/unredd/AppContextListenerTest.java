@@ -71,7 +71,6 @@ public class AppContextListenerTest {
 				.hasModuleConfigurationProvider(PublicConfProvider.class));
 		assertTrue(config
 				.hasModuleConfigurationProvider(DefaultConfProvider.class));
-		assertFalse(config.areAllPluginsEnabled());
 		assertFalse(config.hasModuleConfigurationProvider(
 				PluginJSONConfigurationProvider.class));
 	}
@@ -90,7 +89,6 @@ public class AppContextListenerTest {
 				.hasModuleConfigurationProvider(PublicConfProvider.class));
 		assertTrue(config
 				.hasModuleConfigurationProvider(DefaultConfProvider.class));
-		assertTrue(config.areAllPluginsEnabled());
 		assertTrue(config.hasModuleConfigurationProvider(
 				PluginJSONConfigurationProvider.class));
 	}

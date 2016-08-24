@@ -42,7 +42,7 @@ public class DefaultConfig implements Config {
 	private Properties properties;
 
 	private ConfigFolder folder;
-	private boolean useCache, allPluginsEnabled;
+	private boolean useCache;
 	private HashMap<Locale, ResourceBundle> localeBundles = new HashMap<Locale, ResourceBundle>();
 	private Map<ModuleConfigurationProvider, Map<PluginDescriptor, JSONObject>> cachedConfigurations = new HashMap<ModuleConfigurationProvider, Map<PluginDescriptor, JSONObject>>();
 
@@ -51,13 +51,11 @@ public class DefaultConfig implements Config {
 	private Set<PluginDescriptor> plugins;
 
 	public DefaultConfig(ConfigFolder folder, Set<PluginDescriptor> plugins,
-			DefaultConfProvider defaultConfProvider, boolean useCache,
-			boolean allPluginsEnabled) {
+			DefaultConfProvider defaultConfProvider, boolean useCache) {
 		this.folder = folder;
 		this.plugins = plugins;
 		this.defaultConfProvider = defaultConfProvider;
 		this.useCache = useCache;
-		this.allPluginsEnabled = allPluginsEnabled;
 	}
 
 	@Override
@@ -229,11 +227,15 @@ public class DefaultConfig implements Config {
 		Set<PluginDescriptor> toRemove = new HashSet<>();
 		for (PluginDescriptor plugin : ret.keySet()) {
 			JSONObject pluginConf = ret.get(plugin);
-			if (this.allPluginsEnabled || pluginConf.optBoolean(CONF_ENABLED)) {
-				boolean override = !pluginConf.has(CONF_OVERRIDE)
-						|| pluginConf.getBoolean(CONF_OVERRIDE);
+
+			boolean disabled = pluginConf.has(CONF_ENABLED)
+					&& pluginConf.getBoolean(CONF_ENABLED) == false;
+			if (disabled) {
+				toRemove.add(plugin);
+			} else {
+
 				if (defaultConfs != null && defaultConfs.get(plugin) != null
-						&& !override) {
+						&& !pluginConf.optBoolean(CONF_OVERRIDE)) {
 					pluginConf = JSONUtils.merge(defaultConfs.get(plugin),
 							pluginConf);
 				} else {
@@ -245,8 +247,6 @@ public class DefaultConfig implements Config {
 				pluginConf.remove(CONF_ENABLED);
 				pluginConf.remove(CONF_OVERRIDE);
 				ret.put(plugin, pluginConf);
-			} else {
-				toRemove.add(plugin);
 			}
 		}
 
@@ -254,7 +254,7 @@ public class DefaultConfig implements Config {
 			ret.remove(p);
 		}
 
-		if (this.allPluginsEnabled && defaultConfs != null) {
+		if (defaultConfs != null) {
 			for (PluginDescriptor plugin : defaultConfs.keySet()) {
 				if (ret.containsKey(plugin)) {
 					continue;
@@ -303,10 +303,6 @@ public class DefaultConfig implements Config {
 		}
 
 		return clazz.isInstance(this.defaultConfProvider);
-	}
-
-	public boolean areAllPluginsEnabled() {
-		return this.allPluginsEnabled;
 	}
 
 	private class PortalConfigurationContextImpl
