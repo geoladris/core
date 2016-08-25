@@ -6,6 +6,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -79,17 +81,23 @@ public class GenerateRequireJSBuildConfig extends AbstractMojo {
 			throw new MojoExecutionException("Cannot access main template", e);
 		}
 
-		InputStream buildStream = getClass().getResourceAsStream(
-				"/buildconfig.js");
+		InputStream buildStream = getClass()
+				.getResourceAsStream("/buildconfig.js");
 		processTemplate(analyzer, buildStream, buildconfigOutputPath);
 	}
 
 	private void processTemplate(JEEContextAnalyzer analyzer,
 			InputStream templateStream, String outputPath)
 			throws MojoExecutionException {
-		Map<String, String> paths = analyzer.getNonRequirePathMap();
-		Map<String, String> shims = analyzer.getNonRequireShimMap();
-		List<String> moduleNames = analyzer.getRequireJSModuleNames();
+
+		Map<String, String> paths = new HashMap<String, String>();
+		Map<String, String> shims = new HashMap<String, String>();
+		List<String> moduleNames = new ArrayList<String>();
+		for (PluginDescriptor plugin : analyzer.getPluginDescriptors()) {
+			paths.putAll(plugin.getRequireJSPathsMap());
+			shims.putAll(plugin.getRequireJSShims());
+			moduleNames.addAll(plugin.getModules());
+		}
 		RequireTemplate template = new RequireTemplate(templateStream,
 				webResourcesDir, paths, shims, moduleNames);
 		try {
