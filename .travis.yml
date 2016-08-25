@@ -1,2 +1,8 @@
 language: java
 
+notifications:
+  email:
+    recipients:
+      - victor.gonzalez@geomati.co
+  on_success: always
+

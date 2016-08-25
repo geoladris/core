@@ -9,12 +9,16 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
+import java.util.Set;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import org.fao.unredd.AppContextListener;
+import org.fao.unredd.jwebclientAnalyzer.PluginDescriptor;
 
 import net.sf.json.JSONObject;
 import net.sf.json.JSONSerializer;
@@ -25,8 +29,14 @@ public class ConfigServlet extends HttpServlet {
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
-		Config config = (Config) getServletContext().getAttribute("config");
-		Locale locale = (Locale) req.getAttribute("locale");
+		doGet(req, resp, getServletContext());
+	}
+
+	void doGet(HttpServletRequest req, HttpServletResponse resp,
+			ServletContext context) throws IOException {
+		Config config = (Config) context
+				.getAttribute(AppContextListener.ATTR_CONFIG);
+		Locale locale = (Locale) req.getAttribute(LangFilter.ATTR_LOCALE);
 
 		ResourceBundle bundle = config.getMessages(locale);
 
@@ -37,33 +47,20 @@ public class ConfigServlet extends HttpServlet {
 			title = "Untitled";
 		}
 
+		Map<PluginDescriptor, JSONObject> pluginConfs = config
+				.getPluginConfig(locale, req);
+
 		JSONObject moduleConfig = new JSONObject();
 		// Fixed elements
-		moduleConfig.element(
-				"customization",
-				buildCustomizationObject(getServletContext(), config, locale,
-						title));
+		moduleConfig.element("customization", buildCustomizationObject(context,
+				config, locale, title, pluginConfs.keySet()));
 		moduleConfig.element("i18n", buildI18NObject(bundle));
 		moduleConfig.element("url-parameters",
 				JSONSerializer.toJSON(req.getParameterMap()));
-		/*
-		 * Plugin configuration. default plugin conf and overridden by multiple
-		 * potential means (by default, by portal plugin-conf.json)
-		 */
-		@SuppressWarnings("unchecked")
-		Map<String, JSONObject> pluginConfiguration = (Map<String, JSONObject>) getServletContext()
-				.getAttribute("plugin-configuration");
-		Map<String, JSONObject> pluginConfigurationOverride = config
-				.getPluginConfiguration(locale, req);
-		for (String configurationItem : pluginConfigurationOverride.keySet()) {
-			moduleConfig.element(configurationItem,
-					pluginConfigurationOverride.get(configurationItem));
-		}
-		for (String configurationItem : pluginConfiguration.keySet()) {
-			JSONObject defaultConfiguration = pluginConfiguration
-					.get(configurationItem);
-			if (!pluginConfigurationOverride.containsKey(configurationItem)) {
-				moduleConfig.element(configurationItem, defaultConfiguration);
+
+		for (JSONObject conf : pluginConfs.values()) {
+			if (conf != null) {
+				moduleConfig.putAll(conf);
 			}
 		}
 
@@ -86,7 +83,8 @@ public class ConfigServlet extends HttpServlet {
 	}
 
 	private JSONObject buildCustomizationObject(ServletContext servletContext,
-			Config config, Locale locale, String title) {
+			Config config, Locale locale, String title,
+			Set<PluginDescriptor> plugins) {
 		JSONObject obj = new JSONObject();
 		obj.element("title", title);
 		obj.element(Config.PROPERTY_LANGUAGES, config.getLanguages());
@@ -102,10 +100,9 @@ public class ConfigServlet extends HttpServlet {
 		if (extraModules != null) {
 			Collections.addAll(modules, extraModules);
 		}
-		@SuppressWarnings("unchecked")
-		ArrayList<String> classPathModules = (ArrayList<String>) servletContext
-				.getAttribute("js-paths");
-		modules.addAll(classPathModules);
+		for (PluginDescriptor plugin : plugins) {
+			modules.addAll(plugin.getModules());
+		}
 		obj.element("modules", modules);
 
 		return obj;

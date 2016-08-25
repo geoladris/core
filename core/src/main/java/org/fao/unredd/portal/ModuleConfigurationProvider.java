@@ -5,13 +5,15 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.fao.unredd.jwebclientAnalyzer.PluginDescriptor;
+
 import net.sf.json.JSONObject;
 
 public interface ModuleConfigurationProvider {
-
 	/**
-	 * Returns a map where the keys are the names of the modules and the
-	 * JSONObjects are the configuration of each module
+	 * Returns a map where the keys are the configured plugins and the
+	 * JSONObjects are the configuration for the modules contained in the
+	 * plugin.
 	 * 
 	 * @param configurationContext
 	 * @param request
@@ -20,7 +22,7 @@ public interface ModuleConfigurationProvider {
 	 * @return
 	 * @throws IOException
 	 */
-	Map<String, JSONObject> getConfigurationMap(
+	Map<PluginDescriptor, JSONObject> getPluginConfig(
 			PortalRequestConfiguration configurationContext,
 			HttpServletRequest request) throws IOException;
 
@@ -32,5 +34,4 @@ public interface ModuleConfigurationProvider {
 	 * @return
 	 */
 	boolean canBeCached();
-
 }

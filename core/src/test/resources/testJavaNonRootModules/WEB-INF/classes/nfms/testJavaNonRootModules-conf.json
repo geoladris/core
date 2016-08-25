@@ -1,8 +1,8 @@
 {
-	requirejs : {
-		paths : {
+	"requirejs" : {
+		"paths" : {
 			"lib" : "../jslib/lib"
 		}
 	},
-	installInRoot : false
+	"installInRoot" : false
 }

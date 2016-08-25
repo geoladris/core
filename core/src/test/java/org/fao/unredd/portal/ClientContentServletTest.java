@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import javax.servlet.ServletConfig;
@@ -21,8 +22,10 @@ import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import org.fao.unredd.AppContextListener;
+import org.fao.unredd.jwebclientAnalyzer.PluginDescriptor;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.AdditionalMatchers;
@@ -30,15 +33,11 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.MockitoAnnotations;
 
+import net.sf.json.JSONObject;
+
 public class ClientContentServletTest {
 	@Captor
 	private ArgumentCaptor<Config> configCaptor;
-	@Captor
-	private ArgumentCaptor<List<String>> jsPathsCaptor;
-	@Captor
-	private ArgumentCaptor<List<String>> cssPathsCaptor;
-	@Captor
-	private ArgumentCaptor<Map<String, String>> nonRequirePaths;
 
 	@Before
 	public void setup() {
@@ -46,28 +45,22 @@ public class ClientContentServletTest {
 	}
 
 	public void setupConfigurationFolder(String folder) {
-
 		AppContextListener listener = new AppContextListener();
-		ServletContextEvent servletContextEvent = mock(ServletContextEvent.class);
+		ServletContextEvent servletContextEvent = mock(
+				ServletContextEvent.class);
 		ServletContext servletContext = mock(ServletContext.class);
-		when(servletContext.getInitParameter("PORTAL_CONFIG_DIR")).thenReturn(
-				folder);
-		when(servletContext.getResourcePaths("/WEB-INF/lib")).thenReturn(
-				new HashSet<String>());
-		when(servletContext.getRealPath("/WEB-INF/classes/")).thenReturn(
-				folder + "/WEB-INF/classes");
+		when(servletContext.getInitParameter("PORTAL_CONFIG_DIR"))
+				.thenReturn(folder);
+		when(servletContext.getResourcePaths("/WEB-INF/lib"))
+				.thenReturn(new HashSet<String>());
+		when(servletContext.getRealPath("/WEB-INF/classes/"))
+				.thenReturn(folder + "/WEB-INF/classes");
 		when(servletContextEvent.getServletContext())
 				.thenReturn(servletContext);
 		listener.contextInitialized(servletContextEvent);
 
-		verify(servletContext).setAttribute(eq("config"),
+		verify(servletContext).setAttribute(eq(AppContextListener.ATTR_CONFIG),
 				configCaptor.capture());
-		verify(servletContext).setAttribute(eq("js-paths"),
-				jsPathsCaptor.capture());
-		verify(servletContext).setAttribute(eq("css-paths"),
-				cssPathsCaptor.capture());
-		verify(servletContext).setAttribute(eq("requirejs-paths"),
-				nonRequirePaths.capture());
 	}
 
 	@Test
@@ -88,26 +81,39 @@ public class ClientContentServletTest {
 		requirePaths("/testJavaRootSubfolders");
 	}
 
-	private void requirePaths(String classpathPrefix) throws ServletException,
-			IOException {
+	private void requirePaths(String classpathPrefix)
+			throws ServletException, IOException {
 		Config config = configCaptor.getValue();
-		List<String> paths = jsPathsCaptor.getValue();
-		for (int i = 0; i < paths.size(); i++) {
-			paths.set(i, "/modules/" + paths.get(i) + ".js");
-		}
-		testRequest(config, paths, classpathPrefix);
 
-		paths = new ArrayList<String>(nonRequirePaths.getValue().values());
-		for (int i = 0; i < paths.size(); i++) {
-			paths.set(i, paths.get(i).substring(2) + ".js");
-		}
-		testRequest(config, paths, classpathPrefix);
+		HttpServletRequest request = mock(HttpServletRequest.class);
+		when(request.getSession()).thenReturn(mock(HttpSession.class));
 
-		paths = new ArrayList<String>(cssPathsCaptor.getValue());
-		for (int i = 0; i < paths.size(); i++) {
-			paths.set(i, "/" + paths.get(i));
+		Map<PluginDescriptor, JSONObject> pluginConf = config
+				.getPluginConfig(Locale.ROOT, request);
+
+		List<String> modules = new ArrayList<>();
+		List<String> styles = new ArrayList<>();
+		List<String> nonRequirePaths = new ArrayList<>();
+		for (PluginDescriptor plugin : pluginConf.keySet()) {
+			modules.addAll(plugin.getModules());
+			styles.addAll(plugin.getStylesheets());
+			nonRequirePaths.addAll(plugin.getRequireJSPathsMap().values());
 		}
-		testRequest(config, paths, classpathPrefix);
+
+		for (int i = 0; i < modules.size(); i++) {
+			modules.set(i, "/modules/" + modules.get(i) + ".js");
+		}
+		testRequest(config, modules, classpathPrefix);
+
+		for (int i = 0; i < nonRequirePaths.size(); i++) {
+			nonRequirePaths.set(i, nonRequirePaths.get(i).substring(2) + ".js");
+		}
+		testRequest(config, nonRequirePaths, classpathPrefix);
+
+		for (int i = 0; i < styles.size(); i++) {
+			styles.set(i, "/" + styles.get(i));
+		}
+		testRequest(config, styles, classpathPrefix);
 	}
 
 	private void testRequest(Config config, Collection<String> collection,
@@ -144,8 +150,8 @@ public class ClientContentServletTest {
 		servlet.setTestingClasspathRoot("/testNoJavaPlugins/WEB-INF/classes/");
 		ServletConfig servletConfig = mock(ServletConfig.class);
 		ServletContext servletContext = mock(ServletContext.class);
-		when(servletContext.getAttribute("config")).thenReturn(
-				configCaptor.getValue());
+		when(servletContext.getAttribute("config"))
+				.thenReturn(configCaptor.getValue());
 		when(servletConfig.getServletContext()).thenReturn(servletContext);
 		servlet.init(servletConfig);
 
@@ -168,5 +174,4 @@ public class ClientContentServletTest {
 			assertEquals(404, e.getStatus());
 		}
 	}
-
 }

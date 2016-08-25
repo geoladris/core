@@ -17,7 +17,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
-import org.fao.unredd.jwebclientAnalyzer.JEEContextAnalyzer;
+import org.fao.unredd.AppContextListener;
 
 public class ClientContentServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
@@ -29,7 +29,8 @@ public class ClientContentServlet extends HttpServlet {
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
-		Config config = (Config) getServletContext().getAttribute("config");
+		Config config = (Config) getServletContext()
+				.getAttribute(AppContextListener.ATTR_CONFIG);
 
 		String pathInfo = req.getServletPath() + req.getPathInfo();
 		File file = null;
@@ -43,11 +44,8 @@ public class ClientContentServlet extends HttpServlet {
 			String[] parts = pathInfo.substring(1).split(Pattern.quote("/"));
 
 			{// is it in the root plugin?
-				String resourcePath = testingClasspathRoot
-						+ "/nfms"
-						+ File.separator
-						+ parts[0]
-						+ File.separator
+				String resourcePath = testingClasspathRoot + "/nfms"
+						+ File.separator + parts[0] + File.separator
 						+ StringUtils.join(parts, File.separator, 1,
 								parts.length);
 				InputStream classPathResource = this.getClass()
@@ -63,8 +61,15 @@ public class ClientContentServlet extends HttpServlet {
 						parts.length);
 
 				// Is it in the java plugin space?
-				if (parts[1]
-						.equals(JEEContextAnalyzer.JAVA_CLASSPATH_PLUGIN_NAME)) {
+				// Is it a no-java plugin resource?
+				File noJavaPluginFile = new File(config.getNoJavaPluginRoot(),
+						pluginName + File.separator + modulesOrStylesOrJsLib
+								+ File.separator + path);
+				if (noJavaPluginFile.isFile()) {
+					// It is a no-java plugin resource
+					file = noJavaPluginFile;
+				} else {
+					// It is a Java named plugin
 					String resourcePath = testingClasspathRoot + "/nfms"
 							+ File.separator + modulesOrStylesOrJsLib
 							+ File.separator + path;
@@ -72,15 +77,6 @@ public class ClientContentServlet extends HttpServlet {
 							.getResourceAsStream(resourcePath);
 					if (classPathResource != null) {
 						stream = new BufferedInputStream(classPathResource);
-					}
-				} else {
-					// Is it a no-java plugin resource?
-					File noJavaPluginFile = new File(
-							config.getNoJavaPluginRoot(), pluginName
-									+ File.separator + modulesOrStylesOrJsLib
-									+ File.separator + path);
-					if (noJavaPluginFile.isFile()) {
-						file = noJavaPluginFile;
 					}
 				}
 			}

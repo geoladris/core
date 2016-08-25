@@ -1,6 +1,6 @@
 {
-	requirejs : {
-		paths : {
+	"requirejs" : {
+		"paths" : {
 			"lib" : "../jslib/sub/lib"
 		}
 	}

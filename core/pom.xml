@@ -5,10 +5,22 @@
 	<parent>
 		<groupId>org.fao.unredd</groupId>
 		<artifactId>core-root</artifactId>
-		<version>4.0.2</version>
+		<version>5.0-SNAPSHOT</version>
 	</parent>
-	<name>UNREDD NFMS portal core</name>
+	<name>geoladris core</name>
 	<artifactId>core</artifactId>
+
+	<repositories>
+		<repository>
+			<id>csgis-releases</id>
+			<url>http://service-sandbox.csgis.de:8081/mvn/releases/</url>
+		</repository>
+	</repositories>
+
+	<properties>
+		<jasmine.version>2.1</jasmine.version>
+		<saga.version>1.5.5</saga.version>
+	</properties>
 
 	<dependencies>
 		<dependency>
@@ -39,17 +51,6 @@
 			<artifactId>recaptcha4j</artifactId>
 			<version>0.0.7</version>
 		</dependency>
-		<dependency>
-			<groupId>proxy</groupId>
-			<artifactId>http_proxy</artifactId>
-			<version>1.0.5</version>
-			<exclusions>
-				<exclusion>
-					<groupId>org.mortbay.jetty</groupId>
-					<artifactId>servlet-api-2.5</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
 		<!-- J2EE -->
 		<!-- <dependency> -->
 		<!-- <groupId>javax.servlet</groupId> -->
@@ -77,20 +78,107 @@
 		<dependency>
 			<groupId>org.fao.unredd</groupId>
 			<artifactId>jwebclient-analyzer</artifactId>
-			<version>4.0.2</version>
+			<version>5.0-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>de.csgis.commons</groupId>
+			<artifactId>lib-json</artifactId>
+			<version>1.0.1</version>
 		</dependency>
 	</dependencies>
 	<build>
 		<plugins>
-			
 			<plugin>
-				<groupId>com.mycila.maven-license-plugin</groupId>
-				<artifactId>maven-license-plugin</artifactId>
+				<groupId>com.github.klieber</groupId>
+				<artifactId>phantomjs-maven-plugin</artifactId>
+				<version>0.7</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>install</goal>
+						</goals>
+					</execution>
+				</executions>
 				<configuration>
-					<header>license-header.txt</header>
-					<includes>
-						<include>**/*.java</include>
-					</includes>
+					<version>1.9.7</version>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>com.github.searls</groupId>
+				<artifactId>jasmine-maven-plugin</artifactId>
+				<version>${jasmine.version}</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>test</goal>
+						</goals>
+					</execution>
+				</executions>
+				<!-- keep the configuration out of the execution so that the bdd goal 
+					has access to it -->
+				<configuration>
+					<jsSrcDir>src/main/resources/nfms/modules</jsSrcDir>
+					<jsTestSrcDir>src/test/resources/js-test/tests/</jsTestSrcDir>
+					<webDriverClassName>org.openqa.selenium.phantomjs.PhantomJSDriver</webDriverClassName>
+					<webDriverCapabilities>
+						<capability>
+							<name>phantomjs.binary.path</name>
+							<value>${phantomjs.binary}</value>
+						</capability>
+					</webDriverCapabilities>
+					<haltOnFailure>true</haltOnFailure>
+					<additionalContexts>
+						<context>
+							<contextRoot>/modules</contextRoot>
+							<directory>${project.basedir}/src/main/resources/nfms/modules</directory>
+						</context>
+						<context>
+							<contextRoot>/jslib</contextRoot>
+							<directory>${project.basedir}/src/main/resources/nfms/jslib</directory>
+						</context>
+						<context>
+							<contextRoot>/test-jslib</contextRoot>
+							<directory>${project.basedir}/src/test/resources/js-test/jslib</directory>
+						</context>
+					</additionalContexts>
+					<preloadSources>
+						<source>/jslib/jquery-2.1.0.js</source>
+						<source>/jslib/require.js</source>
+					</preloadSources>
+					<customRunnerTemplate>src/test/resources/SpecRunner.html</customRunnerTemplate>
+					<specIncludes>
+						<include>*.js</include>
+					</specIncludes>
+					<sourceIncludes>
+						<include>*.js</include>
+					</sourceIncludes>
+					<keepServerAlive>true</keepServerAlive>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>com.github.timurstrekalov</groupId>
+				<artifactId>saga-maven-plugin</artifactId>
+				<version>${saga.version}</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>coverage</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<includes>src/*.js</includes>
+					<baseDir>http://localhost:${jasmine.serverPort}</baseDir>
+					<outputDir>${project.build.directory}/coverage</outputDir>
+					<noInstrumentPatterns>
+						<pattern>.*/spec/.*</pattern>
+						<pattern>.*/webjars/.*</pattern>
+						<pattern>.*/classpath/.*</pattern>
+
+						<pattern>.*/test-jslib/.*</pattern>
+						<pattern>.*/modules/.*</pattern>
+						<pattern>.*/jslib/.*</pattern>
+					</noInstrumentPatterns>
 				</configuration>
 			</plugin>
 		</plugins>
@@ -131,54 +219,4 @@
 			</plugins>
 		</pluginManagement>
 	</build>
-	<profiles>
-		<profile>
-			<id>optmize</id>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>com.github.bringking</groupId>
-						<artifactId>requirejs-maven-plugin</artifactId>
-						<version>2.0.2</version>
-						<executions>
-							<execution>
-								<goals>
-									<goal>optimize</goal>
-								</goals>
-							</execution>
-						</executions>
-						<configuration>
-							<!-- optional path to a nodejs executable -->
-							<!--<nodeExecutable> -->
-							<!--/opt/nodejs/node -->
-							<!--</nodeExecutable> -->
-							<!-- path to optimizer json config file -->
-							<configFile>
-								${basedir}/src/main/config/buildconfig.js
-							</configFile>
-							<!-- optional path to optimizer executable -->
-							<!--<optimizerFile> -->
-							<!--${basedir}/src/main/scripts/r.js -->
-							<!--</optimizerFile> -->
-							<!-- optional parameters to optimizer executable -->
-							<optimizerParameters>
-								<parameter>optimize=uglify</parameter>
-								<!--<parameter>baseUrl=${baseDir}</parameter> -->
-							</optimizerParameters>
-							<!-- Whether or not to process configFile with maven filters. If you 
-								use this option, some options in your configFile must resolve to absolute 
-								paths (see below) -->
-							<filterConfig>
-								true
-							</filterConfig>
-							<!-- Skip requirejs optimization if true -->
-							<skip>
-								false
-							</skip>
-						</configuration>
-					</plugin>
-				</plugins>
-			</build>
-		</profile>
-	</profiles>
 </project>

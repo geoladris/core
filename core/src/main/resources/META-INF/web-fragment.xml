@@ -49,6 +49,7 @@
 		<url-pattern>/modules/*</url-pattern>
 		<url-pattern>/jslib/*</url-pattern>
 		<url-pattern>/styles/*</url-pattern>
+		<url-pattern>/theme/*</url-pattern>
 	</servlet-mapping>
 
 	<!-- config call -->
@@ -71,32 +72,10 @@
 		<url-pattern>/*</url-pattern>
 	</filter-mapping>
 
-	<!-- GeoSolution's Proxy Servlet -->
-	<context-param>
-		<param-name>proxyPropPath</param-name>
-		<param-value>/proxy.properties</param-value>
-	</context-param>
-	<servlet>
-		<servlet-name>HttpProxy</servlet-name>
-		<servlet-class>it.geosolutions.httpproxy.HTTPProxy</servlet-class>
-	</servlet>
-	<servlet-mapping>
-		<servlet-name>HttpProxy</servlet-name>
-		<url-pattern>/proxy</url-pattern>
-	</servlet-mapping>
-
 	<session-config>
 		<session-timeout>30</session-timeout>
 	</session-config>
 	<welcome-file-list>
 		<welcome-file>index.html</welcome-file>
 	</welcome-file-list>
-
-	<resource-ref>
-		<description>Application database</description>
-		<res-ref-name>jdbc/unredd-portal</res-ref-name>
-		<res-type>javax.sql.DataSource</res-type>
-		<res-auth>Container</res-auth>
-	</resource-ref>
-
 </web-fragment>

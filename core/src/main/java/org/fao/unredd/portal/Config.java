@@ -23,6 +23,8 @@ import java.util.ResourceBundle;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.fao.unredd.jwebclientAnalyzer.PluginDescriptor;
+
 import net.sf.json.JSONObject;
 
 public interface Config {
@@ -64,14 +66,15 @@ public interface Config {
 
 	/**
 	 * Plugin configuration provided by the list of
-	 * {@link ModuleConfigurationProvider} By default one provider will read the
-	 * plugin-conf.json file at the portal configuration folder
+	 * {@link ModuleConfigurationProvider}. Only configuration for the active
+	 * plugins are provided. Any disabled plugins won't be contained in the key
+	 * set of the returning map.
 	 * 
 	 * @param locale
 	 * @param request
 	 * @return
 	 */
-	Map<String, JSONObject> getPluginConfiguration(Locale locale,
+	Map<PluginDescriptor, JSONObject> getPluginConfig(Locale locale,
 			HttpServletRequest request);
 
 	/**
@@ -90,4 +93,14 @@ public interface Config {
 	 */
 	File getNoJavaPluginRoot();
 
+	/**
+	 * Gets the plugin descriptor with the given name. If there is more than one
+	 * plugin with the same name (which shouldn't happen) it returns one of them
+	 * arbitrarily.
+	 * 
+	 * @param name
+	 *            The name of the plugin.
+	 * @return The plugin descriptor.
+	 */
+	PluginDescriptor getPlugin(String name);
 }

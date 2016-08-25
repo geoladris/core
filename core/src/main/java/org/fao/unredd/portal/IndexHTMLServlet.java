@@ -4,9 +4,13 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Properties;
 
-import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -18,9 +22,21 @@ import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.runtime.resource.loader.StringResourceLoader;
 import org.apache.velocity.runtime.resource.util.StringResourceRepository;
+import org.fao.unredd.jwebclientAnalyzer.PluginDescriptor;
+
+import net.sf.json.JSONObject;
 
 public class IndexHTMLServlet extends HttpServlet {
-	private static final String OPTIMIZED_FOLDER = "optimized";
+	public static final String HTTP_PARAM_DEBUG = "debug";
+
+	// System properties
+	public static final String PROP_MINIFIED_JS = "MINIFIED_JS";
+
+	// portal.properties
+	public static final String PROP_TITLE = "title";
+
+	public static final String OPTIMIZED_FOLDER = "optimized";
+
 	private static final long serialVersionUID = 1L;
 
 	@Override
@@ -39,18 +55,43 @@ public class IndexHTMLServlet extends HttpServlet {
 		engine.init();
 		VelocityContext context = new VelocityContext();
 
-		boolean minifiedjs = Boolean.parseBoolean(System
-				.getProperty("MINIFIED_JS"));
-		ServletContext servletContext = getServletContext();
+		String debug = req.getParameter(HTTP_PARAM_DEBUG);
+		boolean minifiedjs;
+
+		if (debug != null && Boolean.parseBoolean(debug)) {
+			minifiedjs = false;
+		} else {
+			minifiedjs = Boolean
+					.parseBoolean(System.getProperty(PROP_MINIFIED_JS));
+		}
+
 		Config config = (Config) getServletContext().getAttribute("config");
 		ArrayList<String> styleSheets = new ArrayList<String>();
 		if (minifiedjs) {
 			styleSheets.add(OPTIMIZED_FOLDER + "/portal-style.css");
 		} else {
-			@SuppressWarnings("unchecked")
-			ArrayList<String> classPathStylesheets = (ArrayList<String>) servletContext
-					.getAttribute("css-paths");
-			styleSheets.addAll(sortCSS(classPathStylesheets));
+			Locale locale = (Locale) req.getAttribute(LangFilter.ATTR_LOCALE);
+			Map<PluginDescriptor, JSONObject> pluginConf = config
+					.getPluginConfig(locale, req);
+			List<String> classPathStylesheets = new ArrayList<>();
+			for (PluginDescriptor plugin : pluginConf.keySet()) {
+				classPathStylesheets.addAll(plugin.getStylesheets());
+			}
+
+			Collections.sort(classPathStylesheets, new Comparator<String>() {
+				@Override
+				public int compare(String o1, String o2) {
+					if (o1.startsWith("theme") || o2.startsWith("styles")) {
+						return 1;
+					} else if (o1.startsWith("styles")
+							|| o2.startsWith("theme")) {
+						return -1;
+					} else {
+						return 0;
+					}
+				}
+			});
+			styleSheets.addAll(classPathStylesheets);
 			styleSheets.addAll(getStyleSheets(config, "modules"));
 		}
 		context.put("styleSheets", styleSheets);
@@ -68,10 +109,17 @@ public class IndexHTMLServlet extends HttpServlet {
 			context.put("mainModulePath", "modules/main");
 		}
 
+		Properties props = config.getProperties();
+		String title = "";
+		if (props != null && props.containsKey(PROP_TITLE)) {
+			title = "<title>" + props.getProperty(PROP_TITLE) + "</title>";
+		}
+		context.put("title", title);
+
 		StringResourceRepository repo = StringResourceLoader.getRepository();
 		String templateName = "/index.html";
-		BufferedInputStream bis = new BufferedInputStream(this.getClass()
-				.getResourceAsStream("/index.html"));
+		BufferedInputStream bis = new BufferedInputStream(
+				this.getClass().getResourceAsStream("/index.html"));
 		String indexContent = IOUtils.toString(bis);
 		bis.close();
 		repo.putStringResource(templateName, indexContent);
@@ -80,24 +128,6 @@ public class IndexHTMLServlet extends HttpServlet {
 		resp.setCharacterEncoding("UTF-8");
 		Template t = engine.getTemplate("/index.html");
 		t.merge(context, resp.getWriter());
-	}
-
-	/**
-	 * Put the module CSS in last position
-	 * 
-	 * @param cssRelativePaths
-	 * @return
-	 */
-	private List<String> sortCSS(List<String> cssRelativePaths) {
-		List<String> ret = new ArrayList<String>();
-		for (String cssPath : cssRelativePaths) {
-			if (cssPath.startsWith("modules")) {
-				ret.add(cssPath);
-			} else {
-				ret.add(0, cssPath);
-			}
-		}
-		return ret;
 	}
 
 	private ArrayList<String> getStyleSheets(Config config, String path) {

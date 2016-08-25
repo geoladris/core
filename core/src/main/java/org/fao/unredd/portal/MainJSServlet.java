@@ -2,6 +2,8 @@ package org.fao.unredd.portal;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import javax.servlet.ServletException;
@@ -9,7 +11,11 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.fao.unredd.AppContextListener;
+import org.fao.unredd.jwebclientAnalyzer.PluginDescriptor;
 import org.fao.unredd.jwebclientAnalyzer.RequireTemplate;
+
+import net.sf.json.JSONObject;
 
 public class MainJSServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
@@ -21,15 +27,20 @@ public class MainJSServlet extends HttpServlet {
 
 		if (output == null) {
 
-			@SuppressWarnings("unchecked")
-			Map<String, String> paths = (Map<String, String>) getServletContext()
-					.getAttribute("requirejs-paths");
-			@SuppressWarnings("unchecked")
-			Map<String, String> shims = (Map<String, String>) getServletContext()
-					.getAttribute("requirejs-shims");
+			Config config = (Config) getServletContext()
+					.getAttribute(AppContextListener.ATTR_CONFIG);
+			Locale locale = (Locale) req.getAttribute(LangFilter.ATTR_LOCALE);
+			Map<PluginDescriptor, JSONObject> pluginConf = config
+					.getPluginConfig(locale, req);
+			Map<String, String> paths = new HashMap<>();
+			Map<String, String> shims = new HashMap<>();
+			for (PluginDescriptor plugin : pluginConf.keySet()) {
+				paths.putAll(plugin.getRequireJSPathsMap());
+				shims.putAll(plugin.getRequireJSShims());
+			}
 
 			RequireTemplate template = new RequireTemplate("/main.js", paths,
-					shims, Collections.<String> emptyList());
+					shims, Collections.<String>emptyList());
 
 			output = template.generate();
 		}

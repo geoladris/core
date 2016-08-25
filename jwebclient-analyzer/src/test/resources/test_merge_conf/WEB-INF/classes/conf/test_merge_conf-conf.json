@@ -1,0 +1,13 @@
+{
+	"default-conf": {
+		"module1": {
+			"a": 1,
+			"b": 2
+		},
+		"module2": {
+			"a": 1,
+			"b": 2
+		}
+	},
+	"merge-conf": true
+}

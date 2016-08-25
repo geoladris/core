@@ -10,37 +10,52 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
-import net.sf.json.JSONObject;
-
 import org.apache.commons.io.IOUtils;
 import org.fao.unredd.jwebclientAnalyzer.PluginDescriptor;
 
-public class PluginJSONConfigurationProvider implements
-		ModuleConfigurationProvider {
+import net.sf.json.JSONObject;
+
+/**
+ * @deprecated Use {@link PublicConfProvider} instead.
+ * @author victorzinho
+ */
+public class PluginJSONConfigurationProvider
+		implements
+			ModuleConfigurationProvider {
 
 	@Override
-	public Map<String, JSONObject> getConfigurationMap(
+	public Map<PluginDescriptor, JSONObject> getPluginConfig(
 			PortalRequestConfiguration configurationContext,
 			HttpServletRequest request) throws IOException {
+		// We create return a pseudo-plugin descriptor containing all the
+		// configuration to override/merge
+		// The modules, stylesheets and RequireJS data is empty since it is
+		// taken from all the other real plugins.
 		File configProperties = new File(
 				configurationContext.getConfigurationDirectory(),
 				"plugin-conf.json");
 		BufferedInputStream stream;
 		try {
-			stream = new BufferedInputStream(new FileInputStream(
-					configProperties));
+			stream = new BufferedInputStream(
+					new FileInputStream(configProperties));
 		} catch (FileNotFoundException e) {
-			return new HashMap<String, JSONObject>();
+			return null;
 		}
 		String content = IOUtils.toString(stream);
 		stream.close();
-		PluginDescriptor pluginDescriptor = new PluginDescriptor(content);
-		return pluginDescriptor.getConfigurationMap();
+
+		PluginDescriptor plugin = new PluginDescriptor(true);
+		plugin.setConfiguration(content);
+
+		Map<PluginDescriptor, JSONObject> ret = new HashMap<>();
+		if (plugin != null) {
+			ret.put(plugin, plugin.getDefaultConf());
+		}
+		return ret;
 	}
 
 	@Override
 	public boolean canBeCached() {
 		return true;
 	}
-
 }

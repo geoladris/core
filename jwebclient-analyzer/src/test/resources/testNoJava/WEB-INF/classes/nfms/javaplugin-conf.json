@@ -6,7 +6,7 @@
 		},
 		"shim" : {
 			"lib-java" : [ "lib-a", "lib-b", "lib-c" ]
-		},
+		}
 	},
 	"installInRoot": false
 }

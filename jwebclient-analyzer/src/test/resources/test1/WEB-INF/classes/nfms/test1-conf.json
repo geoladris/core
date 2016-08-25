@@ -15,6 +15,6 @@
 		},
 		"shim" : {
 			"fancy-box": [ "jquery" ]
-		},
+		}
 	}
 }
