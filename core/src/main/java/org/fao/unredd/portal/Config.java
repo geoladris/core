@@ -25,8 +25,6 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.fao.unredd.jwebclientAnalyzer.PluginDescriptor;
 
-import net.sf.json.JSONObject;
-
 public interface Config {
 
 	public static final String PROPERTY_CLIENT_MODULES = "client.modules";
@@ -74,8 +72,7 @@ public interface Config {
 	 * @param request
 	 * @return
 	 */
-	Map<PluginDescriptor, JSONObject> getPluginConfig(Locale locale,
-			HttpServletRequest request);
+	PluginDescriptors getPluginConfig(Locale locale, HttpServletRequest request);
 
 	/**
 	 * Add providers to modify the behavior of

@@ -19,8 +19,9 @@ Summarizing, a plugin consists on Javascript and CSS files. How are they organiz
 
 A plugin is a folder with the following contents:
 
-- `modules/`: Contains the requireJS modules and the `.CSS` files that are specific to the modules
-- `styles/`: Contains `.css` files and images from external libraries
+- `modules/`: Contains the requireJS modules and the `.CSS` files that are specific to the modules.
+- `jslib/`: Contains non-requireJS libraries used by the modules in `modules/`.
+- `styles/`: Contains `.css` files and images from external libraries.
 - `themes/`: Contains the `.css` files that define the style of the application, overriding the modules styles.
 - `conf.json`: Exposes configuration that will be consumed by the Javascript modules and can be modified in any installation.
 

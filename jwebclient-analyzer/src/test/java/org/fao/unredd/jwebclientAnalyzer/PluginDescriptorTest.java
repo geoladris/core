@@ -1,10 +1,9 @@
 package org.fao.unredd.jwebclientAnalyzer;
 
+import static junit.framework.Assert.fail;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import java.util.Map;
 import java.util.Set;
@@ -15,54 +14,62 @@ public class PluginDescriptorTest {
 
 	@Test
 	public void canHaveNullName() {
-		PluginDescriptor descriptor = new PluginDescriptor(true);
+		PluginDescriptor descriptor = new PluginDescriptor();
 		assertNull(descriptor.getName());
 	}
 
 	@Test
 	public void equals() {
-		PluginDescriptor p1 = new PluginDescriptor(true);
-		PluginDescriptor p2 = new PluginDescriptor(true);
-
-		String conf = "{'default-conf' : { m1 : true }, "
-				+ "requirejs : { paths : { a : '../jslib/A', "
-				+ "b : '../jslib/B' } } }";
-		p1.setConfiguration(conf);
-		p2.setConfiguration(conf);
-		p1.addModule("m1");
-		p2.addModule("m1");
-		p1.addStylesheet("s1");
-		p2.addStylesheet("s1");
-
-		assertEquals(p1, p2);
-		assertEquals(p1.hashCode(), p2.hashCode());
+		fail();
+		// PluginDescriptor p1 = new PluginDescriptor();
+		// p1.setInstallInRoot(true);
+		// PluginDescriptor p2 = new PluginDescriptor();
+		// p2.setInstallInRoot(true);
+		//
+		// String conf = "{'default-conf' : { m1 : true }, "
+		// + "requirejs : { paths : { a : '../jslib/A', "
+		// + "b : '../jslib/B' } } }";
+		// new PluginDescriptorFileReader(conf, false, null)
+		// .fillPluginDescriptor(p1);
+		// new PluginDescriptorFileReader(conf, false, null)
+		// .fillPluginDescriptor(p2);
+		// p1.addModule("m1");
+		// p2.addModule("m1");
+		// p1.addStylesheet("s1");
+		// p2.addStylesheet("s1");
+		//
+		// assertEquals(p1, p2);
+		// assertEquals(p1.hashCode(), p2.hashCode());
 	}
 
 	@Test
 	public void notEquals() {
-		PluginDescriptor p1 = new PluginDescriptor(true);
-		PluginDescriptor p2 = new PluginDescriptor(true);
-
-		String conf = "{'default-conf' : { m1 : true }, "
-				+ "requirejs : { paths : { a : '../jslib/A', "
-				+ "b : '../jslib/B' } } }";
-		p1.setConfiguration(conf);
-		p2.setConfiguration(conf);
-		p1.addModule("m1");
-		p2.addStylesheet("s1");
-
-		assertNotSame(p1, p2);
-		assertNotSame(p1.hashCode(), p2.hashCode());
+		fail();
+		// PluginDescriptor p1 = new PluginDescriptor(true);
+		// PluginDescriptor p2 = new PluginDescriptor(true);
+		//
+		// String conf = "{'default-conf' : { m1 : true }, "
+		// + "requirejs : { paths : { a : '../jslib/A', "
+		// + "b : '../jslib/B' } } }";
+		// p1.setConfiguration(conf);
+		// p2.setConfiguration(conf);
+		// p1.addModule("m1");
+		// p2.addStylesheet("s1");
+		//
+		// assertNotSame(p1, p2);
+		// assertNotSame(p1.hashCode(), p2.hashCode());
 	}
 
 	@Test
 	public void equalsEmptyPlugins() {
-		assertEquals(new PluginDescriptor(true), new PluginDescriptor(true));
+		fail();
+		// assertEquals(new PluginDescriptor(true), new PluginDescriptor(true));
 	}
 
 	@Test
 	public void modulesAndStylesInstalledInRoot() throws Exception {
-		PluginDescriptor descriptor = new PluginDescriptor(true);
+		PluginDescriptor descriptor = new PluginDescriptor();
+		descriptor.setInstallInRoot(true);
 
 		descriptor.addModule("m1");
 		descriptor.addStylesheet("modules/s1.css");
@@ -81,14 +88,15 @@ public class PluginDescriptorTest {
 
 	@Test
 	public void requirePathsAndShimsInstalledInRoot() throws Exception {
-		PluginDescriptor descriptor = new PluginDescriptor(true);
+		PluginDescriptor descriptor = new PluginDescriptor();
 
 		String paths = "jquery : '../jslib/jquery/jquery', "
 				+ "openlayers : '../jslib/OpenLayers/OpenLayers.unredd'";
 		String shim = "'fancy-box' : ['jquery']";
-		String config = "{requirejs : { paths : {" + paths + "}, shim : {"
-				+ shim + "}}}";
-		descriptor.setConfiguration(config);
+		String config = "{installInRoot:true, requirejs : { paths : {" + paths
+				+ "}, shim : {" + shim + "}}}";
+		new PluginDescriptorFileReader(config, false, null)
+				.fillPluginDescriptor(descriptor);
 
 		Map<String, String> pathsMap = descriptor.getRequireJSPathsMap();
 		assertEquals(2, pathsMap.size());
@@ -105,7 +113,8 @@ public class PluginDescriptorTest {
 
 	@Test
 	public void modulesAndStylesInstalledOutsideRoot() throws Exception {
-		PluginDescriptor descriptor = new PluginDescriptor(false);
+		PluginDescriptor descriptor = new PluginDescriptor();
+		descriptor.setInstallInRoot(false);
 		String name = "myplugin";
 		descriptor.setName(name);
 
@@ -123,18 +132,20 @@ public class PluginDescriptorTest {
 		assertTrue(styles.contains("styles/" + name + "/s1.css"));
 		assertTrue(styles.contains("theme/" + name + "/s1.css"));
 	}
+
 	@Test
 	public void requirePathsAndShimsInstalledOutsideRoot() throws Exception {
-		PluginDescriptor descriptor = new PluginDescriptor(false);
+		PluginDescriptor descriptor = new PluginDescriptor();
 		String name = "myplugin";
 		descriptor.setName(name);
 
 		String paths = "jquery : '../jslib/jquery/jquery', "
 				+ "openlayers : '../jslib/OpenLayers/OpenLayers.unredd'";
 		String shim = "'fancy-box' : ['jquery']";
-		String config = "{requirejs : { paths : {" + paths + "}, shim : {"
-				+ shim + "}}}";
-		descriptor.setConfiguration(config);
+		String config = "{installInRoot:false, requirejs : { paths : {" + paths
+				+ "}, shim : {" + shim + "}}}";
+		new PluginDescriptorFileReader(config, false, name)
+				.fillPluginDescriptor(descriptor);
 
 		Map<String, String> pathsMap = descriptor.getRequireJSPathsMap();
 		assertEquals(2, pathsMap.size());
@@ -150,14 +161,4 @@ public class PluginDescriptorTest {
 		assertEquals("[\"jquery\"]", shimMap.get("fancy-box"));
 	}
 
-	@Test
-	public void cannotSetConfigurationAfterAddingModules() {
-		PluginDescriptor descriptor = new PluginDescriptor(true);
-		descriptor.addModule("m1");
-		try {
-			descriptor.setConfiguration("{}");
-			fail();
-		} catch (IllegalStateException e) {
-		}
-	}
 }

@@ -10,21 +10,21 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
+import net.sf.json.JSONObject;
+
 import org.apache.commons.io.IOUtils;
 import org.fao.unredd.jwebclientAnalyzer.PluginDescriptor;
-
-import net.sf.json.JSONObject;
+import org.fao.unredd.jwebclientAnalyzer.PluginDescriptorFileReader;
 
 /**
  * @deprecated Use {@link PublicConfProvider} instead.
  * @author victorzinho
  */
-public class PluginJSONConfigurationProvider
-		implements
-			ModuleConfigurationProvider {
+public class PluginJSONConfigurationProvider implements
+		ModuleConfigurationProvider {
 
 	@Override
-	public Map<PluginDescriptor, JSONObject> getPluginConfig(
+	public Map<String, JSONObject> getPluginConfig(
 			PortalRequestConfiguration configurationContext,
 			HttpServletRequest request) throws IOException {
 		// We create return a pseudo-plugin descriptor containing all the
@@ -36,20 +36,22 @@ public class PluginJSONConfigurationProvider
 				"plugin-conf.json");
 		BufferedInputStream stream;
 		try {
-			stream = new BufferedInputStream(
-					new FileInputStream(configProperties));
+			stream = new BufferedInputStream(new FileInputStream(
+					configProperties));
 		} catch (FileNotFoundException e) {
 			return null;
 		}
 		String content = IOUtils.toString(stream);
 		stream.close();
 
-		PluginDescriptor plugin = new PluginDescriptor(true);
-		plugin.setConfiguration(content);
+		PluginDescriptor plugin = new PluginDescriptor();
+		new PluginDescriptorFileReader(content, false, null)
+				.fillPluginDescriptor(plugin);
 
-		Map<PluginDescriptor, JSONObject> ret = new HashMap<>();
+		Map<String, JSONObject> ret = new HashMap<>();
 		if (plugin != null) {
-			ret.put(plugin, plugin.getDefaultConf());
+			ret.put(PluginDescriptors.UNNAMED_GEOLADRIS_CORE_PLUGIN,
+					plugin.getConfiguration());
 		}
 		return ret;
 	}

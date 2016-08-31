@@ -15,8 +15,6 @@ import org.fao.unredd.AppContextListener;
 import org.fao.unredd.jwebclientAnalyzer.PluginDescriptor;
 import org.fao.unredd.jwebclientAnalyzer.RequireTemplate;
 
-import net.sf.json.JSONObject;
-
 public class MainJSServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 	private String output;
@@ -27,20 +25,20 @@ public class MainJSServlet extends HttpServlet {
 
 		if (output == null) {
 
-			Config config = (Config) getServletContext()
-					.getAttribute(AppContextListener.ATTR_CONFIG);
+			Config config = (Config) getServletContext().getAttribute(
+					AppContextListener.ATTR_CONFIG);
 			Locale locale = (Locale) req.getAttribute(LangFilter.ATTR_LOCALE);
-			Map<PluginDescriptor, JSONObject> pluginConf = config
-					.getPluginConfig(locale, req);
+			PluginDescriptors pluginDescriptors = config.getPluginConfig(
+					locale, req);
 			Map<String, String> paths = new HashMap<>();
 			Map<String, String> shims = new HashMap<>();
-			for (PluginDescriptor plugin : pluginConf.keySet()) {
+			for (PluginDescriptor plugin : pluginDescriptors.getEnabled()) {
 				paths.putAll(plugin.getRequireJSPathsMap());
 				shims.putAll(plugin.getRequireJSShims());
 			}
 
 			RequireTemplate template = new RequireTemplate("/main.js", paths,
-					shims, Collections.<String>emptyList());
+					shims, Collections.<String> emptyList());
 
 			output = template.generate();
 		}

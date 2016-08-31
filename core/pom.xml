@@ -10,13 +10,6 @@
 	<name>geoladris core</name>
 	<artifactId>core</artifactId>
 
-	<repositories>
-		<repository>
-			<id>csgis-releases</id>
-			<url>http://service-sandbox.csgis.de:8081/mvn/releases/</url>
-		</repository>
-	</repositories>
-
 	<properties>
 		<jasmine.version>2.1</jasmine.version>
 		<saga.version>1.5.5</saga.version>

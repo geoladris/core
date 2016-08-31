@@ -14,7 +14,6 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
@@ -33,8 +32,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.MockitoAnnotations;
 
-import net.sf.json.JSONObject;
-
 public class ClientContentServletTest {
 	@Captor
 	private ArgumentCaptor<Config> configCaptor;
@@ -46,15 +43,14 @@ public class ClientContentServletTest {
 
 	public void setupConfigurationFolder(String folder) {
 		AppContextListener listener = new AppContextListener();
-		ServletContextEvent servletContextEvent = mock(
-				ServletContextEvent.class);
+		ServletContextEvent servletContextEvent = mock(ServletContextEvent.class);
 		ServletContext servletContext = mock(ServletContext.class);
-		when(servletContext.getInitParameter("PORTAL_CONFIG_DIR"))
-				.thenReturn(folder);
-		when(servletContext.getResourcePaths("/WEB-INF/lib"))
-				.thenReturn(new HashSet<String>());
-		when(servletContext.getRealPath("/WEB-INF/classes/"))
-				.thenReturn(folder + "/WEB-INF/classes");
+		when(servletContext.getInitParameter("PORTAL_CONFIG_DIR")).thenReturn(
+				folder);
+		when(servletContext.getResourcePaths("/WEB-INF/lib")).thenReturn(
+				new HashSet<String>());
+		when(servletContext.getRealPath("/WEB-INF/classes/")).thenReturn(
+				folder + "/WEB-INF/classes");
 		when(servletContextEvent.getServletContext())
 				.thenReturn(servletContext);
 		listener.contextInitialized(servletContextEvent);
@@ -81,20 +77,22 @@ public class ClientContentServletTest {
 		requirePaths("/testJavaRootSubfolders");
 	}
 
-	private void requirePaths(String classpathPrefix)
-			throws ServletException, IOException {
+	private void requirePaths(String classpathPrefix) throws ServletException,
+			IOException {
 		Config config = configCaptor.getValue();
 
 		HttpServletRequest request = mock(HttpServletRequest.class);
 		when(request.getSession()).thenReturn(mock(HttpSession.class));
 
-		Map<PluginDescriptor, JSONObject> pluginConf = config
-				.getPluginConfig(Locale.ROOT, request);
+		PluginDescriptors pluginDescriptors = config.getPluginConfig(
+				Locale.ROOT, request);
 
 		List<String> modules = new ArrayList<>();
 		List<String> styles = new ArrayList<>();
 		List<String> nonRequirePaths = new ArrayList<>();
-		for (PluginDescriptor plugin : pluginConf.keySet()) {
+		PluginDescriptor[] enabled = pluginDescriptors.getEnabled();
+
+		for (PluginDescriptor plugin : enabled) {
 			modules.addAll(plugin.getModules());
 			styles.addAll(plugin.getStylesheets());
 			nonRequirePaths.addAll(plugin.getRequireJSPathsMap().values());
@@ -150,8 +148,8 @@ public class ClientContentServletTest {
 		servlet.setTestingClasspathRoot("/testNoJavaPlugins/WEB-INF/classes/");
 		ServletConfig servletConfig = mock(ServletConfig.class);
 		ServletContext servletContext = mock(ServletContext.class);
-		when(servletContext.getAttribute("config"))
-				.thenReturn(configCaptor.getValue());
+		when(servletContext.getAttribute("config")).thenReturn(
+				configCaptor.getValue());
 		when(servletConfig.getServletContext()).thenReturn(servletContext);
 		servlet.init(servletConfig);
 

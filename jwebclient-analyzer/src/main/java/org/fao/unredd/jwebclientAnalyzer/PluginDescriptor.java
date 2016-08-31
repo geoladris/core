@@ -7,109 +7,47 @@ import java.util.Map;
 import java.util.Set;
 
 import net.sf.json.JSONObject;
-import net.sf.json.JSONSerializer;
+import de.csgis.commons.JSONUtils;
 
+/**
+ * Contains all information about the plugin that may be necessary to make a
+ * geoladris application work: modules, requirejs paths and shims,
+ * configuration, etc.
+ * 
+ * @author fergonco
+ */
 public class PluginDescriptor {
-	public static final String PROP_DEFAULT_CONF = "default-conf";
-	public static final String PROP_REQUIREJS = "requirejs";
-	public static final String PROP_INSTALL_IN_ROOT = "installInRoot";
-
-	private JSONObject requireJS;
-	private JSONObject configuration;
-	private boolean installInRoot;
-	private Set<String> modules, stylesheets;
+	private HashMap<String, String> requireJSPathsMap = new HashMap<String, String>();
+	private HashMap<String, String> requireJSShims = new HashMap<String, String>();
+	private JSONObject configuration = new JSONObject();
+	private HashSet<String> modules = new HashSet<String>();
+	private HashSet<String> stylesheets = new HashSet<String>();
 	private String name;
+	private boolean installInRoot;
 
-	/**
-	 * Creates a new plugin descriptor.
-	 * 
-	 * @param installInRoot
-	 *            Determines whether the plugin is installed in root by default
-	 *            or not. It can be overriden with
-	 *            {@link #setConfiguration(String)}.
-	 */
-	public PluginDescriptor(boolean installInRoot) {
-		this.modules = new HashSet<>();
-		this.stylesheets = new HashSet<>();
+	public void setInstallInRoot(boolean installInRoot) {
 		this.installInRoot = installInRoot;
 	}
 
 	/**
-	 * Sets the plugin configuration. This method cannot be called after adding
-	 * modules ({@link #addModule(String)}) or stylesheets
-	 * ({@link #addStylesheet(String)}).
-	 * 
-	 * @param content
-	 *            The JSON configuration for the plugin.
-	 */
-	public void setConfiguration(String content) {
-		if (this.modules.size() > 0 || this.stylesheets.size() > 0) {
-			throw new IllegalStateException(
-					"Cannot configure plugin after modules and/or "
-							+ "stylesheets have been added.");
-		}
-
-		JSONObject jsonRoot = (JSONObject) JSONSerializer.toJSON(content);
-
-		if (jsonRoot.has(PROP_REQUIREJS)) {
-			requireJS = jsonRoot.getJSONObject(PROP_REQUIREJS);
-		}
-		if (jsonRoot.has(PROP_DEFAULT_CONF)) {
-			configuration = jsonRoot.getJSONObject(PROP_DEFAULT_CONF);
-		}
-		if (jsonRoot.has(PROP_INSTALL_IN_ROOT)) {
-			installInRoot = jsonRoot.getBoolean(PROP_INSTALL_IN_ROOT);
-		}
-	}
-
-	/**
-	 * Returns the requirejs paths map for RequireJS config.js. The values of
-	 * the map already contain the plugin name.
+	 * Returns the requireJS maps
 	 * 
 	 * @return
 	 */
 	public Map<String, String> getRequireJSPathsMap() {
-		Map<String, String> ret = new HashMap<String, String>();
-
-		if (requireJS != null) {
-			fill(ret, (JSONObject) requireJS.get("paths"));
-		}
-		return ret;
-	}
-
-	private void fill(Map<String, String> map, JSONObject jsonMap) {
-		if (jsonMap == null) {
-			return;
-		}
-
-		for (Object key : jsonMap.keySet()) {
-			Object value = jsonMap.get(key.toString());
-			map.put(key.toString(), buildJSLibURL(value.toString()));
-		}
-	}
-
-	private String buildJSLibURL(String jsLibPath) {
-		return this.installInRoot
-				? jsLibPath
-				: jsLibPath.replace("jslib/", "jslib/" + this.name + "/");
+		return requireJSPathsMap;
 	}
 
 	/**
-	 * Returns the requirejs shim map for RequireJS config.js. The values of the
-	 * map already contain the plugin name.
+	 * Returns the requirejs shim map for RequireJS config.js.
 	 * 
 	 * @return
 	 */
 	public Map<String, String> getRequireJSShims() {
-		Map<String, String> ret = new HashMap<String, String>();
-
-		if (requireJS != null) {
-			fill(ret, (JSONObject) requireJS.get("shim"));
-		}
-		return ret;
+		return requireJSShims;
 	}
 
-	public JSONObject getDefaultConf() {
+	public JSONObject getConfiguration() {
 		return configuration;
 	}
 
@@ -130,11 +68,6 @@ public class PluginDescriptor {
 	 * Adds a new module to the plugin.
 	 * </p>
 	 * 
-	 * <p>
-	 * <b>IMPORTANT</b>: {@link #setConfiguration(String)} cannot be called
-	 * after modules and/or stylesheets have been added.
-	 * </p>
-	 * 
 	 * @param module
 	 *            The module to add to the plugin. It is simply the path for the
 	 *            JS within the plugin. This class takes care of qualifying the
@@ -148,8 +81,8 @@ public class PluginDescriptor {
 	}
 
 	/**
-	 * Get the stylesheets. It returns a new copied set each time; if you want to
-	 * add a new stylesheet use {@link #addStylesheet(String)}.
+	 * Get the stylesheets. It returns a new copied set each time; if you want
+	 * to add a new stylesheet use {@link #addStylesheet(String)}.
 	 * 
 	 * @return
 	 */
@@ -164,11 +97,6 @@ public class PluginDescriptor {
 	 * Adds a new stylesheet to the plugin.
 	 * </p>
 	 * 
-	 * <p>
-	 * <b>IMPORTANT</b>: {@link #setConfiguration(String)} cannot be called
-	 * after modules and/or stylesheets have been added.
-	 * </p>
-	 * 
 	 * @param stylesheet
 	 *            The stylesheet to add to the plugin. It is simply the path for
 	 *            the CSS within the plugin. This class takes care of qualifying
@@ -177,8 +105,8 @@ public class PluginDescriptor {
 	public void addStylesheet(String stylesheet) {
 		if (!installInRoot && this.name != null) {
 			String dir = new File(stylesheet).getParentFile().getName();
-			stylesheet = stylesheet.replace(dir + "/",
-					dir + "/" + this.name + "/");
+			stylesheet = stylesheet.replace(dir + "/", dir + "/" + this.name
+					+ "/");
 		}
 		this.stylesheets.add(stylesheet);
 	}
@@ -192,40 +120,38 @@ public class PluginDescriptor {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
-		}
-
-		if (!(obj instanceof PluginDescriptor)) {
-			return false;
-		}
-
-		PluginDescriptor p = (PluginDescriptor) obj;
-
-		boolean equals = this.name != null
-				? this.name.equals(p.name)
-				: p.name == null;
-		equals &= this.configuration != null
-				? this.configuration.equals(p.configuration)
-				: p.configuration == null;
-		equals &= this.requireJS != null
-				? this.requireJS.equals(p.requireJS)
-				: p.requireJS == null;
-		return equals && p.modules.equals(this.modules)
-				&& p.stylesheets.equals(this.stylesheets);
-	}
-
-	@Override
-	public int hashCode() {
-		int hash = name != null ? name.hashCode() : 0;
-		hash += configuration != null ? configuration.hashCode() : 0;
-		hash += requireJS != null ? requireJS.hashCode() : 0;
-		return hash + modules.hashCode() + stylesheets.hashCode();
-	}
-
-	@Override
 	public String toString() {
 		return name;
+	}
+
+	public void mergeConfiguration(JSONObject configuration) {
+		this.configuration = JSONUtils.merge(this.configuration, configuration);
+	}
+
+	public void mergeRequireJSPaths(HashMap<String, String> requireJSPathsMap) {
+		this.requireJSPathsMap.putAll(requireJSPathsMap);
+	}
+
+	public void mergeRequireJSShims(HashMap<String, String> requireJSShims) {
+		this.requireJSShims.putAll(requireJSShims);
+	}
+
+	public void setConfiguration(JSONObject configuration) {
+		this.configuration = configuration;
+	}
+
+	@SuppressWarnings("unchecked")
+	public PluginDescriptor cloneDescriptor() {
+		PluginDescriptor ret = new PluginDescriptor();
+		ret.configuration = JSONObject.fromObject(this.configuration);
+		ret.installInRoot = this.installInRoot;
+		ret.modules = (HashSet<String>) this.modules.clone();
+		ret.stylesheets = (HashSet<String>) this.stylesheets.clone();
+		ret.name = this.name;
+		ret.requireJSPathsMap = (HashMap<String, String>) this.requireJSPathsMap
+				.clone();
+		ret.requireJSShims = (HashMap<String, String>) this.requireJSShims
+				.clone();
+		return ret;
 	}
 }

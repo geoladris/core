@@ -7,9 +7,9 @@ import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.fao.unredd.jwebclientAnalyzer.PluginDescriptor;
-
 import net.sf.json.JSONObject;
+
+import org.fao.unredd.jwebclientAnalyzer.PluginDescriptor;
 
 public class DefaultConfProvider implements ModuleConfigurationProvider {
 	private Set<PluginDescriptor> plugins;
@@ -19,12 +19,12 @@ public class DefaultConfProvider implements ModuleConfigurationProvider {
 	}
 
 	@Override
-	public Map<PluginDescriptor, JSONObject> getPluginConfig(
+	public Map<String, JSONObject> getPluginConfig(
 			PortalRequestConfiguration configurationContext,
 			HttpServletRequest request) throws IOException {
-		Map<PluginDescriptor, JSONObject> ret = new HashMap<>();
+		Map<String, JSONObject> ret = new HashMap<>();
 		for (PluginDescriptor plugin : this.plugins) {
-			ret.put(plugin, plugin.getDefaultConf());
+			ret.put(plugin.getName(), plugin.getConfiguration());
 		}
 		return ret;
 	}

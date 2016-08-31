@@ -2,8 +2,6 @@ package org.fao.unredd;
 
 import java.io.File;
 import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 
 import javax.servlet.ServletContext;
@@ -41,31 +39,24 @@ public class AppContextListener implements ServletContextListener {
 		String rootPath = servletContext.getRealPath("/");
 		String configInitParameter = servletContext
 				.getInitParameter(INIT_PARAM_DIR);
-		boolean configCache = Boolean
-				.parseBoolean(System.getenv(ENV_CONFIG_CACHE));
+		boolean configCache = Boolean.parseBoolean(System
+				.getenv(ENV_CONFIG_CACHE));
 		ConfigFolder folder = new ConfigFolder(rootPath, configInitParameter);
 
-		JEEContext context = new JEEContext(servletContext,
-				new File(folder.getFilePath(), "plugins"));
+		JEEContext context = new JEEContext(servletContext, new File(
+				folder.getFilePath(), "plugins"));
 		JEEContextAnalyzer analyzer = getAnalyzer(context);
 
 		Set<PluginDescriptor> plugins = analyzer.getPluginDescriptors();
-		Map<String, PluginDescriptor> pluginNameMap = new HashMap<>();
-		for (PluginDescriptor plugin : plugins) {
-			if (plugin.getName() != null) {
-				pluginNameMap.put(plugin.getName(), plugin);
-			}
-		}
-
 		File publicConf = new File(folder.getFilePath(),
 				PublicConfProvider.FILE);
 		boolean hasPublicConf = publicConf.exists() && publicConf.isFile();
-		ModuleConfigurationProvider confProvider;
+		ModuleConfigurationProvider publicConfigurationProvider;
 		if (hasPublicConf) {
-			confProvider = new PublicConfProvider(folder.getFilePath(),
-					pluginNameMap);
+			publicConfigurationProvider = new PublicConfProvider(
+					folder.getFilePath());
 		} else {
-			confProvider = new PluginJSONConfigurationProvider();
+			publicConfigurationProvider = new PluginJSONConfigurationProvider();
 			logger.warn("plugin-conf.json file for configuration has been "
 					+ "deprecated. Use public-conf.json instead.");
 
@@ -73,9 +64,9 @@ public class AppContextListener implements ServletContextListener {
 
 		DefaultConfig config = new DefaultConfig(folder, plugins,
 				new DefaultConfProvider(plugins), configCache);
-		config.addModuleConfigurationProvider(confProvider);
+		config.addModuleConfigurationProvider(publicConfigurationProvider);
 		config.addModuleConfigurationProvider(new RoleConfigurationProvider(
-				folder.getFilePath(), pluginNameMap));
+				folder.getFilePath()));
 
 		servletContext.setAttribute(ATTR_CONFIG, config);
 	}

@@ -10,10 +10,11 @@ import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.fao.unredd.jwebclientAnalyzer.PluginDescriptor;
-import org.junit.Test;
-
 import net.sf.json.JSONObject;
+
+import org.fao.unredd.jwebclientAnalyzer.PluginDescriptor;
+import org.fao.unredd.jwebclientAnalyzer.PluginDescriptorFileReader;
+import org.junit.Test;
 
 public class DefaultConfProviderTest {
 	@Test
@@ -29,13 +30,13 @@ public class DefaultConfProviderTest {
 		plugins.add(p2);
 
 		DefaultConfProvider provider = new DefaultConfProvider(plugins);
-		Map<PluginDescriptor, JSONObject> config = provider.getPluginConfig(
+		Map<String, JSONObject> config = provider.getPluginConfig(
 				mock(PortalRequestConfiguration.class),
 				mock(HttpServletRequest.class));
 
 		assertEquals(2, config.size());
-		JSONObject conf1 = config.get(p1);
-		JSONObject conf2 = config.get(p2);
+		JSONObject conf1 = config.get("myplugin1");
+		JSONObject conf2 = config.get("myplugin2");
 		assertEquals(42, conf1.getJSONObject("module1").getInt("prop1"));
 		assertTrue(conf1.getJSONObject("module1").getBoolean("prop2"));
 		assertEquals("test", conf2.getJSONObject("module2").getString("prop3"));
@@ -52,9 +53,11 @@ public class DefaultConfProviderTest {
 	}
 
 	private PluginDescriptor mockPlugin(String name, String defaultConf) {
-		PluginDescriptor plugin = new PluginDescriptor(true);
-		plugin.setName(name);
-		plugin.setConfiguration("{'default-conf' : " + defaultConf + "}");
+		PluginDescriptor plugin = new PluginDescriptor();
+		plugin.setInstallInRoot(true);
+		new PluginDescriptorFileReader(
+				"{'default-conf' : " + defaultConf + "}", true, name)
+				.fillPluginDescriptor(plugin);
 		return plugin;
 	}
 }

@@ -8,24 +8,21 @@ import static org.mockito.Mockito.mock;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
+import net.sf.json.JSONObject;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.fao.unredd.jwebclientAnalyzer.PluginDescriptor;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import net.sf.json.JSONObject;
-
 public class PublicConfProviderTest {
 	private File configDir;
 	private PublicConfProvider provider;
-	private PluginDescriptor plugin;
 
 	@Before
 	public void setup() throws IOException {
@@ -33,13 +30,7 @@ public class PublicConfProviderTest {
 		configDir.delete();
 		configDir.mkdir();
 
-		plugin = new PluginDescriptor(true);
-		plugin.setName("myplugin");
-
-		Map<String, PluginDescriptor> plugins = new HashMap<>();
-		plugins.put(plugin.getName(), plugin);
-
-		provider = new PublicConfProvider(configDir, plugins);
+		provider = new PublicConfProvider(configDir);
 	}
 
 	@After
@@ -49,7 +40,7 @@ public class PublicConfProviderTest {
 
 	@Test
 	public void missingPublicConfFile() throws Exception {
-		Map<PluginDescriptor, JSONObject> conf = provider.getPluginConfig(
+		Map<String, JSONObject> conf = provider.getPluginConfig(
 				mock(PortalRequestConfiguration.class),
 				mock(HttpServletRequest.class));
 		assertNull(conf);
@@ -59,17 +50,17 @@ public class PublicConfProviderTest {
 	public void validPublicConfFile() throws Exception {
 		File tmp = new File(configDir, PublicConfProvider.FILE);
 		FileWriter writer = new FileWriter(tmp);
-		IOUtils.write(
-				"{ '" + plugin.getName() + "' : { mymodule : {'a' : true }}}",
+		String pluginName = "p1";
+		IOUtils.write("{ '" + pluginName + "' : { mymodule : {'a' : true }}}",
 				writer);
 		writer.close();
 
-		Map<PluginDescriptor, JSONObject> conf = provider.getPluginConfig(
+		Map<String, JSONObject> conf = provider.getPluginConfig(
 				mock(PortalRequestConfiguration.class),
 				mock(HttpServletRequest.class));
 		assertEquals(1, conf.size());
-		assertTrue(conf.containsKey(plugin));
-		JSONObject pluginConf = conf.get(plugin);
+		assertTrue(conf.containsKey(pluginName));
+		JSONObject pluginConf = conf.get(pluginName);
 		assertTrue(pluginConf.getJSONObject("mymodule").getBoolean("a"));
 
 		tmp.delete();

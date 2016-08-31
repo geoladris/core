@@ -6,17 +6,15 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.fao.unredd.jwebclientAnalyzer.PluginDescriptor;
-
-import de.csgis.commons.JSONContentProvider;
 import net.sf.json.JSONObject;
+import de.csgis.commons.JSONContentProvider;
 
 /**
  * <p>
  * ModuleConfigurationProvider that returns the configuration that is specific
  * to a role. The role configurations are taken from
- * <code>&lt;config_dir&gt;/</code>{@value #ROLE_DIR}<code>/&lt;role&gt;.json</code>
- * files.
+ * <code>&lt;config_dir&gt;/</code>{@value #ROLE_DIR}
+ * <code>/&lt;role&gt;.json</code> files.
  * </p>
  * 
  * <p>
@@ -31,15 +29,14 @@ public class RoleConfigurationProvider implements ModuleConfigurationProvider {
 
 	private ConfigurationProviderHelper helper;
 
-	public RoleConfigurationProvider(File configDir,
-			Map<String, PluginDescriptor> plugins) {
+	public RoleConfigurationProvider(File configDir) {
 		String roleDir = new File(configDir, ROLE_DIR).getAbsolutePath();
-		this.helper = new ConfigurationProviderHelper(
-				new JSONContentProvider(roleDir), plugins);
+		this.helper = new ConfigurationProviderHelper(new JSONContentProvider(
+				roleDir));
 	}
 
 	@Override
-	public Map<PluginDescriptor, JSONObject> getPluginConfig(
+	public Map<String, JSONObject> getPluginConfig(
 			PortalRequestConfiguration configurationContext,
 			HttpServletRequest request) throws IOException {
 		String role = getRole(request);
@@ -47,8 +44,8 @@ public class RoleConfigurationProvider implements ModuleConfigurationProvider {
 	}
 
 	private String getRole(HttpServletRequest request) {
-		Object attr = request.getSession()
-				.getAttribute(Constants.SESSION_ATTR_ROLE);
+		Object attr = request.getSession().getAttribute(
+				Constants.SESSION_ATTR_ROLE);
 		if (attr == null) {
 			return null;
 		}

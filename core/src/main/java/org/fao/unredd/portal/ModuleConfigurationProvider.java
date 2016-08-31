@@ -5,8 +5,6 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.fao.unredd.jwebclientAnalyzer.PluginDescriptor;
-
 import net.sf.json.JSONObject;
 
 public interface ModuleConfigurationProvider {
@@ -15,6 +13,11 @@ public interface ModuleConfigurationProvider {
 	 * JSONObjects are the configuration for the modules contained in the
 	 * plugin.
 	 * 
+	 * It is possible to use the anonymous plugin
+	 * {@link PluginDescriptors#UNNAMED_GEOLADRIS_CORE_PLUGIN} as plugin name
+	 * but in that case the configuration will not be associated to a plugin and
+	 * therefore it will not be possible to enable/disable it
+	 * 
 	 * @param configurationContext
 	 * @param request
 	 *            Request that loads the application
@@ -22,7 +25,7 @@ public interface ModuleConfigurationProvider {
 	 * @return
 	 * @throws IOException
 	 */
-	Map<PluginDescriptor, JSONObject> getPluginConfig(
+	Map<String, JSONObject> getPluginConfig(
 			PortalRequestConfiguration configurationContext,
 			HttpServletRequest request) throws IOException;
 

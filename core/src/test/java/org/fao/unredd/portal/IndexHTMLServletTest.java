@@ -11,9 +11,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Locale;
-import java.util.Map;
+import java.util.Set;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
@@ -25,8 +26,6 @@ import org.fao.unredd.jwebclientAnalyzer.PluginDescriptor;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import net.sf.json.JSONObject;
 
 public class IndexHTMLServletTest {
 	private IndexHTMLServlet servlet;
@@ -59,15 +58,18 @@ public class IndexHTMLServletTest {
 
 	@Test
 	public void cssOrder() throws Exception {
-		PluginDescriptor plugin = new PluginDescriptor(true);
+		PluginDescriptor plugin = new PluginDescriptor();
+		plugin.setInstallInRoot(true);
 		plugin.addStylesheet("theme/a.css");
 		plugin.addStylesheet("styles/a.css");
 		plugin.addStylesheet("theme/b.css");
-		Map<PluginDescriptor, JSONObject> pluginConfig = new HashMap<>();
-		pluginConfig.put(plugin, new JSONObject());
+		Set<PluginDescriptor> plugins = new HashSet<PluginDescriptor>();
+		plugins.add(plugin);
+		PluginDescriptors pluginDescriptors = new PluginDescriptors(plugins);
+
 		Config config = mock(Config.class);
 		when(config.getPluginConfig(any(Locale.class), eq(this.request)))
-				.thenReturn(pluginConfig);
+				.thenReturn(pluginDescriptors);
 		when(this.servletContext.getAttribute(AppContextListener.ATTR_CONFIG))
 				.thenReturn(config);
 
@@ -124,10 +126,16 @@ public class IndexHTMLServletTest {
 	 * @param debugParam
 	 */
 	private void mockDebugParam(String debugParam) {
-		when(this.servletContext.getAttribute("config"))
-				.thenReturn(mock(Config.class));
-		when(this.servletContext.getAttribute("css-paths"))
-				.thenReturn(new ArrayList<String>());
+		Config config = mock(Config.class);
+		PluginDescriptors pluginDescriptors = new PluginDescriptors(
+				Collections.<PluginDescriptor> emptySet());
+		when(
+				config.getPluginConfig(any(Locale.class),
+						any(HttpServletRequest.class))).thenReturn(
+				pluginDescriptors);
+		when(this.servletContext.getAttribute("config")).thenReturn(config);
+		when(this.servletContext.getAttribute("css-paths")).thenReturn(
+				new ArrayList<String>());
 
 		System.setProperty(IndexHTMLServlet.PROP_MINIFIED_JS, "true");
 		when(this.request.getParameter(IndexHTMLServlet.HTTP_PARAM_DEBUG))

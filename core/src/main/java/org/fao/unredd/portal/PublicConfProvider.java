@@ -6,10 +6,8 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.fao.unredd.jwebclientAnalyzer.PluginDescriptor;
-
-import de.csgis.commons.JSONContentProvider;
 import net.sf.json.JSONObject;
+import de.csgis.commons.JSONContentProvider;
 
 /**
  * <p>
@@ -28,16 +26,15 @@ public class PublicConfProvider implements ModuleConfigurationProvider {
 	private ConfigurationProviderHelper helper;
 	private File file;
 
-	public PublicConfProvider(File configDir,
-			Map<String, PluginDescriptor> plugins) {
+	public PublicConfProvider(File configDir) {
 		JSONContentProvider contents = new JSONContentProvider(
 				configDir.getAbsolutePath());
-		this.helper = new ConfigurationProviderHelper(contents, plugins);
+		this.helper = new ConfigurationProviderHelper(contents);
 		this.file = new File(configDir, FILE);
 	}
 
 	@Override
-	public Map<PluginDescriptor, JSONObject> getPluginConfig(
+	public Map<String, JSONObject> getPluginConfig(
 			PortalRequestConfiguration configurationContext,
 			HttpServletRequest request) throws IOException {
 		return file.exists() ? helper.getPluginConfig(FILE_BASE) : null;

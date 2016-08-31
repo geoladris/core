@@ -20,6 +20,8 @@ import java.util.Set;
 import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
 
+import net.sf.json.JSONObject;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.TrueFileFilter;
@@ -27,8 +29,6 @@ import org.apache.commons.io.input.BoundedInputStream;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import net.sf.json.JSONObject;
 
 public class JEEContextAnalyzerTest {
 	private static File test1LibFolder = new File(
@@ -54,8 +54,8 @@ public class JEEContextAnalyzerTest {
 		assertTrue(!jarFile.exists() || jarFile.delete());
 
 		FileOutputStream stream = new FileOutputStream(jarFile);
-		File jarContentRoot = new File("src/test/resources/",
-				testCaseToPack + File.separator + pluginContentsRoot);
+		File jarContentRoot = new File("src/test/resources/", testCaseToPack
+				+ File.separator + pluginContentsRoot);
 		Collection<File> files = FileUtils.listFiles(jarContentRoot,
 				TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE);
 		JarOutputStream out = new JarOutputStream(stream);
@@ -80,8 +80,8 @@ public class JEEContextAnalyzerTest {
 
 	@Test
 	public void checkTest1() {
-		JEEContextAnalyzer context = new JEEContextAnalyzer(
-				new FileContext("src/test/resources/test1"));
+		JEEContextAnalyzer context = new JEEContextAnalyzer(new FileContext(
+				"src/test/resources/test1"));
 
 		Set<PluginDescriptor> plugins = context.getPluginDescriptors();
 		assertEquals(2, plugins.size());
@@ -96,7 +96,7 @@ public class JEEContextAnalyzerTest {
 			styles.addAll(plugin.getStylesheets());
 			paths.putAll(plugin.getRequireJSPathsMap());
 			shims.putAll(plugin.getRequireJSShims());
-			defaultConf.putAll(plugin.getDefaultConf());
+			defaultConf.putAll(plugin.getConfiguration());
 		}
 
 		checkList(modules, "module1", "module2", "module3");
@@ -129,8 +129,8 @@ public class JEEContextAnalyzerTest {
 
 	@Test
 	public void checkCustomPluginConfDir() {
-		JEEContextAnalyzer context = new JEEContextAnalyzer(
-				new FileContext("src/test/resources/test3"), "conf", "webapp");
+		JEEContextAnalyzer context = new JEEContextAnalyzer(new FileContext(
+				"src/test/resources/test3"), "conf", "webapp");
 
 		PluginDescriptor plugin = context.getPluginDescriptors().iterator()
 				.next();
@@ -141,8 +141,8 @@ public class JEEContextAnalyzerTest {
 
 	@Test
 	public void checkCustomWebResourcesDir() {
-		JEEContextAnalyzer context = new JEEContextAnalyzer(
-				new FileContext("src/test/resources/test3"), "conf", "webapp");
+		JEEContextAnalyzer context = new JEEContextAnalyzer(new FileContext(
+				"src/test/resources/test3"), "conf", "webapp");
 
 		PluginDescriptor plugin = context.getPluginDescriptors().iterator()
 				.next();
@@ -153,9 +153,8 @@ public class JEEContextAnalyzerTest {
 
 	@Test
 	public void scanNoJavaPlugins() {
-		JEEContextAnalyzer context = new JEEContextAnalyzer(
-				new FileContext("src/test/resources/testNoJava"), "nfms",
-				"nfms");
+		JEEContextAnalyzer context = new JEEContextAnalyzer(new FileContext(
+				"src/test/resources/testNoJava"), "nfms", "nfms");
 		Set<PluginDescriptor> plugins = context.getPluginDescriptors();
 		assertEquals(3, plugins.size());
 		for (PluginDescriptor plugin : plugins) {
@@ -206,8 +205,8 @@ public class JEEContextAnalyzerTest {
 	@Test
 	public void scanJavaNonRootModules() {
 		String name = "testJavaNonRootModules";
-		JEEContextAnalyzer context = new JEEContextAnalyzer(
-				new FileContext("src/test/resources/" + name), "nfms", "nfms");
+		JEEContextAnalyzer context = new JEEContextAnalyzer(new FileContext(
+				"src/test/resources/" + name), "nfms", "nfms");
 		PluginDescriptor plugin = context.getPluginDescriptors().iterator()
 				.next();
 
@@ -221,9 +220,8 @@ public class JEEContextAnalyzerTest {
 
 	@Test
 	public void scanJavaNonRootModulesAsJar() {
-		JEEContextAnalyzer context = new JEEContextAnalyzer(
-				new FileContext("src/test/resources/testOnlyLib"), "nfms",
-				"nfms");
+		JEEContextAnalyzer context = new JEEContextAnalyzer(new FileContext(
+				"src/test/resources/testOnlyLib"), "nfms", "nfms");
 
 		Set<PluginDescriptor> plugins = context.getPluginDescriptors();
 		assertEquals(2, plugins.size());
@@ -253,8 +251,8 @@ public class JEEContextAnalyzerTest {
 	}
 
 	public void checkThemePath() {
-		JEEContextAnalyzer context = new JEEContextAnalyzer(
-				new FileContext("src/test/resources/test_theme"));
+		JEEContextAnalyzer context = new JEEContextAnalyzer(new FileContext(
+				"src/test/resources/test_theme"));
 
 		PluginDescriptor plugin = context.getPluginDescriptors().iterator()
 				.next();
@@ -264,8 +262,8 @@ public class JEEContextAnalyzerTest {
 
 	@Test
 	public void checkPluginDescriptors() {
-		JEEContextAnalyzer context = new JEEContextAnalyzer(
-				new FileContext("src/test/resources/test1"));
+		JEEContextAnalyzer context = new JEEContextAnalyzer(new FileContext(
+				"src/test/resources/test1"));
 
 		Set<PluginDescriptor> plugins = context.getPluginDescriptors();
 		assertEquals(2, plugins.size());
@@ -273,7 +271,7 @@ public class JEEContextAnalyzerTest {
 		for (PluginDescriptor plugin : plugins) {
 			Set<String> modules = plugin.getModules();
 			Set<String> styles = plugin.getStylesheets();
-			JSONObject defaultConf = plugin.getDefaultConf();
+			JSONObject defaultConf = plugin.getConfiguration();
 			Map<String, String> requirejsPaths = plugin.getRequireJSPathsMap();
 			Map<String, String> requirejsShims = plugin.getRequireJSShims();
 			if ("test1".equals(plugin.getName())) {

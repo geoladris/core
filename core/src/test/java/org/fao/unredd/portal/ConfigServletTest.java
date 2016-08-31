@@ -14,12 +14,14 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
+import java.util.Set;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
@@ -27,13 +29,14 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.fao.unredd.AppContextListener;
-import org.fao.unredd.jwebclientAnalyzer.PluginDescriptor;
-import org.junit.Before;
-import org.junit.Test;
-
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+
+import org.fao.unredd.AppContextListener;
+import org.fao.unredd.jwebclientAnalyzer.PluginDescriptor;
+import org.fao.unredd.jwebclientAnalyzer.PluginDescriptorFileReader;
+import org.junit.Before;
+import org.junit.Test;
 
 public class ConfigServletTest {
 	private ConfigServlet servlet;
@@ -61,8 +64,8 @@ public class ConfigServletTest {
 	@Test
 	public void testCustomizationModule() throws ServletException, IOException {
 		Config config = mock(Config.class);
-		when(config.getMessages(any(Locale.class)))
-				.thenReturn(new PropertyResourceBundle(
+		when(config.getMessages(any(Locale.class))).thenReturn(
+				new PropertyResourceBundle(
 						new ByteArrayInputStream(new byte[0])));
 		Properties portalProperties = new Properties();
 		portalProperties.put("languages", "{\"es\": \"Espa\u00f1ol\"}");
@@ -77,10 +80,17 @@ public class ConfigServletTest {
 		spanish.put("name", "Español");
 		languages.add(spanish);
 		when(config.getLanguages()).thenReturn(languages.toArray(new Map[0]));
-		when(config.getPropertyAsArray(Config.PROPERTY_MAP_CENTER))
-				.thenReturn(new String[]{"0", "0"});
+		when(config.getPropertyAsArray(Config.PROPERTY_MAP_CENTER)).thenReturn(
+				new String[] { "0", "0" });
 		when(config.getPropertyAsArray(Config.PROPERTY_CLIENT_MODULES))
 				.thenReturn(new String[0]);
+
+		PluginDescriptors pluginDescriptors = new PluginDescriptors(
+				Collections.<PluginDescriptor> emptySet());
+		when(
+				config.getPluginConfig(any(Locale.class),
+						any(HttpServletRequest.class))).thenReturn(
+				pluginDescriptors);
 
 		HttpServletRequest req = mock(HttpServletRequest.class);
 		when(req.getAttribute("locale")).thenReturn(new Locale("es"));
@@ -110,10 +120,10 @@ public class ConfigServletTest {
 		ServletConfig servletConfig = mock(ServletConfig.class);
 		ServletContext servletContext = mock(ServletContext.class);
 		when(servletContext.getAttribute("config")).thenReturn(config);
-		when(servletContext.getAttribute("js-paths"))
-				.thenReturn(new ArrayList<String>());
-		when(servletContext.getAttribute("plugin-configuration"))
-				.thenReturn(new HashMap<String, JSONObject>());
+		when(servletContext.getAttribute("js-paths")).thenReturn(
+				new ArrayList<String>());
+		when(servletContext.getAttribute("plugin-configuration")).thenReturn(
+				new HashMap<String, JSONObject>());
 		when(servletConfig.getServletContext()).thenReturn(servletContext);
 		servlet.init(servletConfig);
 		return servlet;
@@ -121,26 +131,27 @@ public class ConfigServletTest {
 
 	@Test
 	public void usesModulesFromPluginsInConfiguration() throws Exception {
-		Locale locale = Locale.ROOT;
-
-		PluginDescriptor plugin1 = new PluginDescriptor(true);
-		plugin1.setName("plugin1");
+		PluginDescriptor plugin1 = new PluginDescriptor();
 		plugin1.addModule("module1");
-		String pluginConf1 = "{module1 : {prop1 : 42, prop2 : true}}";
-
-		Map<PluginDescriptor, JSONObject> pluginConf = new HashMap<PluginDescriptor, JSONObject>();
-		pluginConf.put(plugin1, JSONObject.fromObject(pluginConf1));
+		new PluginDescriptorFileReader(
+				"{default-conf:{module1 : {prop1 : 42, prop2 : true}}}", true,
+				"plugin1").fillPluginDescriptor(plugin1);
+		Set<PluginDescriptor> plugins = new HashSet<PluginDescriptor>();
+		plugins.add(plugin1);
+		PluginDescriptors pluginDescriptors = new PluginDescriptors(plugins);
 
 		mockEmptyConfig();
-		when(request.getAttribute(LangFilter.ATTR_LOCALE)).thenReturn(locale);
-		when(config.getPluginConfig(locale, request)).thenReturn(pluginConf);
+		when(request.getAttribute(LangFilter.ATTR_LOCALE)).thenReturn(
+				Locale.ROOT);
+		when(config.getPluginConfig(Locale.ROOT, request)).thenReturn(
+				pluginDescriptors);
 
 		servlet.doGet(request, response, context);
 
 		String content = response();
 		// It starts with var require = {...
-		JSONObject json = JSONObject
-				.fromObject(response().substring(content.indexOf('{')));
+		JSONObject json = JSONObject.fromObject(response().substring(
+				content.indexOf('{')));
 		JSONArray modules = json.getJSONObject("config")
 				.getJSONObject("customization").getJSONArray("modules");
 		assertEquals(1, modules.size());
@@ -150,33 +161,35 @@ public class ConfigServletTest {
 	@Test
 	public void writesRequireJSConfigurationAsReturnedByConfig()
 			throws Exception {
-		Locale locale = Locale.ROOT;
-
-		PluginDescriptor plugin1 = new PluginDescriptor(true);
-		plugin1.setName("plugin1");
+		PluginDescriptor plugin1 = new PluginDescriptor();
 		plugin1.getModules().add("module1");
-		PluginDescriptor plugin2 = new PluginDescriptor(true);
-		plugin2.setName("plugin2");
+		PluginDescriptor plugin2 = new PluginDescriptor();
 		plugin2.getModules().add("module2");
 		plugin2.getModules().add("module3");
-		String pluginConf1 = "{module1 : {prop1 : 42, prop2 : true}}";
-		String pluginConf2 = "{module2 : {prop3 : 'test'},"
-				+ "module3 : [4, 2, 9]}";
-
-		Map<PluginDescriptor, JSONObject> pluginConf = new HashMap<PluginDescriptor, JSONObject>();
-		pluginConf.put(plugin1, JSONObject.fromObject(pluginConf1));
-		pluginConf.put(plugin2, JSONObject.fromObject(pluginConf2));
+		new PluginDescriptorFileReader(
+				"{default-conf:{module1 : {prop1 : 42, prop2 : true}}}", true,
+				"plugin1").fillPluginDescriptor(plugin1);
+		new PluginDescriptorFileReader(
+				"{default-conf:{module2 : {prop3 : 'test'},"
+						+ "module3 : [4, 2, 9]}}", true, "plugin2")
+				.fillPluginDescriptor(plugin2);
+		Set<PluginDescriptor> plugins = new HashSet<PluginDescriptor>();
+		plugins.add(plugin1);
+		plugins.add(plugin2);
+		PluginDescriptors pluginDescriptors = new PluginDescriptors(plugins);
 
 		mockEmptyConfig();
-		when(request.getAttribute(LangFilter.ATTR_LOCALE)).thenReturn(locale);
-		when(config.getPluginConfig(locale, request)).thenReturn(pluginConf);
+		when(request.getAttribute(LangFilter.ATTR_LOCALE)).thenReturn(
+				Locale.ROOT);
+		when(config.getPluginConfig(Locale.ROOT, request)).thenReturn(
+				pluginDescriptors);
 
 		servlet.doGet(request, response, context);
 
 		String content = response();
 		// It starts with var require = {...
-		JSONObject json = JSONObject
-				.fromObject(response().substring(content.indexOf('{')));
+		JSONObject json = JSONObject.fromObject(response().substring(
+				content.indexOf('{')));
 		JSONObject cfg = json.getJSONObject("config");
 		JSONObject module1 = cfg.getJSONObject("module1");
 		JSONObject module2 = cfg.getJSONObject("module2");
@@ -188,25 +201,6 @@ public class ConfigServletTest {
 		assertEquals(4, module3.get(0));
 		assertEquals(2, module3.get(1));
 		assertEquals(9, module3.get(2));
-	}
-
-	@Test
-	public void ignoresNullConfigurations() throws Exception {
-		mockEmptyConfig();
-		when(request.getAttribute(LangFilter.ATTR_LOCALE))
-				.thenReturn(Locale.ROOT);
-		when(config.getPluginConfig(Locale.ROOT, request)).thenReturn(
-				Collections.<PluginDescriptor, JSONObject>singletonMap(
-						new PluginDescriptor(true), null));
-
-		servlet.doGet(request, response, context);
-
-		// It starts with var require = {...
-		JSONObject json = JSONObject
-				.fromObject(response().substring(response().indexOf('{')));
-		JSONObject cfg = json.getJSONObject("config");
-		// customization, i18n and url-parameters are always there
-		assertEquals(3, cfg.keySet().size());
 	}
 
 	private void mockEmptyConfig() {

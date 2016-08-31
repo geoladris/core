@@ -13,6 +13,13 @@
 		<module>jwebclient-analyzer</module>
 	</modules>
 
+	<repositories>
+		<repository>
+			<id>csgis-releases</id>
+			<url>http://service-sandbox.csgis.de:8081/mvn/releases/</url>
+		</repository>
+	</repositories>
+
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>

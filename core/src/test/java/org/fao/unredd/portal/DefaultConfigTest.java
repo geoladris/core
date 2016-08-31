@@ -1,4 +1,3 @@
-
 package org.fao.unredd.portal;
 
 import static junit.framework.Assert.assertEquals;
@@ -23,17 +22,19 @@ import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.fao.unredd.jwebclientAnalyzer.PluginDescriptor;
-import org.junit.Test;
-
 import net.sf.json.JSONObject;
+
+import org.fao.unredd.jwebclientAnalyzer.PluginDescriptor;
+import org.fao.unredd.jwebclientAnalyzer.PluginDescriptorFileReader;
+import org.junit.Test;
 
 public class DefaultConfigTest {
 
 	@Test
 	public void testConfigurationProvidersMerge() throws Exception {
 		Set<PluginDescriptor> plugins = new HashSet<>();
-		PluginDescriptor plugin1 = new PluginDescriptor(true);
+		PluginDescriptor plugin1 = new PluginDescriptor();
+		plugin1.setInstallInRoot(true);
 		plugin1.setName("1");
 		plugins.add(plugin1);
 
@@ -42,16 +43,18 @@ public class DefaultConfigTest {
 		JSONObject conf2 = JSONObject
 				.fromObject("{ module : { a : 10, c : 3 }}");
 
-		ModuleConfigurationProvider provider1 = mock(
-				ModuleConfigurationProvider.class);
-		when(provider1.getPluginConfig(any(PortalRequestConfiguration.class),
-				any(HttpServletRequest.class)))
-						.thenReturn(Collections.singletonMap(plugin1, conf1));
-		ModuleConfigurationProvider provider2 = mock(
-				ModuleConfigurationProvider.class);
-		when(provider2.getPluginConfig(any(PortalRequestConfiguration.class),
-				any(HttpServletRequest.class)))
-						.thenReturn(Collections.singletonMap(plugin1, conf2));
+		ModuleConfigurationProvider provider1 = mock(ModuleConfigurationProvider.class);
+		when(
+				provider1.getPluginConfig(
+						any(PortalRequestConfiguration.class),
+						any(HttpServletRequest.class))).thenReturn(
+				Collections.singletonMap("1", conf1));
+		ModuleConfigurationProvider provider2 = mock(ModuleConfigurationProvider.class);
+		when(
+				provider2.getPluginConfig(
+						any(PortalRequestConfiguration.class),
+						any(HttpServletRequest.class))).thenReturn(
+				Collections.singletonMap("1", conf2));
 
 		Config config = new DefaultConfig(mock(ConfigFolder.class), plugins,
 				null, false);
@@ -59,9 +62,10 @@ public class DefaultConfigTest {
 		config.addModuleConfigurationProvider(provider1);
 		config.addModuleConfigurationProvider(provider2);
 
-		Map<PluginDescriptor, JSONObject> c = config.getPluginConfig(
-				Locale.getDefault(), mock(HttpServletRequest.class));
-		JSONObject pluginConf = c.get(plugin1).getJSONObject("module");
+		PluginDescriptors c = config.getPluginConfig(Locale.getDefault(),
+				mock(HttpServletRequest.class));
+		JSONObject pluginConf = c.get("1").getConfiguration()
+				.getJSONObject("module");
 
 		assertTrue(pluginConf.has("a") && pluginConf.has("b")
 				&& pluginConf.has("c"));
@@ -150,12 +154,11 @@ public class DefaultConfigTest {
 	private void readPluginConfigurationTwice(boolean useCache,
 			boolean canBeCached, int numCalls) throws IOException {
 		// Install configuration provider
-		ModuleConfigurationProvider configurationProvider = mock(
-				ModuleConfigurationProvider.class);
+		ModuleConfigurationProvider configurationProvider = mock(ModuleConfigurationProvider.class);
 		when(configurationProvider.canBeCached()).thenReturn(canBeCached);
 
-		Config config = new DefaultConfig(mock(ConfigFolder.class), null, null,
-				useCache);
+		Config config = new DefaultConfig(mock(ConfigFolder.class),
+				Collections.<PluginDescriptor> emptySet(), null, useCache);
 		config.addModuleConfigurationProvider(configurationProvider);
 
 		// Call twice
@@ -172,9 +175,9 @@ public class DefaultConfigTest {
 
 	@Test
 	public void testNoConfigurationFolder() {
-		Config config = new DefaultConfig(
-				new ConfigFolder("doesnotexist", "doesnotexist"), null, null,
-				false);
+		Config config = new DefaultConfig(new ConfigFolder("doesnotexist",
+				"doesnotexist"), Collections.<PluginDescriptor> emptySet(),
+				null, false);
 		assertNotNull(config.getDir());
 		assertNotNull(config.getPluginConfig(Locale.getDefault(),
 				mock(HttpServletRequest.class)));
@@ -185,207 +188,49 @@ public class DefaultConfigTest {
 
 	@Test
 	public void testFailingConfigurationProvider() throws Exception {
-		Config config = new DefaultConfig(
-				new ConfigFolder("doesnotexist", "doesnotexist"), null, null,
-				false);
-		ModuleConfigurationProvider provider = mock(
-				ModuleConfigurationProvider.class);
-		when(provider.getPluginConfig(any(PortalRequestConfiguration.class),
-				any(HttpServletRequest.class)))
-						.thenThrow(new IOException("mock"));
+		Config config = new DefaultConfig(new ConfigFolder("doesnotexist",
+				"doesnotexist"), Collections.<PluginDescriptor> emptySet(),
+				null, false);
+		ModuleConfigurationProvider provider = mock(ModuleConfigurationProvider.class);
+		when(
+				provider.getPluginConfig(any(PortalRequestConfiguration.class),
+						any(HttpServletRequest.class))).thenThrow(
+				new IOException("mock"));
 		config.addModuleConfigurationProvider(provider);
 		assertNotNull(config.getPluginConfig(Locale.getDefault(),
 				mock(HttpServletRequest.class)));
 	}
 
 	@Test
-	public void doesNotReturnDisabledPlugins() throws Exception {
-		PluginDescriptor p1 = new PluginDescriptor(true);
-		PluginDescriptor p2 = new PluginDescriptor(true);
-		p1.setName("p1");
-		p1.setName("p2");
-
-		Config config = new DefaultConfig(
-				new ConfigFolder("doesnotexist", "doesnotexist"), null, null,
-				false);
-
-		Map<PluginDescriptor, JSONObject> conf = new HashMap<>();
-		conf.put(p1, JSONObject.fromObject("{_enabled : false, "
-				+ "m1 : { a : 1, b : 2}, m2 : { c : 1, d : 2}}"));
-		conf.put(p2, JSONObject
-				.fromObject("{_enabled : true, m3 : { a : 1, b : 2}}"));
-
-		ModuleConfigurationProvider p = mock(ModuleConfigurationProvider.class);
-		when(p.getPluginConfig(any(PortalRequestConfiguration.class),
-				any(HttpServletRequest.class))).thenReturn(conf);
-		config.addModuleConfigurationProvider(p);
-
-		Map<PluginDescriptor, JSONObject> pluginConfs = config
-				.getPluginConfig(Locale.ROOT, mock(HttpServletRequest.class));
-
-		assertEquals(1, pluginConfs.size());
-		JSONObject pluginConf = pluginConfs.get(p2);
-		assertEquals(1, pluginConf.keySet().size());
-		assertEquals("m3", pluginConf.keySet().iterator().next());
-	}
-
-	@Test
-	public void pluginsEnabledByDefault() throws Exception {
-		PluginDescriptor p1 = new PluginDescriptor(true);
-
-		ModuleConfigurationProvider p = mockConfProvider(p1,
-				"{ m1 : { a : 1, b : 2}, m2 : { c : 1, d : 2}}");
-		Config config = new DefaultConfig(
-				new ConfigFolder("doesnotexist", "doesnotexist"), null, null,
-				false);
-		config.addModuleConfigurationProvider(p);
-
-		Map<PluginDescriptor, JSONObject> pluginConf = config
-				.getPluginConfig(Locale.ROOT, mock(HttpServletRequest.class));
-		assertEquals(1, pluginConf.size());
-	}
-
-	@Test
-	public void mergesDefaultConfIfSpecified() throws Exception {
-		PluginDescriptor plugin = new PluginDescriptor(true);
-
-		DefaultConfProvider defaultConfProvider = mockDefaultConfProvider(
-				plugin, "{ m1 : { a : 1, b : 2}, m2 : { c : 1, d : 2}}");
-		ModuleConfigurationProvider provider = mockConfProvider(plugin,
-				"{ _override : false, _enabled : true, m1 : { a : 10}}");
-
-		Config config = new DefaultConfig(
-				new ConfigFolder("doesnotexist", "doesnotexist"), null,
-				defaultConfProvider, false);
-		config.addModuleConfigurationProvider(provider);
-
-		Map<PluginDescriptor, JSONObject> pluginConfs = config
-				.getPluginConfig(Locale.ROOT, mock(HttpServletRequest.class));
-
-		assertEquals(1, pluginConfs.size());
-		JSONObject pluginConf = pluginConfs.get(plugin);
-		assertEquals(2, pluginConf.keySet().size());
-		assertEquals(10, pluginConf.getJSONObject("m1").get("a"));
-		assertEquals(2, pluginConf.getJSONObject("m1").get("b"));
-		assertEquals(1, pluginConf.getJSONObject("m2").get("c"));
-		assertEquals(2, pluginConf.getJSONObject("m2").get("d"));
-	}
-
-	@Test
-	public void overridesDefaultConfIfSpecified() throws Exception {
-		PluginDescriptor plugin = new PluginDescriptor(true);
-
-		DefaultConfProvider defaultConfProvider = mockDefaultConfProvider(
-				plugin, "{ m1 : { a : 1, b : 2}, m2 : { c : 1, d : 2}}");
-		ModuleConfigurationProvider provider = mockConfProvider(plugin,
-				"{ _override : true, _enabled : true, m1 : { a : 10}}");
-
-		Config config = new DefaultConfig(
-				new ConfigFolder("doesnotexist", "doesnotexist"), null,
-				defaultConfProvider, false);
-		config.addModuleConfigurationProvider(provider);
-
-		Map<PluginDescriptor, JSONObject> pluginConfs = config
-				.getPluginConfig(Locale.ROOT, mock(HttpServletRequest.class));
-
-		assertEquals(1, pluginConfs.size());
-		JSONObject pluginConf = pluginConfs.get(plugin);
-		assertEquals(1, pluginConf.keySet().size());
-		assertEquals(10, pluginConf.getJSONObject("m1").get("a"));
-	}
-
-	@Test
-	public void defaultConfigurationMergedByDefault() throws Exception {
-		PluginDescriptor plugin = new PluginDescriptor(true);
-
-		DefaultConfProvider defaultConfProvider = mockDefaultConfProvider(
-				plugin, "{ m1 : { a : 1, b : 2}, m2 : { c : 1, d : 2}}");
-		ModuleConfigurationProvider provider = mockConfProvider(plugin,
-				"{ _enabled : true, m1 : { a : 10}}");
-
-		Config config = new DefaultConfig(
-				new ConfigFolder("doesnotexist", "doesnotexist"), null,
-				defaultConfProvider, false);
-		config.addModuleConfigurationProvider(provider);
-
-		Map<PluginDescriptor, JSONObject> pluginConfs = config
-				.getPluginConfig(Locale.ROOT, mock(HttpServletRequest.class));
-
-		assertEquals(1, pluginConfs.size());
-		JSONObject pluginConf = pluginConfs.get(plugin);
-		assertEquals(2, pluginConf.keySet().size());
-		assertEquals(10, pluginConf.getJSONObject("m1").get("a"));
-		assertEquals(2, pluginConf.getJSONObject("m1").get("b"));
-		assertEquals(1, pluginConf.getJSONObject("m2").get("c"));
-		assertEquals(2, pluginConf.getJSONObject("m2").get("d"));
-	}
-
-	@Test
-	public void doesNotReturnEnabledOverridePseudomodules() throws Exception {
-		PluginDescriptor plugin = new PluginDescriptor(true);
-
-		ModuleConfigurationProvider provider = mockConfProvider(plugin,
-				"{ _override : false, _enabled : true, m1 : { a : 10 }}");
-
-		Config config = new DefaultConfig(
-				new ConfigFolder("doesnotexist", "doesnotexist"), null, null,
-				false);
-		config.addModuleConfigurationProvider(provider);
-
-		Map<PluginDescriptor, JSONObject> pluginConfs = config
-				.getPluginConfig(Locale.ROOT, mock(HttpServletRequest.class));
-
-		assertEquals(1, pluginConfs.size());
-		JSONObject pluginConf = pluginConfs.get(plugin);
-		assertFalse(pluginConf.has("_enabled"));
-		assertFalse(pluginConf.has("_override"));
-	}
-
-	@Test
-	public void includesPluginsFromDefaultConfIfAllEnabled() throws Exception {
-		PluginDescriptor p1 = new PluginDescriptor(true);
-		p1.setName("plugin1");
-		PluginDescriptor p2 = new PluginDescriptor(true);
-		p2.setName("plugin2");
-
-		DefaultConfProvider defaultConfProvider = mockDefaultConfProvider(p2,
-				"{ m2 : { b : 20 }}");
-		ModuleConfigurationProvider provider = mockConfProvider(p1,
-				"{ m1 : { a : 10 }}");
-
-		Config config = new DefaultConfig(
-				new ConfigFolder("doesnotexist", "doesnotexist"), null,
-				defaultConfProvider, false);
-		config.addModuleConfigurationProvider(provider);
-
-		Map<PluginDescriptor, JSONObject> pluginConfs = config
-				.getPluginConfig(Locale.ROOT, mock(HttpServletRequest.class));
-
-		assertEquals(2, pluginConfs.size());
-		assertEquals(10, pluginConfs.get(p1).getJSONObject("m1").get("a"));
-		assertEquals(20, pluginConfs.get(p2).getJSONObject("m2").get("b"));
-	}
-
-	private DefaultConfProvider mockDefaultConfProvider(PluginDescriptor plugin,
-			String conf) throws IOException {
-		return mockConfProvider(plugin, conf, DefaultConfProvider.class);
-	}
-
-	private ModuleConfigurationProvider mockConfProvider(
-			PluginDescriptor plugin, String conf) throws IOException {
-		return mockConfProvider(plugin, conf,
-				ModuleConfigurationProvider.class);
-	}
-
-	private <T extends ModuleConfigurationProvider> T mockConfProvider(
-			PluginDescriptor plugin, String conf, Class<T> clazz)
+	public void testMergeDoesNotAffectDefaultPluginConfiguration()
 			throws IOException {
-		T p = mock(clazz);
-		Map<PluginDescriptor, JSONObject> defaultConf = new HashMap<>();
-		defaultConf.put(plugin, JSONObject.fromObject(conf));
-		when(p.getPluginConfig(any(PortalRequestConfiguration.class),
-				any(HttpServletRequest.class))).thenReturn(defaultConf);
-		return p;
-	}
+		Set<PluginDescriptor> plugins = new HashSet<PluginDescriptor>();
+		PluginDescriptor pluginDescriptor = new PluginDescriptor();
+		new PluginDescriptorFileReader("{default-conf:{m1:true}}", true, "p1")
+				.fillPluginDescriptor(pluginDescriptor);
+		plugins.add(pluginDescriptor);
+		Config config = new DefaultConfig(new ConfigFolder("doesnotexist",
+				"doesnotexist"), plugins, null, false);
 
+		Map<String, JSONObject> mergingConfiguration1 = new HashMap<String, JSONObject>();
+		mergingConfiguration1.put("p1", JSONObject.fromObject("{m2:true}"));
+		Map<String, JSONObject> mergingConfiguration2 = new HashMap<String, JSONObject>();
+		mergingConfiguration2.put("p1", JSONObject.fromObject("{}"));
+		ModuleConfigurationProvider provider = mock(ModuleConfigurationProvider.class);
+		when(
+				provider.getPluginConfig(any(PortalRequestConfiguration.class),
+						any(HttpServletRequest.class))).thenReturn(
+				mergingConfiguration1).thenReturn(mergingConfiguration2);
+		config.addModuleConfigurationProvider(provider);
+
+		JSONObject configuration = config.getPluginConfig(Locale.ROOT,
+				mock(HttpServletRequest.class)).getEnabled()[0]
+				.getConfiguration();
+		assertEquals(2, configuration.keySet().size());
+
+		configuration = config.getPluginConfig(Locale.ROOT,
+				mock(HttpServletRequest.class)).getEnabled()[0]
+				.getConfiguration();
+		assertEquals(1, configuration.keySet().size());
+	}
 }

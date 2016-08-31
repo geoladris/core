@@ -41,14 +41,14 @@ public class JEEContextAnalyzer {
 
 	private void scanClasses(Context context) {
 		PluginConfigEntryListener pluginConfListener = new PluginConfigEntryListener(
-				pluginConfDir + File.separator);
+				pluginConfDir + File.separator, true);
 		WebResourcesEntryListener webResourcesListener = new WebResourcesEntryListener(
 				webResourcesDir + File.separator);
 
 		ClassesPluginLayout pluginLayout = new ClassesPluginLayout(
 				context.getClientRoot(), pluginConfDir, webResourcesDir);
 		if (pluginLayout.rootFolderExists()) {
-			this.currentPlugin = new PluginDescriptor(true);
+			this.currentPlugin = new PluginDescriptor();
 			extractInfo(context, pluginLayout, pluginConfListener,
 					webResourcesListener);
 			this.pluginDescriptors.add(this.currentPlugin);
@@ -58,13 +58,13 @@ public class JEEContextAnalyzer {
 
 	private void scanJars(Context context) {
 		PluginConfigEntryListener pluginConfListener = new PluginConfigEntryListener(
-				pluginConfDir + File.separator);
+				pluginConfDir + File.separator, true);
 		WebResourcesEntryListener webResourcesListener = new WebResourcesEntryListener(
 				webResourcesDir + File.separator);
 
 		Set<String> libJars = context.getLibPaths();
 		for (Object jar : libJars) {
-			this.currentPlugin = new PluginDescriptor(true);
+			this.currentPlugin = new PluginDescriptor();
 			processJar(context, jar, pluginConfListener);
 			processJar(context, jar, webResourcesListener);
 			this.pluginDescriptors.add(this.currentPlugin);
@@ -74,7 +74,7 @@ public class JEEContextAnalyzer {
 
 	private void scanNoJava(Context context) {
 		PluginConfigEntryListener pluginConfListener = new PluginConfigEntryListener(
-				"");
+				"", false);
 		WebResourcesEntryListener webResourcesListener = new WebResourcesEntryListener(
 				"");
 
@@ -83,7 +83,7 @@ public class JEEContextAnalyzer {
 			File[] plugins = rootFolder.listFiles();
 			if (plugins != null) {
 				for (File pluginRoot : plugins) {
-					this.currentPlugin = new PluginDescriptor(false);
+					this.currentPlugin = new PluginDescriptor();
 					this.currentPlugin.setName(pluginRoot.getName());
 					extractInfo(context, new NoJavaPluginLayout(pluginRoot),
 							pluginConfListener, webResourcesListener);
@@ -97,8 +97,8 @@ public class JEEContextAnalyzer {
 	private void processJar(Context context, Object jar,
 			ContextEntryListener listener) {
 		InputStream jarStream = context.getLibAsStream(jar.toString());
-		final ZipInputStream zis = new ZipInputStream(
-				new BufferedInputStream(jarStream));
+		final ZipInputStream zis = new ZipInputStream(new BufferedInputStream(
+				jarStream));
 		ZipEntry entry;
 		try {
 			while ((entry = zis.getNextEntry()) != null) {
@@ -197,20 +197,23 @@ public class JEEContextAnalyzer {
 
 	private class PluginConfigEntryListener implements ContextEntryListener {
 		private String pathPrefix;
+		private boolean defaultInstallInRoot;
 
-		public PluginConfigEntryListener(String pathPrefix) {
+		public PluginConfigEntryListener(String pathPrefix,
+				boolean defaultInstallInRoot) {
 			this.pathPrefix = pathPrefix;
+			this.defaultInstallInRoot = defaultInstallInRoot;
 		}
 
 		@Override
 		public void accept(String path, ContextEntryReader contentReader)
 				throws IOException {
-			if (path.matches(
-					"\\Q" + pathPrefix + "\\E[\\w-]+\\Q-conf.json\\E")) {
-				currentPlugin.setConfiguration(contentReader.getContent());
+			if (path.matches("\\Q" + pathPrefix + "\\E[\\w-]+\\Q-conf.json\\E")) {
 				String name = new File(path).getName();
 				name = name.substring(0, name.length() - "-conf.json".length());
-				currentPlugin.setName(name);
+				PluginDescriptorFileReader reader = new PluginDescriptorFileReader(
+						contentReader.getContent(), defaultInstallInRoot, name);
+				reader.fillPluginDescriptor(currentPlugin);
 			}
 		}
 	}
@@ -239,8 +242,8 @@ public class JEEContextAnalyzer {
 					name = name.substring(0, name.length() - 3);
 					currentPlugin.addModule(name);
 				}
-			} else if ((path.startsWith(stylesPrefix)
-					|| path.startsWith(themePrefix)) && path.endsWith(".css")) {
+			} else if ((path.startsWith(stylesPrefix) || path
+					.startsWith(themePrefix)) && path.endsWith(".css")) {
 				String stylesheet = path.substring(pathPrefix.length());
 				currentPlugin.addStylesheet(stylesheet);
 			}

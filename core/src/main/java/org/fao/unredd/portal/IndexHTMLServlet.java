@@ -8,7 +8,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Properties;
 
 import javax.servlet.ServletException;
@@ -23,8 +22,6 @@ import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.runtime.resource.loader.StringResourceLoader;
 import org.apache.velocity.runtime.resource.util.StringResourceRepository;
 import org.fao.unredd.jwebclientAnalyzer.PluginDescriptor;
-
-import net.sf.json.JSONObject;
 
 public class IndexHTMLServlet extends HttpServlet {
 	public static final String HTTP_PARAM_DEBUG = "debug";
@@ -61,8 +58,8 @@ public class IndexHTMLServlet extends HttpServlet {
 		if (debug != null && Boolean.parseBoolean(debug)) {
 			minifiedjs = false;
 		} else {
-			minifiedjs = Boolean
-					.parseBoolean(System.getProperty(PROP_MINIFIED_JS));
+			minifiedjs = Boolean.parseBoolean(System
+					.getProperty(PROP_MINIFIED_JS));
 		}
 
 		Config config = (Config) getServletContext().getAttribute("config");
@@ -71,10 +68,10 @@ public class IndexHTMLServlet extends HttpServlet {
 			styleSheets.add(OPTIMIZED_FOLDER + "/portal-style.css");
 		} else {
 			Locale locale = (Locale) req.getAttribute(LangFilter.ATTR_LOCALE);
-			Map<PluginDescriptor, JSONObject> pluginConf = config
-					.getPluginConfig(locale, req);
+			PluginDescriptors pluginDescriptors = config.getPluginConfig(
+					locale, req);
 			List<String> classPathStylesheets = new ArrayList<>();
-			for (PluginDescriptor plugin : pluginConf.keySet()) {
+			for (PluginDescriptor plugin : pluginDescriptors.getEnabled()) {
 				classPathStylesheets.addAll(plugin.getStylesheets());
 			}
 
@@ -118,8 +115,8 @@ public class IndexHTMLServlet extends HttpServlet {
 
 		StringResourceRepository repo = StringResourceLoader.getRepository();
 		String templateName = "/index.html";
-		BufferedInputStream bis = new BufferedInputStream(
-				this.getClass().getResourceAsStream("/index.html"));
+		BufferedInputStream bis = new BufferedInputStream(this.getClass()
+				.getResourceAsStream("/index.html"));
 		String indexContent = IOUtils.toString(bis);
 		bis.close();
 		repo.putStringResource(templateName, indexContent);

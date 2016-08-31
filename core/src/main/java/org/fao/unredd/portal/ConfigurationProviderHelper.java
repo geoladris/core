@@ -3,11 +3,8 @@ package org.fao.unredd.portal;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
-import org.fao.unredd.jwebclientAnalyzer.PluginDescriptor;
-
-import de.csgis.commons.JSONContentProvider;
 import net.sf.json.JSONObject;
+import de.csgis.commons.JSONContentProvider;
 
 /**
  * <p>
@@ -17,20 +14,11 @@ import net.sf.json.JSONObject;
  * @author victorzinho
  */
 public class ConfigurationProviderHelper {
-	private static final Logger logger = Logger
-			.getLogger(ConfigurationProviderHelper.class);
 
 	private JSONContentProvider contents;
-	private Map<String, PluginDescriptor> plugins;
 
-	public ConfigurationProviderHelper(Map<String, PluginDescriptor> plugins) {
-		this(null, plugins);
-	}
-
-	public ConfigurationProviderHelper(JSONContentProvider provider,
-			Map<String, PluginDescriptor> plugins) {
+	public ConfigurationProviderHelper(JSONContentProvider provider) {
 		this.contents = provider;
-		this.plugins = plugins;
 	}
 
 	/**
@@ -56,23 +44,20 @@ public class ConfigurationProviderHelper {
 	 * @throws NullPointerException
 	 *             if this instance has been created with a constructor that
 	 *             does not receive a {@link JSONContentProvider}, such as
-	 *             {@link #ConfigurationProviderHelper(JSONContentProvider, Map)}.
+	 *             {@link #ConfigurationProviderHelper(JSONContentProvider, Map)}
+	 *             .
 	 */
-	public Map<PluginDescriptor, JSONObject> getPluginConfig(String file)
+	public Map<String, JSONObject> getPluginConfig(String file)
 			throws NullPointerException {
 		JSONObject conf = this.contents.get().get(file);
 		if (conf == null) {
 			return null;
 		}
 
-		Map<PluginDescriptor, JSONObject> ret = new HashMap<PluginDescriptor, JSONObject>();
+		Map<String, JSONObject> ret = new HashMap<String, JSONObject>();
 		for (Object plugin : conf.keySet()) {
-			PluginDescriptor descriptor = this.plugins.get(plugin);
-			if (descriptor == null) {
-				logger.warn("Cannot find descriptor for plugin: " + plugin);
-			} else {
-				ret.put(descriptor, conf.getJSONObject(plugin.toString()));
-			}
+			String pluginName = plugin.toString();
+			ret.put(pluginName, conf.getJSONObject(pluginName));
 		}
 
 		return ret;

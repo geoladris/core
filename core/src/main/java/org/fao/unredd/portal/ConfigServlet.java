@@ -6,10 +6,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
-import java.util.Set;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
@@ -17,11 +15,11 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.fao.unredd.AppContextListener;
-import org.fao.unredd.jwebclientAnalyzer.PluginDescriptor;
-
 import net.sf.json.JSONObject;
 import net.sf.json.JSONSerializer;
+
+import org.fao.unredd.AppContextListener;
+import org.fao.unredd.jwebclientAnalyzer.PluginDescriptor;
 
 public class ConfigServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
@@ -47,20 +45,23 @@ public class ConfigServlet extends HttpServlet {
 			title = "Untitled";
 		}
 
-		Map<PluginDescriptor, JSONObject> pluginConfs = config
-				.getPluginConfig(locale, req);
+		PluginDescriptors descriptors = config.getPluginConfig(locale, req);
 
 		JSONObject moduleConfig = new JSONObject();
 		// Fixed elements
-		moduleConfig.element("customization", buildCustomizationObject(context,
-				config, locale, title, pluginConfs.keySet()));
+		PluginDescriptor[] enabledPluginDescriptors = descriptors.getEnabled();
+		moduleConfig.element(
+				"customization",
+				buildCustomizationObject(context, config, locale, title,
+						enabledPluginDescriptors));
 		moduleConfig.element("i18n", buildI18NObject(bundle));
 		moduleConfig.element("url-parameters",
 				JSONSerializer.toJSON(req.getParameterMap()));
 
-		for (JSONObject conf : pluginConfs.values()) {
-			if (conf != null) {
-				moduleConfig.putAll(conf);
+		for (PluginDescriptor pluginDescriptor : enabledPluginDescriptors) {
+			JSONObject configuration = pluginDescriptor.getConfiguration();
+			if (configuration != null) {
+				moduleConfig.putAll(configuration);
 			}
 		}
 
@@ -84,7 +85,7 @@ public class ConfigServlet extends HttpServlet {
 
 	private JSONObject buildCustomizationObject(ServletContext servletContext,
 			Config config, Locale locale, String title,
-			Set<PluginDescriptor> plugins) {
+			PluginDescriptor[] plugins) {
 		JSONObject obj = new JSONObject();
 		obj.element("title", title);
 		obj.element(Config.PROPERTY_LANGUAGES, config.getLanguages());
