@@ -33,6 +33,10 @@
 			<id>geoladris snapshots</id>
 			<url>http://nullisland.geomati.co:8081/mvn/snapshots/</url>
 		</repository>
+		<repository>
+			<id>csgis-releases</id>
+			<url>http://service-sandbox.csgis.de:8081/mvn/releases/</url>
+		</repository>
 	</repositories>
 
 	<dependencies>
