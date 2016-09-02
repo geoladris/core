@@ -1,6 +1,5 @@
 package org.fao.unredd.jwebclientAnalyzer;
 
-import static junit.framework.Assert.fail;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -16,54 +15,6 @@ public class PluginDescriptorTest {
 	public void canHaveNullName() {
 		PluginDescriptor descriptor = new PluginDescriptor();
 		assertNull(descriptor.getName());
-	}
-
-	@Test
-	public void equals() {
-		fail();
-		// PluginDescriptor p1 = new PluginDescriptor();
-		// p1.setInstallInRoot(true);
-		// PluginDescriptor p2 = new PluginDescriptor();
-		// p2.setInstallInRoot(true);
-		//
-		// String conf = "{'default-conf' : { m1 : true }, "
-		// + "requirejs : { paths : { a : '../jslib/A', "
-		// + "b : '../jslib/B' } } }";
-		// new PluginDescriptorFileReader(conf, false, null)
-		// .fillPluginDescriptor(p1);
-		// new PluginDescriptorFileReader(conf, false, null)
-		// .fillPluginDescriptor(p2);
-		// p1.addModule("m1");
-		// p2.addModule("m1");
-		// p1.addStylesheet("s1");
-		// p2.addStylesheet("s1");
-		//
-		// assertEquals(p1, p2);
-		// assertEquals(p1.hashCode(), p2.hashCode());
-	}
-
-	@Test
-	public void notEquals() {
-		fail();
-		// PluginDescriptor p1 = new PluginDescriptor(true);
-		// PluginDescriptor p2 = new PluginDescriptor(true);
-		//
-		// String conf = "{'default-conf' : { m1 : true }, "
-		// + "requirejs : { paths : { a : '../jslib/A', "
-		// + "b : '../jslib/B' } } }";
-		// p1.setConfiguration(conf);
-		// p2.setConfiguration(conf);
-		// p1.addModule("m1");
-		// p2.addStylesheet("s1");
-		//
-		// assertNotSame(p1, p2);
-		// assertNotSame(p1.hashCode(), p2.hashCode());
-	}
-
-	@Test
-	public void equalsEmptyPlugins() {
-		fail();
-		// assertEquals(new PluginDescriptor(true), new PluginDescriptor(true));
 	}
 
 	@Test
