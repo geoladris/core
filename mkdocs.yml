@@ -1,12 +1,9 @@
 site_name: Geoladris - Core
 pages:
 - Home: index.md
-- 'CSS Styling': css.md
 - 'Change log': changelog.md
 - 'Configuration directory': conf_dir.md
-- 'Deprecated': deprecated.md
 - 'Minifying Javascript and CSS': minify_js_css.md
-- 'Plugin configuration': plugin_configuration.md
-- 'Plugin descriptor': plugin_descriptor.md
-- 'portal.properties': portal_properties.md
+- 'Plugins': plugins.md
+- 'Travis configuration': travis.md
 
