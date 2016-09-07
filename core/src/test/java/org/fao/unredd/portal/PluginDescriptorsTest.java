@@ -175,7 +175,6 @@ public class PluginDescriptorsTest {
 				+ "}", true, null).fillPluginDescriptor(pluginDescriptor2);
 		pluginDescriptor2.addModule("m2");
 		pluginDescriptor2.addStylesheet("m2.css");
-		plugins.add(pluginDescriptor1);
 		plugins.add(pluginDescriptor2);
 		PluginDescriptors pluginDescriptors = new PluginDescriptors(plugins);
 
@@ -196,4 +195,84 @@ public class PluginDescriptorsTest {
 		assertEquals(2, pluginDescriptor.getRequireJSShims().size());
 	}
 
+	@Test
+	public void unnamedMergeSearchesModulesInPluginsThatInstallInRoot()
+			throws Exception {
+
+		Set<PluginDescriptor> plugins = new HashSet<PluginDescriptor>();
+		PluginDescriptor rootNamedPluginDescriptor = new PluginDescriptor();
+		String rootNamedPluginName = "rootNamedPlugin";
+		new PluginDescriptorFileReader("{"//
+				+ "installInRoot:true,"//
+				+ "default-conf:{ m1 : {value:1} }, "//
+				+ "}", true, rootNamedPluginName)
+				.fillPluginDescriptor(rootNamedPluginDescriptor);
+		plugins.add(rootNamedPluginDescriptor);
+		PluginDescriptor qualifiedNamedPluginDescriptor = new PluginDescriptor();
+		String qualifiedNamedPluginName = "qualifiedNamedPlugin";
+		new PluginDescriptorFileReader("{"//
+				+ "installInRoot:false,"//
+				+ "default-conf:{ m2 : {value:2} }, "//
+				+ "}", true, qualifiedNamedPluginName)
+				.fillPluginDescriptor(qualifiedNamedPluginDescriptor);
+		plugins.add(qualifiedNamedPluginDescriptor);
+		PluginDescriptor unnamedPluginDescriptor = new PluginDescriptor();
+		new PluginDescriptorFileReader("{"//
+				+ "default-conf:{ m3 : {value:3} }, "//
+				+ "}", true, null)
+				.fillPluginDescriptor(unnamedPluginDescriptor);
+		plugins.add(unnamedPluginDescriptor);
+		PluginDescriptors pluginDescriptors = new PluginDescriptors(plugins);
+
+		pluginDescriptors.merge(
+				PluginDescriptors.UNNAMED_GEOLADRIS_CORE_PLUGIN,
+				JSONObject.fromObject("{"//
+						+ " m1 : {value:11},"//
+						+ " m2 : {value:12},"//
+						+ " m3 : {value:13},"//
+						+ "}"));
+
+		PluginDescriptor[] enabled = pluginDescriptors.getEnabled();
+		assertEquals(3, enabled.length);
+		int unnamedIndex = -1;
+		int qualifiedNamedIndex = -1;
+		int rootNamedIndex = -1;
+		for (int i = 0; i < enabled.length; i++) {
+			if (enabled[i].getName().equals(
+					PluginDescriptors.UNNAMED_GEOLADRIS_CORE_PLUGIN)) {
+				unnamedIndex = i;
+			}
+			if (enabled[i].getName().equals(rootNamedPluginName)) {
+				rootNamedIndex = i;
+			}
+			if (enabled[i].getName().equals(qualifiedNamedPluginName)) {
+				qualifiedNamedIndex = i;
+			}
+		}
+		JSONObject rootConfiguration = enabled[unnamedIndex].getConfiguration();
+		assertEquals(1, rootConfiguration.keySet().size());
+		assertEquals(13, rootConfiguration.getJSONObject("m3").getInt("value"));
+		JSONObject namedrootConfiguration = enabled[rootNamedIndex]
+				.getConfiguration();
+		assertEquals(1, namedrootConfiguration.keySet().size());
+		assertEquals(11,
+				namedrootConfiguration.getJSONObject("m1").getInt("value"));
+		JSONObject namedQualifiedConfiguration = enabled[qualifiedNamedIndex]
+				.getConfiguration();
+		assertEquals(1, namedQualifiedConfiguration.keySet().size());
+		assertEquals(2,
+				namedQualifiedConfiguration.getJSONObject("m2").getInt("value"));
+	}
+
+	@Test
+	public void qualifiedPluginModuleConfiguration() throws Exception {
+		Set<PluginDescriptor> plugins = createPluginSet("{"//
+				+ " installInRoot:false,"//
+				+ " default-conf:{ m2 : 0 }, "//
+				+ "}", "plugin1");
+		PluginDescriptors pluginDescriptors = new PluginDescriptors(plugins);
+
+		assertTrue(pluginDescriptors.getQualifiedConfiguration("plugin1").has(
+				"plugin1/m2"));
+	}
 }

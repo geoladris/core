@@ -59,7 +59,8 @@ public class ConfigServlet extends HttpServlet {
 				JSONSerializer.toJSON(req.getParameterMap()));
 
 		for (PluginDescriptor pluginDescriptor : enabledPluginDescriptors) {
-			JSONObject configuration = pluginDescriptor.getConfiguration();
+			JSONObject configuration = descriptors
+					.getQualifiedConfiguration(pluginDescriptor.getName());
 			if (configuration != null) {
 				moduleConfig.putAll(configuration);
 			}

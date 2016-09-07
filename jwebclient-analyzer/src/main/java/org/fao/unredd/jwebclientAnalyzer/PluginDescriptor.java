@@ -155,4 +155,7 @@ public class PluginDescriptor {
 		return ret;
 	}
 
+	public boolean isInstallInRoot() {
+		return installInRoot;
+	}
 }

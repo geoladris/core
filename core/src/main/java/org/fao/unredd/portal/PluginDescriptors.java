@@ -8,6 +8,8 @@ import net.sf.json.JSONObject;
 
 import org.fao.unredd.jwebclientAnalyzer.PluginDescriptor;
 
+import de.csgis.commons.JSONUtils;
+
 public class PluginDescriptors {
 	private static final String CONF_ENABLED = "_enabled";
 	private static final String CONF_OVERRIDE = "_override";
@@ -25,20 +27,26 @@ public class PluginDescriptors {
 				pluginName = UNNAMED_GEOLADRIS_CORE_PLUGIN;
 				clonedDescriptor.setName(UNNAMED_GEOLADRIS_CORE_PLUGIN);
 			}
-			PluginDescriptor unnamedPluginDescriptor = namePluginDescriptor
-					.get(UNNAMED_GEOLADRIS_CORE_PLUGIN);
-			if (unnamedPluginDescriptor != null) {
-				unnamedPluginDescriptor.mergeConfiguration(clonedDescriptor
-						.getConfiguration());
-				unnamedPluginDescriptor.mergeRequireJSPaths(clonedDescriptor
-						.getRequireJSPathsMap());
-				unnamedPluginDescriptor.mergeRequireJSShims(clonedDescriptor
-						.getRequireJSShims());
-				for (String module : pluginDescriptor.getModules()) {
-					unnamedPluginDescriptor.addModule(module);
-				}
-				for (String stylesheet : pluginDescriptor.getStylesheets()) {
-					unnamedPluginDescriptor.addStylesheet(stylesheet);
+			if (UNNAMED_GEOLADRIS_CORE_PLUGIN.equals(pluginName)) {
+				PluginDescriptor unnamedPluginDescriptor = namePluginDescriptor
+						.get(UNNAMED_GEOLADRIS_CORE_PLUGIN);
+				if (unnamedPluginDescriptor != null) {
+					unnamedPluginDescriptor.mergeConfiguration(clonedDescriptor
+							.getConfiguration());
+					unnamedPluginDescriptor
+							.mergeRequireJSPaths(clonedDescriptor
+									.getRequireJSPathsMap());
+					unnamedPluginDescriptor
+							.mergeRequireJSShims(clonedDescriptor
+									.getRequireJSShims());
+					for (String module : pluginDescriptor.getModules()) {
+						unnamedPluginDescriptor.addModule(module);
+					}
+					for (String stylesheet : pluginDescriptor.getStylesheets()) {
+						unnamedPluginDescriptor.addStylesheet(stylesheet);
+					}
+				} else {
+					namePluginDescriptor.put(pluginName, clonedDescriptor);
 				}
 			} else {
 				namePluginDescriptor.put(pluginName, clonedDescriptor);
@@ -48,20 +56,56 @@ public class PluginDescriptors {
 
 	public void merge(String pluginName,
 			JSONObject overridingPluginConfiguration) {
-		PluginDescriptor pluginDescriptor = namePluginDescriptor
-				.get(pluginName);
-		if (pluginDescriptor == null) {
-			pluginDescriptor = new PluginDescriptor();
-			pluginDescriptor.mergeConfiguration(overridingPluginConfiguration);
-			namePluginDescriptor.put(pluginName, pluginDescriptor);
+		if (pluginName == UNNAMED_GEOLADRIS_CORE_PLUGIN) {
+			@SuppressWarnings("unchecked")
+			Set<String> modules = overridingPluginConfiguration.keySet();
+			for (String overridingConfigurationModuleName : modules) {
+				JSONObject overridingModuleConfiguration = overridingPluginConfiguration
+						.getJSONObject(overridingConfigurationModuleName);
+
+				/*
+				 * Search for the module on each plugin installed in root,
+				 * unnamed included
+				 */
+				Set<String> pluginNames = namePluginDescriptor.keySet();
+				for (String searchPluginName : pluginNames) {
+					PluginDescriptor descriptor = namePluginDescriptor
+							.get(searchPluginName);
+					if (descriptor.isInstallInRoot()) {
+						JSONObject moduleConfiguration = descriptor
+								.getConfiguration().getJSONObject(
+										overridingConfigurationModuleName);
+						if (moduleConfiguration != null
+								&& !moduleConfiguration.isNullObject()) {
+							JSONObject mergedModuleConfiguration = JSONUtils
+									.merge(moduleConfiguration,
+											overridingModuleConfiguration);
+							descriptor.getConfiguration().element(
+									overridingConfigurationModuleName,
+									mergedModuleConfiguration);
+							break;
+						}
+					}
+				}
+			}
 		} else {
-			if (!overridingPluginConfiguration.has(CONF_OVERRIDE)
-					|| !overridingPluginConfiguration.getBoolean(CONF_OVERRIDE)) {
+			PluginDescriptor pluginDescriptor = namePluginDescriptor
+					.get(pluginName);
+			if (pluginDescriptor == null) {
+				pluginDescriptor = new PluginDescriptor();
 				pluginDescriptor
 						.mergeConfiguration(overridingPluginConfiguration);
+				namePluginDescriptor.put(pluginName, pluginDescriptor);
 			} else {
-				pluginDescriptor
-						.setConfiguration(overridingPluginConfiguration);
+				if (!overridingPluginConfiguration.has(CONF_OVERRIDE)
+						|| !overridingPluginConfiguration
+								.getBoolean(CONF_OVERRIDE)) {
+					pluginDescriptor
+							.mergeConfiguration(overridingPluginConfiguration);
+				} else {
+					pluginDescriptor
+							.setConfiguration(overridingPluginConfiguration);
+				}
 			}
 		}
 	}
@@ -90,6 +134,24 @@ public class PluginDescriptors {
 
 	public PluginDescriptor get(String pluginName) {
 		return namePluginDescriptor.get(pluginName);
+	}
+
+	public JSONObject getQualifiedConfiguration(String pluginName) {
+		PluginDescriptor descriptor = namePluginDescriptor.get(pluginName);
+		JSONObject descriptorConfiguration = descriptor.getConfiguration();
+		if (descriptor.isInstallInRoot()) {
+			return descriptorConfiguration;
+		} else {
+			// prefix all keys with plugin name
+			JSONObject qualifiedConfiguration = new JSONObject();
+			@SuppressWarnings("unchecked")
+			Set<String> moduleNames = descriptorConfiguration.keySet();
+			for (String moduleName : moduleNames) {
+				qualifiedConfiguration.put(descriptor.getName() + "/"
+						+ moduleName, descriptorConfiguration.get(moduleName));
+			}
+			return qualifiedConfiguration;
+		}
 	}
 
 }
