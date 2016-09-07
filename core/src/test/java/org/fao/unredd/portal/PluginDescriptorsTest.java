@@ -250,8 +250,9 @@ public class PluginDescriptorsTest {
 			}
 		}
 		JSONObject rootConfiguration = enabled[unnamedIndex].getConfiguration();
-		assertEquals(1, rootConfiguration.keySet().size());
+		assertEquals(2, rootConfiguration.keySet().size());
 		assertEquals(13, rootConfiguration.getJSONObject("m3").getInt("value"));
+		assertEquals(12, rootConfiguration.getJSONObject("m2").getInt("value"));
 		JSONObject namedrootConfiguration = enabled[rootNamedIndex]
 				.getConfiguration();
 		assertEquals(1, namedrootConfiguration.keySet().size());
@@ -274,5 +275,49 @@ public class PluginDescriptorsTest {
 
 		assertTrue(pluginDescriptors.getQualifiedConfiguration("plugin1").has(
 				"plugin1/m2"));
+	}
+
+	@Test
+	public void firstUnnamedQualifiedButQualifiedConfigurationIsNotQualified()
+			throws Exception {
+		Set<PluginDescriptor> plugins = new HashSet<PluginDescriptor>();
+		PluginDescriptor pluginDescriptor = new PluginDescriptor();
+		new PluginDescriptorFileReader("{"//
+				+ " default-conf:{ m2 : {value:0} }, "//
+				+ "}", false, null).fillPluginDescriptor(pluginDescriptor);
+		plugins.add(pluginDescriptor);
+		PluginDescriptors pluginDescriptors = new PluginDescriptors(plugins);
+		pluginDescriptors.merge(
+				PluginDescriptors.UNNAMED_GEOLADRIS_CORE_PLUGIN,
+				JSONObject.fromObject("{ m1 : {value:0} }"));
+
+		JSONObject unnamedPluginConfiguration = pluginDescriptors
+				.getQualifiedConfiguration(PluginDescriptors.UNNAMED_GEOLADRIS_CORE_PLUGIN);
+		assertTrue(unnamedPluginConfiguration.has("m1"));
+		assertTrue(unnamedPluginConfiguration.has("m2"));
+	}
+
+	@Test
+	public void mergingUnnamedModuleConfigurationThatDoesNotExistInitiallyOnThePlugins()
+			throws Exception {
+		PluginDescriptors pluginDescriptors = new PluginDescriptors(
+				createPluginSet("{"//
+						+ " default-conf:{ m2 : 0 }, "//
+						+ "}", null));
+
+		pluginDescriptors.merge(
+				PluginDescriptors.UNNAMED_GEOLADRIS_CORE_PLUGIN,
+				JSONObject.fromObject("{"//
+						+ " m1 : {value:11}"//
+						+ "}"));
+
+		PluginDescriptor[] enabled = pluginDescriptors.getEnabled();
+		assertEquals(1, enabled.length);
+		assertEquals(PluginDescriptors.UNNAMED_GEOLADRIS_CORE_PLUGIN,
+				enabled[0].getName());
+		JSONObject configuration = enabled[0].getConfiguration();
+		assertEquals(2, configuration.keySet().size());
+		assertTrue(configuration.has("m1"));
+		assertTrue(configuration.has("m2"));
 	}
 }

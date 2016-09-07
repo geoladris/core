@@ -25,7 +25,6 @@ public class PluginDescriptors {
 			String pluginName = clonedDescriptor.getName();
 			if (pluginName == null) {
 				pluginName = UNNAMED_GEOLADRIS_CORE_PLUGIN;
-				clonedDescriptor.setName(UNNAMED_GEOLADRIS_CORE_PLUGIN);
 			}
 			if (UNNAMED_GEOLADRIS_CORE_PLUGIN.equals(pluginName)) {
 				PluginDescriptor unnamedPluginDescriptor = namePluginDescriptor
@@ -46,6 +45,8 @@ public class PluginDescriptors {
 						unnamedPluginDescriptor.addStylesheet(stylesheet);
 					}
 				} else {
+					clonedDescriptor.setName(UNNAMED_GEOLADRIS_CORE_PLUGIN);
+					clonedDescriptor.setInstallInRoot(true);
 					namePluginDescriptor.put(pluginName, clonedDescriptor);
 				}
 			} else {
@@ -67,6 +68,7 @@ public class PluginDescriptors {
 				 * Search for the module on each plugin installed in root,
 				 * unnamed included
 				 */
+				boolean found = false;
 				Set<String> pluginNames = namePluginDescriptor.keySet();
 				for (String searchPluginName : pluginNames) {
 					PluginDescriptor descriptor = namePluginDescriptor
@@ -83,9 +85,22 @@ public class PluginDescriptors {
 							descriptor.getConfiguration().element(
 									overridingConfigurationModuleName,
 									mergedModuleConfiguration);
+							found = true;
 							break;
 						}
 					}
+				}
+
+				/*
+				 * If not found on plugins installed in root, add it to the
+				 * unnamed plugin
+				 */
+				if (!found) {
+					PluginDescriptor descriptor = namePluginDescriptor
+							.get(UNNAMED_GEOLADRIS_CORE_PLUGIN);
+					descriptor.getConfiguration().put(
+							overridingConfigurationModuleName,
+							overridingModuleConfiguration);
 				}
 			}
 		} else {
