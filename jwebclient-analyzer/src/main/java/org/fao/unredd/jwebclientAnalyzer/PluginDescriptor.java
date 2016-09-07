@@ -128,11 +128,11 @@ public class PluginDescriptor {
 		this.configuration = JSONUtils.merge(this.configuration, configuration);
 	}
 
-	public void mergeRequireJSPaths(HashMap<String, String> requireJSPathsMap) {
+	public void mergeRequireJSPaths(Map<String, String> requireJSPathsMap) {
 		this.requireJSPathsMap.putAll(requireJSPathsMap);
 	}
 
-	public void mergeRequireJSShims(HashMap<String, String> requireJSShims) {
+	public void mergeRequireJSShims(Map<String, String> requireJSShims) {
 		this.requireJSShims.putAll(requireJSShims);
 	}
 
@@ -154,4 +154,5 @@ public class PluginDescriptor {
 				.clone();
 		return ret;
 	}
+
 }

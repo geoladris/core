@@ -146,4 +146,54 @@ public class PluginDescriptorsTest {
 						.get("b"));
 	}
 
+	@Test
+	public void twoAnonymousPlugins() throws Exception {
+		Set<PluginDescriptor> plugins = new HashSet<PluginDescriptor>();
+		PluginDescriptor pluginDescriptor1 = new PluginDescriptor();
+		new PluginDescriptorFileReader("{"//
+				+ "default-conf:{ m1 : 1}, "//
+				+ " requirejs:{"//
+				+ "  paths:{"//
+				+ "   l1:\"../jslib/l1.js\","//
+				+ "   l2:\"../jslib/l2.js\""//
+				+ "  },"//
+				+ "  shim:{ l2:[\"l1\"] }"//
+				+ " }"//
+				+ "}", true, null).fillPluginDescriptor(pluginDescriptor1);
+		pluginDescriptor1.addModule("m1");
+		pluginDescriptor1.addStylesheet("m1.css");
+		plugins.add(pluginDescriptor1);
+		PluginDescriptor pluginDescriptor2 = new PluginDescriptor();
+		new PluginDescriptorFileReader("{"//
+				+ "default-conf:{ m2 : 2}, "//
+				+ " requirejs:{"//
+				+ "  paths:{"//
+				+ "   l3:\"../jslib/l3.js\""//
+				+ "  },"//
+				+ "  shim:{ l3:[\"l1\"] }"//
+				+ " }"//
+				+ "}", true, null).fillPluginDescriptor(pluginDescriptor2);
+		pluginDescriptor2.addModule("m2");
+		pluginDescriptor2.addStylesheet("m2.css");
+		plugins.add(pluginDescriptor1);
+		plugins.add(pluginDescriptor2);
+		PluginDescriptors pluginDescriptors = new PluginDescriptors(plugins);
+
+		PluginDescriptor[] descriptors = pluginDescriptors.getEnabled();
+		assertEquals(1, descriptors.length);
+		PluginDescriptor pluginDescriptor = descriptors[0];
+		// all in unnamed plugin
+		assertEquals(PluginDescriptors.UNNAMED_GEOLADRIS_CORE_PLUGIN,
+				pluginDescriptor.getName());
+		// configuration merged
+		assertEquals(1, pluginDescriptor.getConfiguration().getInt("m1"));
+		assertEquals(2, pluginDescriptor.getConfiguration().getInt("m2"));
+		// modules and stylesheets
+		assertEquals(2, pluginDescriptor.getModules().size());
+		assertEquals(2, pluginDescriptor.getStylesheets().size());
+		// requirejs paths and shims
+		assertEquals(3, pluginDescriptor.getRequireJSPathsMap().size());
+		assertEquals(2, pluginDescriptor.getRequireJSShims().size());
+	}
+
 }

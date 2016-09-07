@@ -18,12 +18,31 @@ public class PluginDescriptors {
 
 	public PluginDescriptors(Set<PluginDescriptor> plugins) {
 		for (PluginDescriptor pluginDescriptor : plugins) {
-			String pluginName = pluginDescriptor.getName();
+			PluginDescriptor clonedDescriptor = pluginDescriptor
+					.cloneDescriptor();
+			String pluginName = clonedDescriptor.getName();
 			if (pluginName == null) {
 				pluginName = UNNAMED_GEOLADRIS_CORE_PLUGIN;
+				clonedDescriptor.setName(UNNAMED_GEOLADRIS_CORE_PLUGIN);
 			}
-			namePluginDescriptor.put(pluginName,
-					pluginDescriptor.cloneDescriptor());
+			PluginDescriptor unnamedPluginDescriptor = namePluginDescriptor
+					.get(UNNAMED_GEOLADRIS_CORE_PLUGIN);
+			if (unnamedPluginDescriptor != null) {
+				unnamedPluginDescriptor.mergeConfiguration(clonedDescriptor
+						.getConfiguration());
+				unnamedPluginDescriptor.mergeRequireJSPaths(clonedDescriptor
+						.getRequireJSPathsMap());
+				unnamedPluginDescriptor.mergeRequireJSShims(clonedDescriptor
+						.getRequireJSShims());
+				for (String module : pluginDescriptor.getModules()) {
+					unnamedPluginDescriptor.addModule(module);
+				}
+				for (String stylesheet : pluginDescriptor.getStylesheets()) {
+					unnamedPluginDescriptor.addStylesheet(stylesheet);
+				}
+			} else {
+				namePluginDescriptor.put(pluginName, clonedDescriptor);
+			}
 		}
 	}
 
