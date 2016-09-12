@@ -16,7 +16,7 @@ Only this properties are visible to the client:
 
 ##public-conf.json
 
-> TODO: Format of the file
+> TODO: Format of the file. enabled and override pseudomodules
 
 #Roles
 
