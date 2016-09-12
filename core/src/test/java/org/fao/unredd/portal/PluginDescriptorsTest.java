@@ -7,11 +7,11 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import net.sf.json.JSONObject;
-
 import org.fao.unredd.jwebclientAnalyzer.PluginDescriptor;
 import org.fao.unredd.jwebclientAnalyzer.PluginDescriptorFileReader;
 import org.junit.Test;
+
+import net.sf.json.JSONObject;
 
 public class PluginDescriptorsTest {
 
@@ -19,8 +19,8 @@ public class PluginDescriptorsTest {
 	public void doesNotReturnDisabledPlugins() throws Exception {
 		PluginDescriptors pluginDescriptors = new PluginDescriptors(
 				Collections.<PluginDescriptor> emptySet());
-		pluginDescriptors.merge("p1", JSONObject
-				.fromObject("{_enabled : false, "
+		pluginDescriptors.merge("p1",
+				JSONObject.fromObject("{_enabled : false, "
 						+ "m1 : { a : 1, b : 2}, m2 : { c : 1, d : 2}}"));
 		pluginDescriptors.merge("p2", JSONObject
 				.fromObject("{_enabled : true, m3 : { a : 1, b : 2}}"));
@@ -52,8 +52,8 @@ public class PluginDescriptorsTest {
 
 	@Test
 	public void mergesDefaultConfIfSpecified() throws Exception {
-		checkConfigurationMerge("{ _override : false,"
-				+ " _enabled : true, m1 : { a : 10}}");
+		checkConfigurationMerge(
+				"{ _override : false," + " _enabled : true, m1 : { a : 10}}");
 	}
 
 	private void checkConfigurationMerge(String pluginConfiguration) {
@@ -82,9 +82,8 @@ public class PluginDescriptorsTest {
 				"{default-conf:{ m1 : { a : 1, b : 2}, m2 : { c : 1, d : 2}}}",
 				"p1");
 		PluginDescriptors pluginDescriptors = new PluginDescriptors(plugins);
-		pluginDescriptors.merge("p1", JSONObject
-				.fromObject("{ _override : true,"
-						+ " _enabled : true, m1 : { a : 10}}"));
+		pluginDescriptors.merge("p1", JSONObject.fromObject(
+				"{ _override : true," + " _enabled : true, m1 : { a : 10}}"));
 
 		JSONObject resultConfiguration = pluginDescriptors.getEnabled()[0]
 				.getConfiguration();
@@ -111,8 +110,8 @@ public class PluginDescriptorsTest {
 				"p1");
 		PluginDescriptors pluginDescriptors = new PluginDescriptors(plugins);
 
-		pluginDescriptors.merge("p1", JSONObject
-				.fromObject("{ _override : false, "//
+		pluginDescriptors.merge("p1",
+				JSONObject.fromObject("{ _override : false, "//
 						+ "_enabled : true, "//
 						+ "m1 : { a : 1, b : 2}, "//
 						+ "m2 : { c : 1, d : 2}}"));
@@ -138,12 +137,10 @@ public class PluginDescriptorsTest {
 		assertEquals(2, descriptors.length);
 		int p1Index = descriptors[0].getName().equals("p1") ? 0 : 1;
 		int p2Index = 1 - p1Index;
-		assertEquals(10,
-				descriptors[p1Index].getConfiguration().getJSONObject("m1")
-						.get("a"));
-		assertEquals(20,
-				descriptors[p2Index].getConfiguration().getJSONObject("m2")
-						.get("b"));
+		assertEquals(10, descriptors[p1Index].getConfiguration()
+				.getJSONObject("m1").get("a"));
+		assertEquals(20, descriptors[p2Index].getConfiguration()
+				.getJSONObject("m2").get("b"));
 	}
 
 	@Test
@@ -206,7 +203,7 @@ public class PluginDescriptorsTest {
 				+ "installInRoot:true,"//
 				+ "default-conf:{ m1 : {value:1} }, "//
 				+ "}", true, rootNamedPluginName)
-				.fillPluginDescriptor(rootNamedPluginDescriptor);
+						.fillPluginDescriptor(rootNamedPluginDescriptor);
 		plugins.add(rootNamedPluginDescriptor);
 		PluginDescriptor qualifiedNamedPluginDescriptor = new PluginDescriptor();
 		String qualifiedNamedPluginName = "qualifiedNamedPlugin";
@@ -214,18 +211,17 @@ public class PluginDescriptorsTest {
 				+ "installInRoot:false,"//
 				+ "default-conf:{ m2 : {value:2} }, "//
 				+ "}", true, qualifiedNamedPluginName)
-				.fillPluginDescriptor(qualifiedNamedPluginDescriptor);
+						.fillPluginDescriptor(qualifiedNamedPluginDescriptor);
 		plugins.add(qualifiedNamedPluginDescriptor);
 		PluginDescriptor unnamedPluginDescriptor = new PluginDescriptor();
 		new PluginDescriptorFileReader("{"//
 				+ "default-conf:{ m3 : {value:3} }, "//
 				+ "}", true, null)
-				.fillPluginDescriptor(unnamedPluginDescriptor);
+						.fillPluginDescriptor(unnamedPluginDescriptor);
 		plugins.add(unnamedPluginDescriptor);
 		PluginDescriptors pluginDescriptors = new PluginDescriptors(plugins);
 
-		pluginDescriptors.merge(
-				PluginDescriptors.UNNAMED_GEOLADRIS_CORE_PLUGIN,
+		pluginDescriptors.merge(PluginDescriptors.UNNAMED_GEOLADRIS_CORE_PLUGIN,
 				JSONObject.fromObject("{"//
 						+ " m1 : {value:11},"//
 						+ " m2 : {value:12},"//
@@ -238,8 +234,8 @@ public class PluginDescriptorsTest {
 		int qualifiedNamedIndex = -1;
 		int rootNamedIndex = -1;
 		for (int i = 0; i < enabled.length; i++) {
-			if (enabled[i].getName().equals(
-					PluginDescriptors.UNNAMED_GEOLADRIS_CORE_PLUGIN)) {
+			if (enabled[i].getName()
+					.equals(PluginDescriptors.UNNAMED_GEOLADRIS_CORE_PLUGIN)) {
 				unnamedIndex = i;
 			}
 			if (enabled[i].getName().equals(rootNamedPluginName)) {
@@ -261,8 +257,8 @@ public class PluginDescriptorsTest {
 		JSONObject namedQualifiedConfiguration = enabled[qualifiedNamedIndex]
 				.getConfiguration();
 		assertEquals(1, namedQualifiedConfiguration.keySet().size());
-		assertEquals(2,
-				namedQualifiedConfiguration.getJSONObject("m2").getInt("value"));
+		assertEquals(2, namedQualifiedConfiguration.getJSONObject("m2")
+				.getInt("value"));
 	}
 
 	@Test
@@ -273,8 +269,34 @@ public class PluginDescriptorsTest {
 				+ "}", "plugin1");
 		PluginDescriptors pluginDescriptors = new PluginDescriptors(plugins);
 
-		assertTrue(pluginDescriptors.getQualifiedConfiguration("plugin1").has(
-				"plugin1/m2"));
+		assertTrue(pluginDescriptors.getQualifiedConfiguration("plugin1")
+				.has("plugin1/m2"));
+	}
+
+	@Test
+	public void unqualifiedPluginModuleConfiguration() throws Exception {
+		Set<PluginDescriptor> plugins = createPluginSet("{"//
+				+ " installInRoot:true,"//
+				+ " default-conf:{ m2 : 0 }, "//
+				+ "}", "plugin1");
+		PluginDescriptors pluginDescriptors = new PluginDescriptors(plugins);
+
+		assertTrue(pluginDescriptors.getQualifiedConfiguration("plugin1")
+				.has("m2"));
+	}
+
+	@Test
+	public void qualifiedAnonymousPluginModuleConfiguration() throws Exception {
+		Set<PluginDescriptor> plugins = createPluginSet("{"//
+				+ " installInRoot:false,"//
+				+ " default-conf:{ m2 : 0 }, "//
+				+ "}", null);
+		PluginDescriptors pluginDescriptors = new PluginDescriptors(plugins);
+
+		assertTrue(pluginDescriptors
+				.getQualifiedConfiguration(
+						PluginDescriptors.UNNAMED_GEOLADRIS_CORE_PLUGIN)
+				.has("m2"));
 	}
 
 	@Test
@@ -287,12 +309,12 @@ public class PluginDescriptorsTest {
 				+ "}", false, null).fillPluginDescriptor(pluginDescriptor);
 		plugins.add(pluginDescriptor);
 		PluginDescriptors pluginDescriptors = new PluginDescriptors(plugins);
-		pluginDescriptors.merge(
-				PluginDescriptors.UNNAMED_GEOLADRIS_CORE_PLUGIN,
+		pluginDescriptors.merge(PluginDescriptors.UNNAMED_GEOLADRIS_CORE_PLUGIN,
 				JSONObject.fromObject("{ m1 : {value:0} }"));
 
 		JSONObject unnamedPluginConfiguration = pluginDescriptors
-				.getQualifiedConfiguration(PluginDescriptors.UNNAMED_GEOLADRIS_CORE_PLUGIN);
+				.getQualifiedConfiguration(
+						PluginDescriptors.UNNAMED_GEOLADRIS_CORE_PLUGIN);
 		assertTrue(unnamedPluginConfiguration.has("m1"));
 		assertTrue(unnamedPluginConfiguration.has("m2"));
 	}
@@ -305,8 +327,7 @@ public class PluginDescriptorsTest {
 						+ " default-conf:{ m2 : 0 }, "//
 						+ "}", null));
 
-		pluginDescriptors.merge(
-				PluginDescriptors.UNNAMED_GEOLADRIS_CORE_PLUGIN,
+		pluginDescriptors.merge(PluginDescriptors.UNNAMED_GEOLADRIS_CORE_PLUGIN,
 				JSONObject.fromObject("{"//
 						+ " m1 : {value:11}"//
 						+ "}"));
