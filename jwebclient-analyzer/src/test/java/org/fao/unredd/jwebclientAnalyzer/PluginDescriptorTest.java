@@ -88,7 +88,6 @@ public class PluginDescriptorTest {
 	public void requirePathsAndShimsInstalledOutsideRoot() throws Exception {
 		PluginDescriptor descriptor = new PluginDescriptor();
 		String name = "myplugin";
-		descriptor.setName(name);
 
 		String paths = "jquery : '../jslib/jquery/jquery', "
 				+ "openlayers : '../jslib/OpenLayers/OpenLayers.unredd'";
