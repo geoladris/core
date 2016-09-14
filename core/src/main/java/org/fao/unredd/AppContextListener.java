@@ -25,7 +25,7 @@ public class AppContextListener implements ServletContextListener {
 			.getLogger(AppContextListener.class);
 
 	public static final String ENV_CONFIG_CACHE = "NFMS_CONFIG_CACHE";
-	public static final String INIT_PARAM_DIR = "PROTAL_CONFIG_DIR";
+	public static final String INIT_PARAM_DIR = "PORTAL_CONFIG_DIR";
 
 	public static final String ATTR_CONFIG = "config";
 
@@ -39,12 +39,12 @@ public class AppContextListener implements ServletContextListener {
 		String rootPath = servletContext.getRealPath("/");
 		String configInitParameter = servletContext
 				.getInitParameter(INIT_PARAM_DIR);
-		boolean configCache = Boolean.parseBoolean(System
-				.getenv(ENV_CONFIG_CACHE));
+		boolean configCache = Boolean
+				.parseBoolean(System.getenv(ENV_CONFIG_CACHE));
 		ConfigFolder folder = new ConfigFolder(rootPath, configInitParameter);
 
-		JEEContext context = new JEEContext(servletContext, new File(
-				folder.getFilePath(), "plugins"));
+		JEEContext context = new JEEContext(servletContext,
+				new File(folder.getFilePath(), "plugins"));
 		JEEContextAnalyzer analyzer = getAnalyzer(context);
 
 		Set<PluginDescriptor> plugins = analyzer.getPluginDescriptors();
@@ -65,8 +65,8 @@ public class AppContextListener implements ServletContextListener {
 		DefaultConfig config = new DefaultConfig(folder, plugins,
 				new DefaultConfProvider(plugins), configCache);
 		config.addModuleConfigurationProvider(publicConfigurationProvider);
-		config.addModuleConfigurationProvider(new RoleConfigurationProvider(
-				folder.getFilePath()));
+		config.addModuleConfigurationProvider(
+				new RoleConfigurationProvider(folder.getFilePath()));
 
 		servletContext.setAttribute(ATTR_CONFIG, config);
 	}
