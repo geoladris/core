@@ -1,8 +1,10 @@
 package org.fao.unredd.portal;
 
 import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertTrue;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -340,5 +342,30 @@ public class PluginDescriptorsTest {
 		assertEquals(2, configuration.keySet().size());
 		assertTrue(configuration.has("m1"));
 		assertTrue(configuration.has("m2"));
+	}
+
+	/**
+	 * Bug fix: a call to merge with a pluginName not found in the descriptors
+	 * used to construct the PluginDescriptors instance causes the
+	 * PluginDescriptor to have null name
+	 */
+	@Test
+	public void nullNameWhenNewPluginConfigurationIsMerged() {
+		PluginDescriptors pluginDescriptors = new PluginDescriptors(
+				createPluginSet("{"//
+						+ " default-conf:{ m2 : 0 }, "//
+						+ "}", "plugin1"));
+
+		pluginDescriptors.merge("plugin2", JSONObject.fromObject("{ m2 : 0 }"));
+
+		PluginDescriptor[] descriptors = pluginDescriptors.getEnabled();
+		assertEquals(2, descriptors.length);
+		ArrayList<String> pluginNames = new ArrayList<>();
+		Collections.addAll(pluginNames, "plugin1", "plugin2");
+		for (PluginDescriptor pluginDescriptor : descriptors) {
+			assertNotNull(pluginDescriptor.getName());
+			pluginNames.remove(pluginDescriptor.getName());
+		}
+		assertEquals(0, pluginNames.size());
 	}
 }

@@ -4,11 +4,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
 
-import net.sf.json.JSONObject;
-
 import org.fao.unredd.jwebclientAnalyzer.PluginDescriptor;
 
 import de.csgis.commons.JSONUtils;
+import net.sf.json.JSONObject;
 
 public class PluginDescriptors {
 	private static final String CONF_ENABLED = "_enabled";
@@ -30,18 +29,17 @@ public class PluginDescriptors {
 				PluginDescriptor unnamedPluginDescriptor = namePluginDescriptor
 						.get(UNNAMED_GEOLADRIS_CORE_PLUGIN);
 				if (unnamedPluginDescriptor != null) {
-					unnamedPluginDescriptor.mergeConfiguration(clonedDescriptor
-							.getConfiguration());
-					unnamedPluginDescriptor
-							.mergeRequireJSPaths(clonedDescriptor
-									.getRequireJSPathsMap());
-					unnamedPluginDescriptor
-							.mergeRequireJSShims(clonedDescriptor
-									.getRequireJSShims());
+					unnamedPluginDescriptor.mergeConfiguration(
+							clonedDescriptor.getConfiguration());
+					unnamedPluginDescriptor.mergeRequireJSPaths(
+							clonedDescriptor.getRequireJSPathsMap());
+					unnamedPluginDescriptor.mergeRequireJSShims(
+							clonedDescriptor.getRequireJSShims());
 					for (String module : pluginDescriptor.getModules()) {
 						unnamedPluginDescriptor.addModule(module);
 					}
-					for (String stylesheet : pluginDescriptor.getStylesheets()) {
+					for (String stylesheet : pluginDescriptor
+							.getStylesheets()) {
 						unnamedPluginDescriptor.addStylesheet(stylesheet);
 					}
 				} else {
@@ -110,6 +108,7 @@ public class PluginDescriptors {
 				pluginDescriptor = new PluginDescriptor();
 				pluginDescriptor
 						.mergeConfiguration(overridingPluginConfiguration);
+				pluginDescriptor.setName(pluginName);
 				namePluginDescriptor.put(pluginName, pluginDescriptor);
 			} else {
 				if (!overridingPluginConfiguration.has(CONF_OVERRIDE)
@@ -134,7 +133,8 @@ public class PluginDescriptors {
 						.getConfiguration();
 
 				if (!pluginConfiguration.has(CONF_ENABLED)
-						|| pluginConfiguration.getBoolean(CONF_ENABLED) == true) {
+						|| pluginConfiguration
+								.getBoolean(CONF_ENABLED) == true) {
 					pluginConfiguration.remove(CONF_ENABLED);
 					pluginConfiguration.remove(CONF_OVERRIDE);
 
@@ -162,8 +162,9 @@ public class PluginDescriptors {
 			@SuppressWarnings("unchecked")
 			Set<String> moduleNames = descriptorConfiguration.keySet();
 			for (String moduleName : moduleNames) {
-				qualifiedConfiguration.put(descriptor.getName() + "/"
-						+ moduleName, descriptorConfiguration.get(moduleName));
+				qualifiedConfiguration.put(
+						descriptor.getName() + "/" + moduleName,
+						descriptorConfiguration.get(moduleName));
 			}
 			return qualifiedConfiguration;
 		}
