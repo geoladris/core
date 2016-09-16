@@ -86,14 +86,13 @@ public class ClientContentServlet extends HttpServlet {
 		if (file != null) { // it was a file
 			// Manage cache headers: Last-Modified and If-Modified-Since
 			long ifModifiedSince = req.getDateHeader("If-Modified-Since");
-			long lastModified = confStaticFile.lastModified();
+			long lastModified = file.lastModified();
 			if (ifModifiedSince >= (lastModified / 1000 * 1000)) {
 				resp.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
 				return;
 			}
 			resp.setDateHeader("Last-Modified", lastModified);
-			stream = new BufferedInputStream(
-					new FileInputStream(confStaticFile));
+			stream = new BufferedInputStream(new FileInputStream(file));
 		}
 
 		// Set content type

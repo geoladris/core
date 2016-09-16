@@ -27,7 +27,6 @@ import org.fao.unredd.AppContextListener;
 import org.fao.unredd.jwebclientAnalyzer.PluginDescriptor;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.AdditionalMatchers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.MockitoAnnotations;
@@ -151,7 +150,7 @@ public class ClientContentServletTest {
 			when(request.getPathInfo()).thenReturn(pathInfo);
 			servlet.doGet(request, response);
 
-			verify(response).setStatus(AdditionalMatchers.not(eq(404)));
+			verify(response).setStatus(HttpServletResponse.SC_OK);
 		}
 	}
 
@@ -187,4 +186,30 @@ public class ClientContentServletTest {
 			assertEquals(404, e.getStatus());
 		}
 	}
+
+	@Test
+	public void test304NotModified() throws ServletException, IOException {
+		setupConfigurationFolder("src/test/resources/testNoJavaPlugins");
+
+		ClientContentServlet servlet = new ClientContentServlet();
+		servlet.setTestingClasspathRoot("/testNoJavaPlugins/WEB-INF/classes/");
+		ServletConfig servletConfig = mock(ServletConfig.class);
+		ServletContext servletContext = mock(ServletContext.class);
+		when(servletContext.getAttribute("config"))
+				.thenReturn(configCaptor.getValue());
+		when(servletConfig.getServletContext()).thenReturn(servletContext);
+		servlet.init(servletConfig);
+
+		HttpServletResponse response = mock(HttpServletResponse.class);
+		HttpServletRequest request = mock(HttpServletRequest.class);
+		when(request.getServletPath()).thenReturn("/modules/plugin1/");
+		when(request.getPathInfo()).thenReturn("a.js");
+		when(request.getDateHeader("If-Modified-Since"))
+				.thenReturn(System.currentTimeMillis());
+
+		servlet.doGet(request, response);
+
+		verify(response).setStatus(HttpServletResponse.SC_NOT_MODIFIED);
+	}
+
 }
