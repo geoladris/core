@@ -2,6 +2,7 @@ package org.fao.unredd.portal;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -77,8 +78,10 @@ public class ConfigFolder {
 		Properties properties = new Properties();
 		try {
 			properties.load(new FileInputStream(file));
+		} catch (FileNotFoundException e) {
+			logger.warn("Missing portal.properties file");
 		} catch (IOException e) {
-			logger.error("Error reading portal properties file", e);
+			logger.error("Error reading portal.properties file", e);
 		}
 
 		return properties;
