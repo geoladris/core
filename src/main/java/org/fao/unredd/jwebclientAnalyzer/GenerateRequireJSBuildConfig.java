@@ -50,19 +50,6 @@ public class GenerateRequireJSBuildConfig extends AbstractMojo {
 	protected String mainOutputPath;
 
 	/**
-	 * Path to search for the plugin configuration files
-	 * (&lt;plugin&gt;-conf.json)
-	 */
-	@Parameter(defaultValue = "nfms")
-	protected String pluginConfDir;
-
-	/**
-	 * Path to search for the web resources (modules, styles, ...)
-	 */
-	@Parameter(defaultValue = "nfms")
-	protected String webResourcesDir;
-
-	/**
 	 * Path to the main.js template to use.
 	 */
 	@Parameter
@@ -71,8 +58,7 @@ public class GenerateRequireJSBuildConfig extends AbstractMojo {
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
 		JEEContextAnalyzer analyzer = new JEEContextAnalyzer(
-				new ExpandedClientContext(webClientFolder), pluginConfDir,
-				webResourcesDir);
+				new ExpandedClientContext(webClientFolder));
 
 		try {
 			InputStream mainStream = new FileInputStream(mainTemplate);
@@ -99,7 +85,7 @@ public class GenerateRequireJSBuildConfig extends AbstractMojo {
 			moduleNames.addAll(plugin.getModules());
 		}
 		RequireTemplate template = new RequireTemplate(templateStream,
-				webResourcesDir, paths, shims, moduleNames);
+				paths, shims, moduleNames);
 		try {
 			String content = template.generate();
 			templateStream.close();
