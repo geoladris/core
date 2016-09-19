@@ -5,25 +5,15 @@ import java.io.File;
 public class ClassesPluginLayout implements PluginLayout {
 
 	private File rootFolder;
-	private String configurationFolder;
-	private String webResourcesFolder;
 
-	public ClassesPluginLayout(File rootFolder, String configurationFolder,
-			String webResourcesFolder) {
+	public ClassesPluginLayout(File rootFolder) {
 		super();
 		this.rootFolder = rootFolder;
-		this.configurationFolder = configurationFolder;
-		this.webResourcesFolder = webResourcesFolder;
-	}
-
-	@Override
-	public File getConfigurationRoot() {
-		return new File(rootFolder, configurationFolder);
 	}
 
 	@Override
 	public File getWebResourcesRoot() {
-		return new File(rootFolder, webResourcesFolder);
+		return new File(rootFolder, Constants.CLIENT_RESOURCES_DIR);
 	}
 
 	@Override

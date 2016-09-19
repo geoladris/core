@@ -128,33 +128,9 @@ public class JEEContextAnalyzerTest {
 	}
 
 	@Test
-	public void checkCustomPluginConfDir() {
-		JEEContextAnalyzer context = new JEEContextAnalyzer(new FileContext(
-				"src/test/resources/test3"), "conf", "webapp");
-
-		PluginDescriptor plugin = context.getPluginDescriptors().iterator()
-				.next();
-		checkMapKeys(plugin.getRequireJSPathsMap(), "jquery-ui", "fancy-box",
-				"openlayers");
-		checkMapKeys(plugin.getRequireJSShims(), "fancy-box");
-	}
-
-	@Test
-	public void checkCustomWebResourcesDir() {
-		JEEContextAnalyzer context = new JEEContextAnalyzer(new FileContext(
-				"src/test/resources/test3"), "conf", "webapp");
-
-		PluginDescriptor plugin = context.getPluginDescriptors().iterator()
-				.next();
-		checkList(plugin.getModules(), "module1", "module2");
-		checkList(plugin.getStylesheets(), "styles/general.css",
-				"modules/module2.css");
-	}
-
-	@Test
 	public void scanNoJavaPlugins() {
 		JEEContextAnalyzer context = new JEEContextAnalyzer(new FileContext(
-				"src/test/resources/testNoJava"), "nfms", "nfms");
+				"src/test/resources/testNoJava"));
 		Set<PluginDescriptor> plugins = context.getPluginDescriptors();
 		assertEquals(3, plugins.size());
 		for (PluginDescriptor plugin : plugins) {
@@ -206,7 +182,7 @@ public class JEEContextAnalyzerTest {
 	public void scanJavaNonRootModules() {
 		String name = "testJavaNonRootModules";
 		JEEContextAnalyzer context = new JEEContextAnalyzer(new FileContext(
-				"src/test/resources/" + name), "nfms", "nfms");
+				"src/test/resources/" + name));
 		PluginDescriptor plugin = context.getPluginDescriptors().iterator()
 				.next();
 
@@ -221,7 +197,7 @@ public class JEEContextAnalyzerTest {
 	@Test
 	public void scanJavaNonRootModulesAsJar() {
 		JEEContextAnalyzer context = new JEEContextAnalyzer(new FileContext(
-				"src/test/resources/testOnlyLib"), "nfms", "nfms");
+				"src/test/resources/testOnlyLib"));
 
 		Set<PluginDescriptor> plugins = context.getPluginDescriptors();
 		assertEquals(2, plugins.size());

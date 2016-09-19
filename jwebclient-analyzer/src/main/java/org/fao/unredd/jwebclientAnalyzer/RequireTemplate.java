@@ -10,22 +10,19 @@ import org.apache.commons.io.IOUtils;
 public class RequireTemplate {
 
 	private InputStream template;
-	private String webResourcesDir;
 	private Map<String, String> paths;
 	private Map<String, String> shims;
 	private List<String> moduleNames;
 
 	public RequireTemplate(String template, Map<String, String> paths,
 			Map<String, String> shims, List<String> moduleNames) {
-		this(RequireTemplate.class.getResourceAsStream(template), "nfms",
-				paths, shims, moduleNames);
+		this(RequireTemplate.class.getResourceAsStream(template), paths, shims,
+				moduleNames);
 	}
 
-	public RequireTemplate(InputStream template, String webResourcesDir,
-			Map<String, String> paths, Map<String, String> shims,
-			List<String> moduleNames) {
+	public RequireTemplate(InputStream template, Map<String, String> paths,
+			Map<String, String> shims, List<String> moduleNames) {
 		this.template = template;
-		this.webResourcesDir = webResourcesDir;
 		this.paths = paths;
 		this.shims = shims;
 		this.moduleNames = moduleNames;
@@ -34,11 +31,12 @@ public class RequireTemplate {
 	public String generate() throws IOException {
 		String output = IOUtils.toString(template);
 
-		output = output.replaceAll("\\Q$webResourcesDir\\E", webResourcesDir);
-		output = output.replaceAll("\\Q$paths\\E", "paths:{"
-				+ getCommaSeparatedMap(paths, "\"") + "}");
-		output = output.replaceAll("\\Q$shim\\E", "shim:{"
-				+ getCommaSeparatedMap(shims, "") + "}");
+		output = output.replaceAll("\\Q$webResourcesDir\\E",
+				Constants.CLIENT_RESOURCES_DIR);
+		output = output.replaceAll("\\Q$paths\\E",
+				"paths:{" + getCommaSeparatedMap(paths, "\"") + "}");
+		output = output.replaceAll("\\Q$shim\\E",
+				"shim:{" + getCommaSeparatedMap(shims, "") + "}");
 		StringBuilder moduleList = new StringBuilder();
 		for (String moduleName : moduleNames) {
 			moduleList.append("\"").append(moduleName).append("\"").append(",");

@@ -18,6 +18,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.fao.unredd.AppContextListener;
+import org.fao.unredd.jwebclientAnalyzer.Constants;
 
 public class ClientContentServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
@@ -44,10 +45,10 @@ public class ClientContentServlet extends HttpServlet {
 			String[] parts = pathInfo.substring(1).split(Pattern.quote("/"));
 
 			{// is it in the root plugin?
-				String resourcePath = testingClasspathRoot + "/nfms"
-						+ File.separator + parts[0] + File.separator
-						+ StringUtils.join(parts, File.separator, 1,
-								parts.length);
+				String resourcePath = testingClasspathRoot + File.separator
+						+ Constants.CLIENT_RESOURCES_DIR + File.separator
+						+ parts[0] + File.separator + StringUtils.join(parts,
+								File.separator, 1, parts.length);
 				InputStream classPathResource = this.getClass()
 						.getResourceAsStream(resourcePath);
 				if (classPathResource != null) {
@@ -70,9 +71,9 @@ public class ClientContentServlet extends HttpServlet {
 					file = noJavaPluginFile;
 				} else {
 					// It is a Java named plugin
-					String resourcePath = testingClasspathRoot + "/nfms"
-							+ File.separator + modulesOrStylesOrJsLib
-							+ File.separator + path;
+					String resourcePath = testingClasspathRoot + File.separator
+							+ Constants.CLIENT_RESOURCES_DIR + File.separator
+							+ modulesOrStylesOrJsLib + File.separator + path;
 					InputStream classPathResource = this.getClass()
 							.getResourceAsStream(resourcePath);
 					if (classPathResource != null) {

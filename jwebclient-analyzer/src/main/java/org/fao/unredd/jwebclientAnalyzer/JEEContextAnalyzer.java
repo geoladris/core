@@ -22,17 +22,9 @@ public class JEEContextAnalyzer {
 
 	private PluginDescriptor currentPlugin;
 	private Set<PluginDescriptor> pluginDescriptors;
-	private String pluginConfDir, webResourcesDir;
 
 	public JEEContextAnalyzer(Context context) {
-		this(context, "nfms", "nfms");
-	}
-
-	public JEEContextAnalyzer(Context context, String pluginConfDir,
-			String webResourcesDir) {
 		this.pluginDescriptors = new HashSet<>();
-		this.pluginConfDir = pluginConfDir;
-		this.webResourcesDir = webResourcesDir;
 
 		scanClasses(context);
 		scanJars(context);
@@ -41,12 +33,12 @@ public class JEEContextAnalyzer {
 
 	private void scanClasses(Context context) {
 		PluginConfigEntryListener pluginConfListener = new PluginConfigEntryListener(
-				pluginConfDir + File.separator, true);
+				Constants.CLIENT_RESOURCES_DIR + File.separator, true);
 		WebResourcesEntryListener webResourcesListener = new WebResourcesEntryListener(
-				webResourcesDir + File.separator);
+				Constants.CLIENT_RESOURCES_DIR + File.separator);
 
 		ClassesPluginLayout pluginLayout = new ClassesPluginLayout(
-				context.getClientRoot(), pluginConfDir, webResourcesDir);
+				context.getClientRoot());
 		if (pluginLayout.rootFolderExists()) {
 			this.currentPlugin = new PluginDescriptor();
 			extractInfo(context, pluginLayout, pluginConfListener,
@@ -58,9 +50,9 @@ public class JEEContextAnalyzer {
 
 	private void scanJars(Context context) {
 		PluginConfigEntryListener pluginConfListener = new PluginConfigEntryListener(
-				pluginConfDir + File.separator, true);
+				Constants.CLIENT_RESOURCES_DIR + File.separator, true);
 		WebResourcesEntryListener webResourcesListener = new WebResourcesEntryListener(
-				webResourcesDir + File.separator);
+				Constants.CLIENT_RESOURCES_DIR + File.separator);
 
 		Set<String> libJars = context.getLibPaths();
 		for (Object jar : libJars) {
@@ -97,8 +89,8 @@ public class JEEContextAnalyzer {
 	private void processJar(Context context, Object jar,
 			ContextEntryListener listener) {
 		InputStream jarStream = context.getLibAsStream(jar.toString());
-		final ZipInputStream zis = new ZipInputStream(new BufferedInputStream(
-				jarStream));
+		final ZipInputStream zis = new ZipInputStream(
+				new BufferedInputStream(jarStream));
 		ZipEntry entry;
 		try {
 			while ((entry = zis.getNextEntry()) != null) {
@@ -128,7 +120,7 @@ public class JEEContextAnalyzer {
 	private void extractInfo(Context context, PluginLayout pluginLayout,
 			PluginConfigEntryListener pluginConfListener,
 			WebResourcesEntryListener webResourcesListener) {
-		scanDir(context, pluginLayout.getConfigurationRoot(),
+		scanDir(context, pluginLayout.getWebResourcesRoot(),
 				pluginLayout.getReferenceFolder(), pluginConfListener);
 		scanDir(context, pluginLayout.getWebResourcesRoot(),
 				pluginLayout.getReferenceFolder(), webResourcesListener);
@@ -208,7 +200,8 @@ public class JEEContextAnalyzer {
 		@Override
 		public void accept(String path, ContextEntryReader contentReader)
 				throws IOException {
-			if (path.matches("\\Q" + pathPrefix + "\\E[\\w-]+\\Q-conf.json\\E")) {
+			if (path.matches(
+					"\\Q" + pathPrefix + "\\E[\\w-]+\\Q-conf.json\\E")) {
 				String name = new File(path).getName();
 				name = name.substring(0, name.length() - "-conf.json".length());
 				PluginDescriptorFileReader reader = new PluginDescriptorFileReader(
@@ -242,8 +235,8 @@ public class JEEContextAnalyzer {
 					name = name.substring(0, name.length() - 3);
 					currentPlugin.addModule(name);
 				}
-			} else if ((path.startsWith(stylesPrefix) || path
-					.startsWith(themePrefix)) && path.endsWith(".css")) {
+			} else if ((path.startsWith(stylesPrefix)
+					|| path.startsWith(themePrefix)) && path.endsWith(".css")) {
 				String stylesheet = path.substring(pathPrefix.length());
 				currentPlugin.addStylesheet(stylesheet);
 			}

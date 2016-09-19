@@ -12,11 +12,6 @@ public class NoJavaPluginLayout implements PluginLayout {
 	}
 
 	@Override
-	public File getConfigurationRoot() {
-		return rootFolder;
-	}
-
-	@Override
 	public File getWebResourcesRoot() {
 		return rootFolder;
 	}

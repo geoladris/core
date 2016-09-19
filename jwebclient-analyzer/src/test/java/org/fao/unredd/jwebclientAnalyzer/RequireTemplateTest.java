@@ -27,27 +27,27 @@ public class RequireTemplateTest {
 		moduleNames.add("module1");
 		moduleNames.add("module2");
 
-		RequireTemplate template = new RequireTemplate("/test.js", paths,
-				shims, moduleNames);
+		RequireTemplate template = new RequireTemplate("/test.js", paths, shims,
+				moduleNames);
 
 		String output = template.generate();
-		assertTrue(output
-				.indexOf("\"foo\":\"http://boh\","
-						+ "\"bar\":\"http://bohboh\","
+		assertTrue(output.indexOf(
+				"\"foo\":\"http://boh\"," + "\"bar\":\"http://bohboh\","
 						+ "\"boh\":\"http://bohbohboh\"") != -1);
-		assertTrue(output.indexOf("\"bar\":[\"foo\", \"boh\"],"
-				+ "\"boh\":[\"foo\"]") != -1);
+		assertTrue(output.indexOf(
+				"\"bar\":[\"foo\", \"boh\"]," + "\"boh\":[\"foo\"]") != -1);
 		assertTrue(output.indexOf("\"module1\",\"module2\"") != -1);
 	}
 
 	@Test
 	public void checkWebResourcesDir() throws IOException {
-		RequireTemplate template = new RequireTemplate(getClass()
-				.getResourceAsStream("/test.js"), "webapp",
+		RequireTemplate template = new RequireTemplate(
+				getClass().getResourceAsStream("/test.js"),
 				new HashMap<String, String>(), new HashMap<String, String>(),
 				new ArrayList<String>());
 
 		String output = template.generate();
-		assertTrue(output.indexOf("requirejs/webapp/modules") != -1);
+		assertTrue(output.indexOf("requirejs/" + Constants.CLIENT_RESOURCES_DIR
+				+ "/modules") != -1);
 	}
 }
