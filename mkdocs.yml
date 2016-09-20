@@ -2,8 +2,8 @@ site_name: Geoladris - Core
 pages:
 - Home: index.md
 - 'Change log': changelog.md
-- 'Configuration directory': conf_dir.md
-- 'Minifying Javascript and CSS': minify_js_css.md
+- 'Directorio de configuración': conf_dir.md
+- 'Minificando Javascript y CSS': minify_js_css.md
 - 'Plugins': plugins.md
-- 'Travis configuration': travis.md
+- 'Configuración de Travis': travis.md
 

@@ -1,6 +1,6 @@
-It is possible to use minified client resources (Javascript and CSS) by specifying a `MINIFIED_JS` Java property set to `true` when starting the servlet container.
+Es posible utilizar recursos minificados en el cliente especificando la propiedad Java `MINIFIED_JS=true` al arrancar el servidor.
 
-Note that the minified resources have to be created beforehand. See an [example](https://github.com/geoladris/apps/blob/master/demo/pom.xml#L159) of a Maven profile with configuration for minification.
+Los recursos minificados se han de crear de antemano. [Aquí](https://github.com/geoladris/apps/blob/master/demo/pom.xml) hay un ejemplo de un perfil Maven con configuración para la minificación.
 
-It is also possible to use not minified resources (even if the `MINIFIED_JS` property has been set to `true`) by adding the `debug=true` parameter to your HTML request. For example: `http://localhost:8080/demo/?debug=true`.
+También es posible utilizar recursos *no* minificados (incluso si se ha especificado la propiedad `MINIFIED_JS=true`) añadiendo el parámetro `debug=true` a la petición HTML. Por ejemplo: http://localhost:8080/demo/?debug=true.
 

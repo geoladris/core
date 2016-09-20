@@ -8,19 +8,19 @@
 
 > TODO: Private configuration.
 
-Only this properties are visible to the client:
+Únicamente estas propiedades son visibles para el cliente:
 
-* `title`: For the HTML `<title>` tag. If the title is not specified here, it is taken from the `messages.properties` files.
+* `title`: Para el _tag_ `<title>` del fichero HTML. Si el título no se especifica aquí, se obtiene de los ficheros `messages.properties`.
 
 > TODO: Good for passwords and sensitive information
 
-##public-conf.json
+## public-conf.json
 
 > TODO: Format of the file. enabled and override pseudomodules
 
-#Roles
+# Roles
 
-The previous configuration can be further adapted depending on the user that access the platform.
+La configuración anterior puede ser adaptada en función del usuario que accede a la plataforma.
 
 > TODO: We talk about user specific configuration but we cannot implement yet user support.
 

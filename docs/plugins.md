@@ -1,60 +1,59 @@
-Geoladris applications have a client/server architecture consisting of a server sticking to the Servlet API and a HTML+CSS+Javascript client application. The way to add functionality to either part is therefore very different
+Las aplicaciones Geoladris utilizan una arquitectura cliente/servidor. El cliente utiliza la API Servlet mientras que el cliente utiliza HTML+CSS+Javascript.
 
-#Server side
+# Servidor
 
-Plugins on the server leverage the Servlet3 API. Therefore it is enough to have a Jar file in the classpath containing a web-fragment that identifies the Servlets that are to be installed.
+Los plugins aprovechan la API Servlet 3.0 en el servidor. Es suficiente tener un paquete `.jar` en el _classpath_ que contenga un fichero `web-fragment.xml` con los _servlets_, filtros, etc. a utilizar por el plugin.
 
-#Client 
+# Cliente 
 
-On the client, the following is required:
+En el cliente es necesario:
 
-- write a [RequireJS](http://requirejs.org/docs/api.html) module,
-- make this module generate any necessary HTML code,
-- include any .css file to style the generated HTML.
-- pack the plugin in one of the possible ways.
+- Escribir un módulo [RequireJS](http://requirejs.org/docs/api.html).
+- Hacer que este módulo genere el código HTML necesario.
+- Incluir ficheros CSS para darle estilo al HTML generado.
+- [Empaquetar el plugin](#packaging) de alguna de las maneras posibles.
 
-Summarizing, a plugin consists on Javascript and CSS files. How are they organized?
+En resumen, un _plugin_ consiste en ficheros Javascript y CSS. ¿Cómo se organizan?
 
-##Structure
+## <a name="Estructura"></a> Estructura
 
-A plugin is a folder with the following contents:
+Un _plugin_ es un directorio con:
 
-- `modules/`: Contains the requireJS modules and the `.CSS` files that are specific to the modules.
-- `jslib/`: Contains non-requireJS libraries used by the modules in `modules/`.
-- `styles/`: Contains `.css` files and images from external libraries.
-- `themes/`: Contains the `.css` files that define the style of the application, overriding the modules styles.
-- `conf.json`: Exposes configuration that will be consumed by the Javascript modules and can be modified in any installation.
+- `modules/`: Contiene los módulos RequireJS y los CSS específicos de cada módulo.
+- `jslib/`: Contiene librerías (no RequireJS) utilizadas por los módulos.
+- `styles/`: Contiene ficheros CSS e imágenes de librerías externas.
+- `theme/`: Contiene ficheros CSS que definen el estilo de la aplicacion, sobreescribiendo los estilos de `modules` y `styles`.
 
-***
-Note that CSS can override each other. They are loaded the order "styles/", "modules/", "themes/", so "modules/" have priority over "styles/" and "themes/" over all the others.
+> TODO - `conf.json`: Define la [configuración](#config) del módulo.
 
-***
+*Importante*: Los ficheros CSS se sobreescriben entre sí. El orden de carga es `styles`, `modules` y `theme`; es decir, `modules` tiene preferencia sobre `styles` y `theme` sobre todos los demás.
 
-##Client plugin packing
+## <a name="packaging"></a>Empaquetado de plugins
 
-The plugin folder can be packed in several ways:
+Un _plugin_ se puede empaquetar de varias maneras:
 
-- As a Jar file: the plugin folder is packed in the `/webapp` folder in the classpath. In case the plugin involves some server activity, the Jar file can include also server side code defined in web fragments. A `/nfms` folder in the classpath plays the same role as `/webapp`. It is available for backwards compatibility but its use is discouraged and may not be supported in next releases.
+- Como un paquete `.jar`. As a Jar file: El directorio del plugin se empaqueta dentro de un directorio `/geoladris` en el _classpath_. Si el _plugin_ tiene parte servidor, el fichero `.jar` también incluye el código Java y el fichero `web-fragment.xml` para definir los servlets.
 
-- As a folder: the plugin folder is packed in the `plugins` folder inside the [configuration directory](conf_dir.md).
+- Como un directorio: El directorio del plugin se empaqueta dentro de un directorio `plugins` en el [directorio de configuración](conf_dir.md).
 
-In both cases, the name of the plugin will be the name of the plugin folder.
+> TODO: En ambos casos, el nombre del plugin será el nombre del directorio.
 
-##Configuration
+## <a name="config"></a> Configuración
 
-The conf.json file is located in the root of the plugin folder, and consists of a JSON element with the following properties:
+> TODO El fichero de configuración `conf.json` está en la raíz del directorio del plugin. Contiene un objeto JSON con las siguientes propiedades:
 
-- installInRoot: Indicates if the RequireJS modules will be installed in the root of the RequireJS `baseURL` or under a subfolder with the name of the plugin. By default, it is `true` if the plugin is packaged in a Jar file and false if it is packaged in the `plugin` folder.
-  Note that the place where the modules are installed affect the way other modules reference it. For example, a module called "mymodule" in a "myplugin" plugin would be referenced as "mymodule" when installed in the root of the RequireJS space and as "myplugin/mymodule" otherwise (or "./mymodule" when referenced from modules on the same plugin).
+- `installInRoot`: Indica si los módulos RequireJS se instalarán en la raíz de la `baseURL` de RequireJS o dentro de un directorio con el nombre del plugin. Por defecto es `true` si el plugin se empaqueta como un fichero `.jar` y `false` si se empaqueta en el directorio `plugins` del directorio de configuración.
+
+  Hay que tener en cuenta que el lugar donde se instalen los módulos afecta a la manera en la que otros módulos los referencian. Por ejemplo, un módulo llamado `mi_modulo` en un _plugin_ `mi_plugin` se referenciará como `mi_modulo` si se instala en la raíz (`installInRoot : true`) y como  `mi_plugin/mi_modulo` en caso contrario (o como `./mi_modulo` cuando se referencia por otros módulos del mismo plugin).
   
-  Note also that although the default for Java plugins is `true`, it is strongly recommended to set it explicitly to false because, otherwise, subfolders in the modules espace can collide with the name of other plugins.
+  También hay que tener en cuenta que a pesar de que por defecto es `true` para _plugins_ empaquetados como `.jar`, se recomienda definirlo como `false` para evitar colisiones de nombres con otros módulos instalados también en la raíz.  
 
-- default-conf: Configuration for the RequireJS modules. It is an object whose properties reference the RequireJS modules and where the values for these properties will be passed to the specified RequireJS module on the `module` pseudo-dependence. In this file, although the modules from plugins with a false `installInRoot` must be referenced with the name of the plugin as prefix ("plugin/module"), it is enough to put the name of the module without the plugin name prefix.
+- `default-conf`: Configuración para los módulos RequireJS. Es un objeto donde los nombres de las propiedades son los nombres de los módulos a configurar y los valores la configuración a pasarles a dichos módulos. En este fichero es suficiente con especificar únicamente el nombre del módulo (sin el prefijo del _plugin_) independientemente del valor de `installInRoot`.
 
-  The configuration can be retrieved in the module through the `module` pseudo-dependence this way:
+  La configuración se puede obtener en el módulo con la pseudodependencia `module`:
 
 		define([ "module" ], function(module) {
 		var configuration = module.config(); 
 
-- requirejs: RequireJS specific configuration, to be mixed with the other plugins. In particular, non-requirejs library dependencies will be specified here.  
+- `requirejs`: Configuración específica de RequireJS, a ser mezclada con la de otros _plugins_. En concreto, dependencias a librerías no-RequireJS se han de especificar aquí.
 

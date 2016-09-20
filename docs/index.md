@@ -1,7 +1,7 @@
 # Geoladris core documentation
 
 * [Plugins](plugins.md)
-* [Configuration directory](conf_dir.md)
-* [Minifying Javascript and CSS](minify_js_css.md)
-* [Travis configuration](travis.md)
+* [Directorio de configuración](conf_dir.md)
+* [Minificando Javascript y CSS](minify_js_css.md)
+* [Configuración de Travis](travis.md)
 * [Change log](changelog.md)
