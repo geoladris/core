@@ -1,4 +1,4 @@
-package org.fao.unredd.jwebclientAnalyzer;
+package org.geoladris.maven;
 
 import java.io.BufferedOutputStream;
 import java.io.FileInputStream;
@@ -17,6 +17,9 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.geoladris.JEEContextAnalyzer;
+import org.geoladris.PluginDescriptor;
+import org.geoladris.RequireTemplate;
 
 /**
  * Generates a RequireJS main.js module and configuration file for the requirejs
