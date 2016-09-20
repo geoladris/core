@@ -6,12 +6,12 @@
 	<name>core</name>
 
 	<listener>
-		<listener-class>org.fao.unredd.AppContextListener</listener-class>
+		<listener-class>org.geoladris.servlet.AppContextListener</listener-class>
 	</listener>
 
 	<filter>
 		<filter-name>lang-filter</filter-name>
-		<filter-class>org.fao.unredd.portal.LangFilter</filter-class>
+		<filter-class>org.geoladris.servlet.LangFilter</filter-class>
 	</filter>
 	<filter-mapping>
 		<filter-name>lang-filter</filter-name>
@@ -21,7 +21,7 @@
 	<!-- index call -->
 	<servlet>
 		<servlet-name>index-servlet</servlet-name>
-		<servlet-class>org.fao.unredd.portal.IndexHTMLServlet</servlet-class>
+		<servlet-class>org.geoladris.servlet.IndexHTMLServlet</servlet-class>
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>index-servlet</servlet-name>
@@ -31,7 +31,7 @@
 	<!-- main requirejs module -->
 	<servlet>
 		<servlet-name>mainjs-servlet</servlet-name>
-		<servlet-class>org.fao.unredd.portal.MainJSServlet</servlet-class>
+		<servlet-class>org.geoladris.servlet.MainJSServlet</servlet-class>
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>mainjs-servlet</servlet-name>
@@ -41,7 +41,7 @@
 	<!-- static folder content -->
 	<servlet>
 		<servlet-name>static-content-servlet</servlet-name>
-		<servlet-class>org.fao.unredd.portal.ClientContentServlet</servlet-class>
+		<servlet-class>org.geoladris.servlet.ClientContentServlet</servlet-class>
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>static-content-servlet</servlet-name>
@@ -55,7 +55,7 @@
 	<!-- config call -->
 	<servlet>
 		<servlet-name>config-servlet</servlet-name>
-		<servlet-class>org.fao.unredd.portal.ConfigServlet</servlet-class>
+		<servlet-class>org.geoladris.servlet.ConfigServlet</servlet-class>
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>config-servlet</servlet-name>
@@ -65,7 +65,7 @@
 	<!-- Error management -->
 	<filter>
 		<filter-name>error-filter</filter-name>
-		<filter-class>org.fao.unredd.portal.ErrorFilter</filter-class>
+		<filter-class>org.geoladris.servlet.ErrorFilter</filter-class>
 	</filter>
 	<filter-mapping>
 		<filter-name>error-filter</filter-name>
