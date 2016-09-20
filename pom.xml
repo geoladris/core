@@ -35,7 +35,7 @@
 		</repository>
 		<repository>
 			<id>csgis-releases</id>
-			<url>http://service-sandbox.csgis.de:8081/mvn/releases/</url>
+			<url>http://service-aws.csgis.de:8081/mvn/releases/</url>
 		</repository>
 	</repositories>
 
