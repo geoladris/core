@@ -22,83 +22,78 @@ import org.geoladris.PluginDescriptor;
 import org.geoladris.RequireTemplate;
 
 /**
- * Generates a RequireJS main.js module and configuration file for the requirejs
- * minification process.
+ * Generates a RequireJS main.js module and configuration file for the requirejs minification
+ * process.
  * 
- * The plugin operates on a folder that contains all the client resources,
- * expects to find the RequireJS modules in a "modules" folder and CSS
- * stylesheets in the "styles" folder
+ * The plugin operates on a folder that contains all the client resources, expects to find the
+ * RequireJS modules in a "modules" folder and CSS stylesheets in the "styles" folder
  * 
  * @author fergonco
  */
 @Mojo(name = "generate-buildconfig")
 public class GenerateRequireJSBuildConfig extends AbstractMojo {
 
-	/**
-	 * Root of the client resources
-	 */
-	@Parameter
-	protected String webClientFolder;
+  /**
+   * Root of the client resources
+   */
+  @Parameter
+  protected String webClientFolder;
 
-	/**
-	 * Path where the buildconfig file will be generated
-	 */
-	@Parameter
-	protected String buildconfigOutputPath;
+  /**
+   * Path where the buildconfig file will be generated
+   */
+  @Parameter
+  protected String buildconfigOutputPath;
 
-	/**
-	 * Path where the main.js file will be generated
-	 */
-	@Parameter
-	protected String mainOutputPath;
+  /**
+   * Path where the main.js file will be generated
+   */
+  @Parameter
+  protected String mainOutputPath;
 
-	/**
-	 * Path to the main.js template to use.
-	 */
-	@Parameter
-	protected String mainTemplate;
+  /**
+   * Path to the main.js template to use.
+   */
+  @Parameter
+  protected String mainTemplate;
 
-	@Override
-	public void execute() throws MojoExecutionException, MojoFailureException {
-		JEEContextAnalyzer analyzer = new JEEContextAnalyzer(
-				new ExpandedClientContext(webClientFolder));
+  @Override
+  public void execute() throws MojoExecutionException, MojoFailureException {
+    JEEContextAnalyzer analyzer =
+        new JEEContextAnalyzer(new ExpandedClientContext(webClientFolder));
 
-		try {
-			InputStream mainStream = new FileInputStream(mainTemplate);
-			processTemplate(analyzer, mainStream, mainOutputPath);
-		} catch (IOException e) {
-			throw new MojoExecutionException("Cannot access main template", e);
-		}
+    try {
+      InputStream mainStream = new FileInputStream(mainTemplate);
+      processTemplate(analyzer, mainStream, mainOutputPath);
+    } catch (IOException e) {
+      throw new MojoExecutionException("Cannot access main template", e);
+    }
 
-		InputStream buildStream = getClass()
-				.getResourceAsStream("/buildconfig.js");
-		processTemplate(analyzer, buildStream, buildconfigOutputPath);
-	}
+    InputStream buildStream = getClass().getResourceAsStream("/buildconfig.js");
+    processTemplate(analyzer, buildStream, buildconfigOutputPath);
+  }
 
-	private void processTemplate(JEEContextAnalyzer analyzer,
-			InputStream templateStream, String outputPath)
-			throws MojoExecutionException {
+  private void processTemplate(JEEContextAnalyzer analyzer, InputStream templateStream,
+      String outputPath) throws MojoExecutionException {
 
-		Map<String, String> paths = new HashMap<String, String>();
-		Map<String, String> shims = new HashMap<String, String>();
-		List<String> moduleNames = new ArrayList<String>();
-		for (PluginDescriptor plugin : analyzer.getPluginDescriptors()) {
-			paths.putAll(plugin.getRequireJSPathsMap());
-			shims.putAll(plugin.getRequireJSShims());
-			moduleNames.addAll(plugin.getModules());
-		}
-		RequireTemplate template = new RequireTemplate(templateStream,
-				paths, shims, moduleNames);
-		try {
-			String content = template.generate();
-			templateStream.close();
+    Map<String, String> paths = new HashMap<String, String>();
+    Map<String, String> shims = new HashMap<String, String>();
+    List<String> moduleNames = new ArrayList<String>();
+    for (PluginDescriptor plugin : analyzer.getPluginDescriptors()) {
+      paths.putAll(plugin.getRequireJSPathsMap());
+      shims.putAll(plugin.getRequireJSShims());
+      moduleNames.addAll(plugin.getModules());
+    }
+    RequireTemplate template = new RequireTemplate(templateStream, paths, shims, moduleNames);
+    try {
+      String content = template.generate();
+      templateStream.close();
 
-			OutputStream outputStream = new BufferedOutputStream(
-					new FileOutputStream(outputPath));
-			IOUtils.write(content, outputStream);
-			outputStream.close();
-		} catch (IOException e) {
-		}
-	}
+      OutputStream outputStream = new BufferedOutputStream(new FileOutputStream(outputPath));
+      IOUtils.write(content, outputStream);
+      outputStream.close();
+    } catch (IOException e) {
+    }
+  }
 
 }

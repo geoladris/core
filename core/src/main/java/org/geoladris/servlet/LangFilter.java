@@ -13,36 +13,34 @@ import javax.servlet.ServletResponse;
 import org.geoladris.config.Config;
 
 public class LangFilter implements Filter {
-	public static final String ATTR_LOCALE = "locale";
+  public static final String ATTR_LOCALE = "locale";
 
-	private Config config;
+  private Config config;
 
-	@Override
-	public void init(FilterConfig filterConfig) throws ServletException {
-		config = (Config) filterConfig.getServletContext()
-				.getAttribute(AppContextListener.ATTR_CONFIG);
-	}
+  @Override
+  public void init(FilterConfig filterConfig) throws ServletException {
+    config = (Config) filterConfig.getServletContext().getAttribute(AppContextListener.ATTR_CONFIG);
+  }
 
-	@Override
-	public void doFilter(ServletRequest request, ServletResponse response,
-			FilterChain chain) throws IOException, ServletException {
-		String lang = request.getParameter("lang");
-		if (lang == null) {
-			lang = config.getDefaultLang();
-		}
+  @Override
+  public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
+      throws IOException, ServletException {
+    String lang = request.getParameter("lang");
+    if (lang == null) {
+      lang = config.getDefaultLang();
+    }
 
-		Locale locale;
-		if (lang != null && lang.trim().length() > 0) {
-			locale = new Locale(lang);
-		} else {
-			locale = request.getLocale();
-		}
-		request.setAttribute(ATTR_LOCALE, locale);
-		chain.doFilter(request, response);
-	}
+    Locale locale;
+    if (lang != null && lang.trim().length() > 0) {
+      locale = new Locale(lang);
+    } else {
+      locale = request.getLocale();
+    }
+    request.setAttribute(ATTR_LOCALE, locale);
+    chain.doFilter(request, response);
+  }
 
-	@Override
-	public void destroy() {
-	}
+  @Override
+  public void destroy() {}
 
 }

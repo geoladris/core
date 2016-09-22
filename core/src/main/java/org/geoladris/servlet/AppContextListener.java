@@ -21,93 +21,85 @@ import org.geoladris.config.PublicConfProvider;
 import org.geoladris.config.RoleConfigurationProvider;
 
 public class AppContextListener implements ServletContextListener {
-	private static final Logger logger = Logger
-			.getLogger(AppContextListener.class);
+  private static final Logger logger = Logger.getLogger(AppContextListener.class);
 
-	public static final String ENV_CONFIG_CACHE = "NFMS_CONFIG_CACHE";
-	public static final String INIT_PARAM_DIR = "PORTAL_CONFIG_DIR";
+  public static final String ENV_CONFIG_CACHE = "NFMS_CONFIG_CACHE";
+  public static final String INIT_PARAM_DIR = "PORTAL_CONFIG_DIR";
 
-	public static final String ATTR_CONFIG = "config";
+  public static final String ATTR_CONFIG = "config";
 
-	@Override
-	public void contextInitialized(ServletContextEvent sce) {
-		ServletContext servletContext = sce.getServletContext();
-		
-		String rootPath = servletContext.getRealPath("/");
-		String configInitParameter = servletContext
-				.getInitParameter(INIT_PARAM_DIR);
-		boolean configCache = Boolean
-				.parseBoolean(System.getenv(ENV_CONFIG_CACHE));
-		ConfigFolder folder = new ConfigFolder(rootPath, configInitParameter);
+  @Override
+  public void contextInitialized(ServletContextEvent sce) {
+    ServletContext servletContext = sce.getServletContext();
 
-		JEEContext context = new JEEContext(servletContext,
-				new File(folder.getFilePath(), "plugins"));
-		JEEContextAnalyzer analyzer = getAnalyzer(context);
+    String rootPath = servletContext.getRealPath("/");
+    String configInitParameter = servletContext.getInitParameter(INIT_PARAM_DIR);
+    boolean configCache = Boolean.parseBoolean(System.getenv(ENV_CONFIG_CACHE));
+    ConfigFolder folder = new ConfigFolder(rootPath, configInitParameter);
 
-		Set<PluginDescriptor> plugins = analyzer.getPluginDescriptors();
-		File publicConf = new File(folder.getFilePath(),
-				PublicConfProvider.FILE);
-		boolean hasPublicConf = publicConf.exists() && publicConf.isFile();
-		ModuleConfigurationProvider publicConfigurationProvider;
-		if (hasPublicConf) {
-			publicConfigurationProvider = new PublicConfProvider(
-					folder.getFilePath());
-		} else {
-			publicConfigurationProvider = new PluginJSONConfigurationProvider();
-			logger.warn("plugin-conf.json file for configuration has been "
-					+ "deprecated. Use public-conf.json instead.");
+    JEEContext context = new JEEContext(servletContext, new File(folder.getFilePath(), "plugins"));
+    JEEContextAnalyzer analyzer = getAnalyzer(context);
 
-		}
+    Set<PluginDescriptor> plugins = analyzer.getPluginDescriptors();
+    File publicConf = new File(folder.getFilePath(), PublicConfProvider.FILE);
+    boolean hasPublicConf = publicConf.exists() && publicConf.isFile();
+    ModuleConfigurationProvider publicConfigurationProvider;
+    if (hasPublicConf) {
+      publicConfigurationProvider = new PublicConfProvider(folder.getFilePath());
+    } else {
+      publicConfigurationProvider = new PluginJSONConfigurationProvider();
+      logger.warn("plugin-conf.json file for configuration has been "
+          + "deprecated. Use public-conf.json instead.");
 
-		DefaultConfig config = new DefaultConfig(folder, plugins,
-				new DefaultConfProvider(plugins), configCache);
-		config.addModuleConfigurationProvider(publicConfigurationProvider);
-		config.addModuleConfigurationProvider(
-				new RoleConfigurationProvider(folder.getFilePath()));
+    }
 
-		servletContext.setAttribute(ATTR_CONFIG, config);
-	}
+    DefaultConfig config =
+        new DefaultConfig(folder, plugins, new DefaultConfProvider(plugins), configCache);
+    config.addModuleConfigurationProvider(publicConfigurationProvider);
+    config.addModuleConfigurationProvider(new RoleConfigurationProvider(folder.getFilePath()));
 
-	/**
-	 * For testing purposes.
-	 */
-	JEEContextAnalyzer getAnalyzer(Context context) {
-		return new JEEContextAnalyzer(context);
-	}
+    servletContext.setAttribute(ATTR_CONFIG, config);
+  }
 
-	@Override
-	public void contextDestroyed(ServletContextEvent sce) {
-	}
+  /**
+   * For testing purposes.
+   */
+  JEEContextAnalyzer getAnalyzer(Context context) {
+    return new JEEContextAnalyzer(context);
+  }
 
-	private class JEEContext implements Context {
+  @Override
+  public void contextDestroyed(ServletContextEvent sce) {}
 
-		private ServletContext servletContext;
-		private File noJavaRoot;
+  private class JEEContext implements Context {
 
-		public JEEContext(ServletContext servletContext, File noJavaRoot) {
-			this.servletContext = servletContext;
-			this.noJavaRoot = noJavaRoot;
-		}
+    private ServletContext servletContext;
+    private File noJavaRoot;
 
-		@SuppressWarnings("unchecked")
-		@Override
-		public Set<String> getLibPaths() {
-			return servletContext.getResourcePaths("/WEB-INF/lib");
-		}
+    public JEEContext(ServletContext servletContext, File noJavaRoot) {
+      this.servletContext = servletContext;
+      this.noJavaRoot = noJavaRoot;
+    }
 
-		@Override
-		public InputStream getLibAsStream(String jarFileName) {
-			return servletContext.getResourceAsStream(jarFileName);
-		}
+    @SuppressWarnings("unchecked")
+    @Override
+    public Set<String> getLibPaths() {
+      return servletContext.getResourcePaths("/WEB-INF/lib");
+    }
 
-		@Override
-		public File getClientRoot() {
-			return new File(servletContext.getRealPath("/WEB-INF/classes/"));
-		}
+    @Override
+    public InputStream getLibAsStream(String jarFileName) {
+      return servletContext.getResourceAsStream(jarFileName);
+    }
 
-		@Override
-		public File getNoJavaRoot() {
-			return noJavaRoot;
-		}
-	}
+    @Override
+    public File getClientRoot() {
+      return new File(servletContext.getRealPath("/WEB-INF/classes/"));
+    }
+
+    @Override
+    public File getNoJavaRoot() {
+      return noJavaRoot;
+    }
+  }
 }

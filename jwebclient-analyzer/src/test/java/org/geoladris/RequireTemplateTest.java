@@ -13,41 +13,36 @@ import org.junit.Test;
 
 public class RequireTemplateTest {
 
-	@Test
-	public void checkGenerate() throws IOException {
+  @Test
+  public void checkGenerate() throws IOException {
 
-		Map<String, String> paths = new LinkedHashMap<String, String>();
-		paths.put("foo", "http://boh");
-		paths.put("bar", "http://bohboh");
-		paths.put("boh", "http://bohbohboh");
-		Map<String, String> shims = new LinkedHashMap<String, String>();
-		shims.put("bar", "[\"foo\", \"boh\"]");
-		shims.put("boh", "[\"foo\"]");
-		List<String> moduleNames = new ArrayList<String>();
-		moduleNames.add("module1");
-		moduleNames.add("module2");
+    Map<String, String> paths = new LinkedHashMap<String, String>();
+    paths.put("foo", "http://boh");
+    paths.put("bar", "http://bohboh");
+    paths.put("boh", "http://bohbohboh");
+    Map<String, String> shims = new LinkedHashMap<String, String>();
+    shims.put("bar", "[\"foo\", \"boh\"]");
+    shims.put("boh", "[\"foo\"]");
+    List<String> moduleNames = new ArrayList<String>();
+    moduleNames.add("module1");
+    moduleNames.add("module2");
 
-		RequireTemplate template = new RequireTemplate("/test.js", paths, shims,
-				moduleNames);
+    RequireTemplate template = new RequireTemplate("/test.js", paths, shims, moduleNames);
 
-		String output = template.generate();
-		assertTrue(output.indexOf(
-				"\"foo\":\"http://boh\"," + "\"bar\":\"http://bohboh\","
-						+ "\"boh\":\"http://bohbohboh\"") != -1);
-		assertTrue(output.indexOf(
-				"\"bar\":[\"foo\", \"boh\"]," + "\"boh\":[\"foo\"]") != -1);
-		assertTrue(output.indexOf("\"module1\",\"module2\"") != -1);
-	}
+    String output = template.generate();
+    assertTrue(output.indexOf("\"foo\":\"http://boh\"," + "\"bar\":\"http://bohboh\","
+        + "\"boh\":\"http://bohbohboh\"") != -1);
+    assertTrue(output.indexOf("\"bar\":[\"foo\", \"boh\"]," + "\"boh\":[\"foo\"]") != -1);
+    assertTrue(output.indexOf("\"module1\",\"module2\"") != -1);
+  }
 
-	@Test
-	public void checkWebResourcesDir() throws IOException {
-		RequireTemplate template = new RequireTemplate(
-				getClass().getResourceAsStream("/test.js"),
-				new HashMap<String, String>(), new HashMap<String, String>(),
-				new ArrayList<String>());
+  @Test
+  public void checkWebResourcesDir() throws IOException {
+    RequireTemplate template = new RequireTemplate(getClass().getResourceAsStream("/test.js"),
+        new HashMap<String, String>(), new HashMap<String, String>(), new ArrayList<String>());
 
-		String output = template.generate();
-		assertTrue(output.indexOf("requirejs/"
-				+ JEEContextAnalyzer.CLIENT_RESOURCES_DIR + "/modules") != -1);
-	}
+    String output = template.generate();
+    assertTrue(
+        output.indexOf("requirejs/" + JEEContextAnalyzer.CLIENT_RESOURCES_DIR + "/modules") != -1);
+  }
 }

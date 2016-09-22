@@ -6,11 +6,11 @@ import java.util.Set;
 
 public interface Context {
 
-	Set<String> getLibPaths();
+  Set<String> getLibPaths();
 
-	InputStream getLibAsStream(String jarFileName);
+  InputStream getLibAsStream(String jarFileName);
 
-	File getClientRoot();
+  File getClientRoot();
 
-	File getNoJavaRoot();
+  File getNoJavaRoot();
 }

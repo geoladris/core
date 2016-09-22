@@ -20,30 +20,28 @@ import de.csgis.commons.JSONContentProvider;
  * @author victorzinho
  */
 public class PublicConfProvider implements ModuleConfigurationProvider {
-	public static final String FILE_BASE = "public-conf";
-	public static final String FILE = FILE_BASE + ".json";
+  public static final String FILE_BASE = "public-conf";
+  public static final String FILE = FILE_BASE + ".json";
 
-	public static final String ROLE_DIR = "role_conf";
+  public static final String ROLE_DIR = "role_conf";
 
-	private ConfigurationProviderHelper helper;
-	private File file;
+  private ConfigurationProviderHelper helper;
+  private File file;
 
-	public PublicConfProvider(File configDir) {
-		JSONContentProvider contents = new JSONContentProvider(
-				configDir.getAbsolutePath());
-		this.helper = new ConfigurationProviderHelper(contents);
-		this.file = new File(configDir, FILE);
-	}
+  public PublicConfProvider(File configDir) {
+    JSONContentProvider contents = new JSONContentProvider(configDir.getAbsolutePath());
+    this.helper = new ConfigurationProviderHelper(contents);
+    this.file = new File(configDir, FILE);
+  }
 
-	@Override
-	public Map<String, JSONObject> getPluginConfig(
-			PortalRequestConfiguration configurationContext,
-			HttpServletRequest request) throws IOException {
-		return file.exists() ? helper.getPluginConfig(FILE_BASE) : null;
-	}
+  @Override
+  public Map<String, JSONObject> getPluginConfig(PortalRequestConfiguration configurationContext,
+      HttpServletRequest request) throws IOException {
+    return file.exists() ? helper.getPluginConfig(FILE_BASE) : null;
+  }
 
-	@Override
-	public boolean canBeCached() {
-		return true;
-	}
+  @Override
+  public boolean canBeCached() {
+    return true;
+  }
 }

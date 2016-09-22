@@ -32,73 +32,63 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 
 public class AppContextListenerTest {
-	private AppContextListener listener;
-	private File confDir;
-	private ServletContext context;
-	private ServletContextEvent sce;
+  private AppContextListener listener;
+  private File confDir;
+  private ServletContext context;
+  private ServletContextEvent sce;
 
-	@Before
-	public void setup() throws IOException {
-		this.listener = spy(new AppContextListener());
-		File root = File.createTempFile("geoladris_conf_dir", "");
-		root.delete();
-		this.confDir = new File(root, "WEB-INF/default_config");
-		this.confDir.mkdirs();
-		this.context = mock(ServletContext.class);
-		this.sce = mock(ServletContextEvent.class);
-		when(sce.getServletContext()).thenReturn(context);
-		when(this.context.getRealPath("/")).thenReturn(root.getAbsolutePath());
+  @Before
+  public void setup() throws IOException {
+    this.listener = spy(new AppContextListener());
+    File root = File.createTempFile("geoladris_conf_dir", "");
+    root.delete();
+    this.confDir = new File(root, "WEB-INF/default_config");
+    this.confDir.mkdirs();
+    this.context = mock(ServletContext.class);
+    this.sce = mock(ServletContextEvent.class);
+    when(sce.getServletContext()).thenReturn(context);
+    when(this.context.getRealPath("/")).thenReturn(root.getAbsolutePath());
 
-		doReturn(mock(JEEContextAnalyzer.class)).when(this.listener)
-				.getAnalyzer(any(Context.class));
-	}
+    doReturn(mock(JEEContextAnalyzer.class)).when(this.listener).getAnalyzer(any(Context.class));
+  }
 
-	@After
-	public void teardown() throws IOException {
-		FileUtils.deleteDirectory(this.confDir);
-	}
+  @After
+  public void teardown() throws IOException {
+    FileUtils.deleteDirectory(this.confDir);
+  }
 
-	@Test
-	public void addsConfig() {
-		this.listener.contextInitialized(sce);
-		verify(context).setAttribute(eq(AppContextListener.ATTR_CONFIG),
-				any(Config.class));
-	}
+  @Test
+  public void addsConfig() {
+    this.listener.contextInitialized(sce);
+    verify(context).setAttribute(eq(AppContextListener.ATTR_CONFIG), any(Config.class));
+  }
 
-	@Test
-	public void testPublicConf() throws IOException {
-		File publicConf = new File(this.confDir, PublicConfProvider.FILE);
-		publicConf.createNewFile();
+  @Test
+  public void testPublicConf() throws IOException {
+    File publicConf = new File(this.confDir, PublicConfProvider.FILE);
+    publicConf.createNewFile();
 
-		ArgumentCaptor<Config> captor = ArgumentCaptor.forClass(Config.class);
+    ArgumentCaptor<Config> captor = ArgumentCaptor.forClass(Config.class);
 
-		this.listener.contextInitialized(sce);
-		verify(context).setAttribute(eq(AppContextListener.ATTR_CONFIG),
-				captor.capture());
+    this.listener.contextInitialized(sce);
+    verify(context).setAttribute(eq(AppContextListener.ATTR_CONFIG), captor.capture());
 
-		DefaultConfig config = (DefaultConfig) captor.getValue();
-		assertTrue(config
-				.hasModuleConfigurationProvider(PublicConfProvider.class));
-		assertTrue(config
-				.hasModuleConfigurationProvider(DefaultConfProvider.class));
-		assertFalse(config.hasModuleConfigurationProvider(
-				PluginJSONConfigurationProvider.class));
-	}
+    DefaultConfig config = (DefaultConfig) captor.getValue();
+    assertTrue(config.hasModuleConfigurationProvider(PublicConfProvider.class));
+    assertTrue(config.hasModuleConfigurationProvider(DefaultConfProvider.class));
+    assertFalse(config.hasModuleConfigurationProvider(PluginJSONConfigurationProvider.class));
+  }
 
-	@Test
-	public void testPluginConf() {
-		ArgumentCaptor<Config> captor = ArgumentCaptor.forClass(Config.class);
+  @Test
+  public void testPluginConf() {
+    ArgumentCaptor<Config> captor = ArgumentCaptor.forClass(Config.class);
 
-		this.listener.contextInitialized(sce);
-		verify(context).setAttribute(eq(AppContextListener.ATTR_CONFIG),
-				captor.capture());
+    this.listener.contextInitialized(sce);
+    verify(context).setAttribute(eq(AppContextListener.ATTR_CONFIG), captor.capture());
 
-		DefaultConfig config = (DefaultConfig) captor.getValue();
-		assertFalse(config
-				.hasModuleConfigurationProvider(PublicConfProvider.class));
-		assertTrue(config
-				.hasModuleConfigurationProvider(DefaultConfProvider.class));
-		assertTrue(config.hasModuleConfigurationProvider(
-				PluginJSONConfigurationProvider.class));
-	}
+    DefaultConfig config = (DefaultConfig) captor.getValue();
+    assertFalse(config.hasModuleConfigurationProvider(PublicConfProvider.class));
+    assertTrue(config.hasModuleConfigurationProvider(DefaultConfProvider.class));
+    assertTrue(config.hasModuleConfigurationProvider(PluginJSONConfigurationProvider.class));
+  }
 }

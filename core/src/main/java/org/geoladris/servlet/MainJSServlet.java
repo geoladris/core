@@ -17,34 +17,32 @@ import org.geoladris.config.Config;
 import org.geoladris.config.PluginDescriptors;
 
 public class MainJSServlet extends HttpServlet {
-	private static final long serialVersionUID = 1L;
-	private String output;
+  private static final long serialVersionUID = 1L;
+  private String output;
 
-	@Override
-	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException {
+  @Override
+  protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+      throws ServletException, IOException {
 
-		if (output == null) {
+    if (output == null) {
 
-			Config config = (Config) getServletContext().getAttribute(
-					AppContextListener.ATTR_CONFIG);
-			Locale locale = (Locale) req.getAttribute(LangFilter.ATTR_LOCALE);
-			PluginDescriptors pluginDescriptors = config.getPluginConfig(
-					locale, req);
-			Map<String, String> paths = new HashMap<>();
-			Map<String, String> shims = new HashMap<>();
-			for (PluginDescriptor plugin : pluginDescriptors.getEnabled()) {
-				paths.putAll(plugin.getRequireJSPathsMap());
-				shims.putAll(plugin.getRequireJSShims());
-			}
+      Config config = (Config) getServletContext().getAttribute(AppContextListener.ATTR_CONFIG);
+      Locale locale = (Locale) req.getAttribute(LangFilter.ATTR_LOCALE);
+      PluginDescriptors pluginDescriptors = config.getPluginConfig(locale, req);
+      Map<String, String> paths = new HashMap<>();
+      Map<String, String> shims = new HashMap<>();
+      for (PluginDescriptor plugin : pluginDescriptors.getEnabled()) {
+        paths.putAll(plugin.getRequireJSPathsMap());
+        shims.putAll(plugin.getRequireJSShims());
+      }
 
-			RequireTemplate template = new RequireTemplate("/main.js", paths,
-					shims, Collections.<String> emptyList());
+      RequireTemplate template =
+          new RequireTemplate("/main.js", paths, shims, Collections.<String>emptyList());
 
-			output = template.generate();
-		}
+      output = template.generate();
+    }
 
-		resp.getWriter().print(output);
-	}
+    resp.getWriter().print(output);
+  }
 
 }
