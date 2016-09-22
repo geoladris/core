@@ -27,11 +27,11 @@
 	<distributionManagement>
 		<repository>
 			<id>geoladris-releases</id>
-			<url>scp://nullisland.geomati.co/var/mvn/releases</url>
+			<url>http://nullisland.geomati.co:8082/repository/releases</url>
 		</repository>
 		<snapshotRepository>
 			<id>geoladris-snapshots</id>
-			<url>scp://nullisland.geomati.co/var/mvn/snapshots</url>
+			<url>http://nullisland.geomati.co:8082/repository/snapshots</url>
 		</snapshotRepository>
 	</distributionManagement>
 
@@ -87,12 +87,61 @@
 				</executions>
 			</plugin>
 		</plugins>
-		<extensions>
-			<extension>
-				<groupId>org.apache.maven.wagon</groupId>
-				<artifactId>wagon-ssh</artifactId>
-				<version>2.10</version>
-			</extension>
-		</extensions>
+		<pluginManagement>
+			<plugins>
+				<!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+				<plugin>
+					<groupId>org.eclipse.m2e</groupId>
+					<artifactId>lifecycle-mapping</artifactId>
+					<version>1.0.0</version>
+					<configuration>
+						<lifecycleMappingMetadata>
+							<pluginExecutions>
+								<pluginExecution>
+									<pluginExecutionFilter>
+										<groupId>org.apache.maven.plugins</groupId>
+										<artifactId>maven-plugin-plugin</artifactId>
+										<versionRange>[3.2,)</versionRange>
+										<goals>
+											<goal>descriptor</goal>
+											<goal>helpmojo</goal>
+										</goals>
+									</pluginExecutionFilter>
+									<action>
+										<ignore></ignore>
+									</action>
+								</pluginExecution>
+								<pluginExecution>
+									<pluginExecutionFilter>
+										<groupId>org.apache.maven.plugins</groupId>
+										<artifactId>maven-dependency-plugin</artifactId>
+										<versionRange>[2.8,)</versionRange>
+										<goals>
+											<goal>unpack-dependencies</goal>
+										</goals>
+									</pluginExecutionFilter>
+									<action>
+										<ignore></ignore>
+									</action>
+								</pluginExecution>
+								<pluginExecution>
+									<pluginExecutionFilter>
+										<groupId>com.github.klieber</groupId>
+										<artifactId>phantomjs-maven-plugin</artifactId>
+										<versionRange>[0.7,)</versionRange>
+										<goals>
+											<goal>install</goal>
+										</goals>
+									</pluginExecutionFilter>
+									<action>
+										<ignore></ignore>
+									</action>
+								</pluginExecution>
+							</pluginExecutions>
+						</lifecycleMappingMetadata>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
 	</build>
 </project>
