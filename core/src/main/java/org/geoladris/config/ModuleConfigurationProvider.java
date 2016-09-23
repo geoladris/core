@@ -30,8 +30,8 @@ public interface ModuleConfigurationProvider {
 
   /**
    * True if the value returned by
-   * {@link #getConfigurationMap(PortalRequestConfiguration, HttpServletRequest)} can be cached so
-   * that the method is not called in every request.
+   * {@link #getPluginConfig(PortalRequestConfiguration, HttpServletRequest)} can be cached so that
+   * the method is not called in every request.
    * 
    * @return
    */

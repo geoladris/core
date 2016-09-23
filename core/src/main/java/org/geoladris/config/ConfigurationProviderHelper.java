@@ -34,13 +34,14 @@ public class ConfigurationProviderHelper {
    * 
    * 
    * @param file The file to obtain the configuration. Contents are provided by the
-   *        {@link JSONContentProvider} used in {@link #PublicConfHelper(JSONContentProvider, Map)}.
+   *        {@link JSONContentProvider} used in
+   *        {@link #ConfigurationProviderHelper(JSONContentProvider)}.
    * @return A map with the plugin configuration. Keys are plugin names; values are JSON objects
    *         with module configurations (JSON object keys are module names; JSON object values are
    *         module configurations).
    * @throws NullPointerException if this instance has been created with a constructor that does not
    *         receive a {@link JSONContentProvider}, such as
-   *         {@link #ConfigurationProviderHelper(JSONContentProvider, Map)} .
+   *         {@link #ConfigurationProviderHelper(JSONContentProvider)} .
    */
   public Map<String, JSONObject> getPluginConfig(String file) throws NullPointerException {
     JSONObject conf = this.contents.get().get(file);

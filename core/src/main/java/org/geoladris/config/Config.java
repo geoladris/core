@@ -48,7 +48,7 @@ public interface Config {
   /**
    * Returns the property as an array or null if the property does not exist
    * 
-   * @param name
+   * @param property
    * @return
    */
   String[] getPropertyAsArray(String property);
@@ -71,7 +71,7 @@ public interface Config {
   PluginDescriptors getPluginConfig(Locale locale, HttpServletRequest request);
 
   /**
-   * Add providers to modify the behavior of {@link #getPluginConfiguration(HttpServletRequest)} and
+   * Add providers to modify the behavior of {@link #getPluginConfig(Locale, HttpServletRequest)}.
    * 
    * @param provider
    */
