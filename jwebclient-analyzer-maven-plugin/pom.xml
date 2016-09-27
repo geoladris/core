@@ -54,7 +54,7 @@
 		<dependency>
 			<groupId>org.fao.unredd</groupId>
 			<artifactId>jwebclient-analyzer</artifactId>
-			<version>5.0-SNAPSHOT</version>
+			<version>5.0.0-beta1</version>
 		</dependency>
 
 		<!-- Testing -->
