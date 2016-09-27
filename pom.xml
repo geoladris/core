@@ -11,6 +11,7 @@
 	<modules>
 		<module>core</module>
 		<module>jwebclient-analyzer</module>
+		<module>jwebclient-analyzer-maven-plugin</module>
 	</modules>
 
 	<repositories>
