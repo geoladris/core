@@ -16,12 +16,46 @@
 
 ## public-conf.json
 
-> TODO: Format of the file. enabled and override pseudomodules
+El fichero `public-conf.json` contiene un objeto JSON. Cada propiedad del objeto es el nombre del _plugin_ a configurar y el valor es la configuración del plugin.
 
-# Roles
+La configuración del plugin es a su vez otro objeto JSON. Cada propiedad es el nombre del módulo RequireJS a configurar y el valor es la configuración del módulo, tal y como se puede obtener con ``module.config()``.
+
+Aparte existen los siguientes psedo-módulos:
+
+* `_enabled`: Activa (`true`) o desactiva (`false`) el plugin. Por defecto es `true`.
+* `_override`: Sobreescribe (`true`) o mezcla (`false`) la configuración por defecto del plugin. Por defecto es `false`.
+
+### Ejemplo
+
+```
+    {
+      "base" : {
+        "banner" : {
+          "hide" : true,
+          "show-flag" : false,
+          "show-logos" : false
+        }
+      },
+      "footnote": {
+        "footnote": {
+          "text": "footnote.text",
+          "link": "http://example.com",
+          "align": "center"
+        }
+      },
+      "feedback": {
+        "_enabled" : false
+      }
+    }
+```
+
+# Configuración específica de usuarios
 
 La configuración anterior puede ser adaptada en función del usuario que accede a la plataforma.
 
-> TODO: We talk about user specific configuration but we cannot implement yet user support.
+Para ello basta con añadir ficheros `role_conf/<role>.json` dentro del [directorio de configuración](conf_dir.md). Cada uno de los ficheros contiene la configuración específica del rol del usuario. El contenido de los ficheros sigue el mismo formato que `public-conf.json`.
 
-> * `role_conf/<role>.json`. The `role_conf` directory is contained in the [configuration directory](conf_dir.md). It can contain multiple JSON files with configuration that is specific to a role. The name of these files must match `<role>.json` and its content must be the same as the plugin descriptor above. Note that with these role-specific  descriptors it is possible not only to override plugin configurations but also to add new plugins for a user. Finally, users and roles are managed by applications, so it is not possible to give further indications for them.
+De esta forma es posible no solo cambiar la configuración de un _plugin_, sino también añadir o eliminar _plugins_ para un usuario concreto con el pseudomódulo `_enabled`.
+
+Finalmente hay que tener en cuenta que los usuarios y roles son gestionados por los _plugins_. Actualmente en Geoladris no existe ningún plugin que permita la autenticación.
+

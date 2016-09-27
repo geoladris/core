@@ -2,15 +2,7 @@ El código de Geoladris está configurado en Travis para su integración contín
 
 	https://travis-ci.org/geoladris/
 
-La configuración debe garantizar que se pasan todos los tests (tests de integración incluídos) y que se hace un `mvn deploy` de todas las librerías que componen Geoladris.
-
-#Configuración
-
-Para que los tests de integración puedan pasar es necesario establecer algunas variables de entorno en la configuración de los repositorios en Travis:
-
-* ONUREDDMAILPASSWORD: Password del usuario de correo con el que se envían los correos de la herramienta de Feedback.
-* NFMS4REDD_USER: Usuario para hacer el deploy maven
-* NFMS4REDD_PASSWORD: Password del usuario anterior
+La configuración debe garantizar que se pasan todos los tests y que se hace un `mvn deploy` de todas las librerías que componen Geoladris.
 
 ## mvn deploy
 
