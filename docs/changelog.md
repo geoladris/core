@@ -23,4 +23,5 @@ This project follows [semantic versioning](http://semver.org).
 
 ## Bugs conocidos
 * [Minificación no funciona para plugins con installInRoot:false](https://github.com/geoladris/geoladris/issues/24).
+* [Es posible cargar recursos instalados en la raíz como si pertenecieran a un plugin inexistente.](https://github.com/geoladris/geoladris/issues/26).
 
