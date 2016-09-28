@@ -99,8 +99,13 @@ public class PluginDescriptor {
    */
   public void addStylesheet(String stylesheet) {
     if (!installInRoot && this.name != null) {
-      String dir = new File(stylesheet).getParentFile().getName();
-      stylesheet = stylesheet.replace(dir + "/", dir + "/" + this.name + "/");
+      // Get root (styles, modules or theme)
+      File root = new File(stylesheet).getParentFile();
+      while (root.getParentFile() != null) {
+        root = root.getParentFile();
+      }
+
+      stylesheet = stylesheet.replace(root.getName(), root.getName() + "/" + this.name);
     }
     this.stylesheets.add(stylesheet);
   }
