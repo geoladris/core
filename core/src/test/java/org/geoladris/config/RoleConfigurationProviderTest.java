@@ -19,7 +19,7 @@ import net.sf.json.JSONObject;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.geoladris.Constants;
+import org.geoladris.Geoladris;
 import org.geoladris.PortalRequestConfiguration;
 import org.geoladris.config.RoleConfigurationProvider;
 import org.junit.After;
@@ -94,7 +94,7 @@ public class RoleConfigurationProviderTest {
 
     HttpSession session = mock(HttpSession.class);
     when(request.getSession()).thenReturn(session);
-    when(session.getAttribute(Constants.SESSION_ATTR_ROLE)).thenReturn(role);
+    when(session.getAttribute(Geoladris.SESSION_ATTR_ROLE)).thenReturn(role);
 
     return request;
   }

@@ -31,25 +31,13 @@ public class ConfigFolder {
     if (dir == null) {
       String defaultDir = rootPath + File.separator + "WEB-INF" + File.separator + "default_config";
 
-      // Get the portal config dir property from Java system properties
-      String portalConfigDir = System.getenv("PORTAL_CONFIG_DIR");
-      if (portalConfigDir == null || portalConfigDir.trim().length() == 0) {
-        portalConfigDir = System.getProperty("PORTAL_CONFIG_DIR");
-      }
-
-      // If not set in the system properties, get it from the Servlet
-      // context parameters (web.xml)
-      if (portalConfigDir == null)
-        portalConfigDir = configInitParameter;
-
-      // Otherwise:
-      if (portalConfigDir == null) {
+      if (configInitParameter == null) {
         // if not set already, use the default portal config dir
         logger.warn("PORTAL_CONFIG_DIR property not found. Using default config.");
         dir = new File(defaultDir);
       } else {
         // if set but not existing, use the default portal config dir
-        dir = new File(portalConfigDir, contextPath);
+        dir = new File(configInitParameter, contextPath);
         if (!dir.exists()) {
           logger.warn("PORTAL_CONFIG_DIR is set to " + dir.getAbsolutePath()
               + ", but it doesn't exist. Using default config.");

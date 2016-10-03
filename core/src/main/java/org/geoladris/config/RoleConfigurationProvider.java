@@ -6,7 +6,7 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.geoladris.Constants;
+import org.geoladris.Geoladris;
 import org.geoladris.PortalRequestConfiguration;
 
 import net.sf.json.JSONObject;
@@ -20,7 +20,7 @@ import de.csgis.commons.JSONContentProvider;
  * </p>
  * 
  * <p>
- * The active role is taken from the {@link Constants#SESSION_ATTR_ROLE} session attribute.
+ * The active role is taken from the {@link Geoladris#SESSION_ATTR_ROLE} session attribute.
  * </p>
  * 
  * @author victorzinho
@@ -43,7 +43,7 @@ public class RoleConfigurationProvider implements ModuleConfigurationProvider {
   }
 
   private String getRole(HttpServletRequest request) {
-    Object attr = request.getSession().getAttribute(Constants.SESSION_ATTR_ROLE);
+    Object attr = request.getSession().getAttribute(Geoladris.SESSION_ATTR_ROLE);
     if (attr == null) {
       return null;
     }

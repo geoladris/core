@@ -17,6 +17,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Properties;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
@@ -26,12 +27,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.geoladris.Environment;
 import org.geoladris.PluginDescriptor;
 import org.geoladris.StatusServletException;
 import org.geoladris.config.Config;
 import org.geoladris.config.PluginDescriptors;
-import org.geoladris.servlet.AppContextListener;
-import org.geoladris.servlet.ClientContentServlet;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -42,9 +43,20 @@ public class ClientContentServletTest {
   @Captor
   private ArgumentCaptor<Config> configCaptor;
 
+  private Properties systemProperties;
+
   @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
+    systemProperties = System.getProperties();
+    Properties props = new Properties();
+    props.putAll(systemProperties);
+    System.setProperties(props);
+  }
+
+  @After
+  public void teardown() {
+    System.setProperties(systemProperties);
   }
 
   /**
@@ -58,11 +70,11 @@ public class ClientContentServletTest {
     ServletContextEvent servletContextEvent = mock(ServletContextEvent.class);
     ServletContext servletContext = mock(ServletContext.class);
     String confDir = folder.substring(0, folder.lastIndexOf('/'));
-    String context = folder.substring(folder.lastIndexOf('/') + 1);
-    when(servletContext.getInitParameter("PORTAL_CONFIG_DIR")).thenReturn(confDir);
+    String contextPath = folder.substring(folder.lastIndexOf('/') + 1);
+    System.setProperty(Environment.CONFIG_DIR, confDir);
     when(servletContext.getResourcePaths("/WEB-INF/lib")).thenReturn(new HashSet<String>());
     when(servletContext.getRealPath("/WEB-INF/classes/")).thenReturn(folder + "/WEB-INF/classes");
-    when(servletContext.getContextPath()).thenReturn(context);
+    when(servletContext.getContextPath()).thenReturn(contextPath);
     when(servletContextEvent.getServletContext()).thenReturn(servletContext);
     listener.contextInitialized(servletContextEvent);
 
@@ -198,7 +210,8 @@ public class ClientContentServletTest {
     servlet.setTestingClasspathRoot("/testNoJavaPlugins/WEB-INF/classes/");
     ServletConfig servletConfig = mock(ServletConfig.class);
     ServletContext servletContext = mock(ServletContext.class);
-    when(servletContext.getAttribute("config")).thenReturn(configCaptor.getValue());
+    when(servletContext.getAttribute(AppContextListener.ATTR_CONFIG))
+        .thenReturn(configCaptor.getValue());
     when(servletConfig.getServletContext()).thenReturn(servletContext);
     servlet.init(servletConfig);
 
