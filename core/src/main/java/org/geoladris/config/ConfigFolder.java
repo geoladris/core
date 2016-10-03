@@ -15,12 +15,14 @@ import org.apache.log4j.Logger;
 import org.geoladris.ConfigurationException;
 
 public class ConfigFolder {
-  private static Logger logger = Logger.getLogger(ConfigFolder.class);
+  private static final Logger logger = Logger.getLogger(ConfigFolder.class);
   private File dir = null;
   private String rootPath;
   private String configInitParameter;
+  private String contextPath;
 
-  public ConfigFolder(String rootPath, String configInitParameter) {
+  public ConfigFolder(String contextPath, String rootPath, String configInitParameter) {
+    this.contextPath = contextPath;
     this.rootPath = rootPath;
     this.configInitParameter = configInitParameter;
   }
@@ -47,7 +49,7 @@ public class ConfigFolder {
         dir = new File(defaultDir);
       } else {
         // if set but not existing, use the default portal config dir
-        dir = new File(portalConfigDir);
+        dir = new File(portalConfigDir, contextPath);
         if (!dir.exists()) {
           logger.warn("PORTAL_CONFIG_DIR is set to " + dir.getAbsolutePath()
               + ", but it doesn't exist. Using default config.");

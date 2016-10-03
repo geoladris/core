@@ -164,7 +164,7 @@ public class DefaultConfigTest {
 
   @Test
   public void testNoConfigurationFolder() {
-    Config config = new DefaultConfig(new ConfigFolder("doesnotexist", "doesnotexist"),
+    Config config = new DefaultConfig(new ConfigFolder("app", "doesnotexist", "doesnotexist"),
         Collections.<PluginDescriptor>emptySet(), null, false);
     assertNotNull(config.getDir());
     assertNotNull(config.getPluginConfig(Locale.getDefault(), mock(HttpServletRequest.class)));
@@ -175,7 +175,7 @@ public class DefaultConfigTest {
 
   @Test
   public void testFailingConfigurationProvider() throws Exception {
-    Config config = new DefaultConfig(new ConfigFolder("doesnotexist", "doesnotexist"),
+    Config config = new DefaultConfig(new ConfigFolder("app", "doesnotexist", "doesnotexist"),
         Collections.<PluginDescriptor>emptySet(), null, false);
     ModuleConfigurationProvider provider = mock(ModuleConfigurationProvider.class);
     when(provider.getPluginConfig(any(PortalRequestConfiguration.class),
@@ -191,8 +191,8 @@ public class DefaultConfigTest {
     new PluginDescriptorFileReader("{default-conf:{m1:true}}", true, "p1")
         .fillPluginDescriptor(pluginDescriptor);
     plugins.add(pluginDescriptor);
-    Config config =
-        new DefaultConfig(new ConfigFolder("doesnotexist", "doesnotexist"), plugins, null, false);
+    Config config = new DefaultConfig(new ConfigFolder("app", "doesnotexist", "doesnotexist"),
+        plugins, null, false);
 
     Map<String, JSONObject> mergingConfiguration1 = new HashMap<String, JSONObject>();
     mergingConfiguration1.put("p1", JSONObject.fromObject("{m2:true}"));

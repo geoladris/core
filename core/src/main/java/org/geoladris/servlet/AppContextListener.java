@@ -35,7 +35,8 @@ public class AppContextListener implements ServletContextListener {
     String rootPath = servletContext.getRealPath("/");
     String configInitParameter = servletContext.getInitParameter(INIT_PARAM_DIR);
     boolean configCache = Boolean.parseBoolean(System.getenv(ENV_CONFIG_CACHE));
-    ConfigFolder folder = new ConfigFolder(rootPath, configInitParameter);
+    String contextPath = servletContext.getContextPath();
+    ConfigFolder folder = new ConfigFolder(contextPath, rootPath, configInitParameter);
 
     JEEContext context = new JEEContext(servletContext, new File(folder.getFilePath(), "plugins"));
     JEEContextAnalyzer analyzer = getAnalyzer(context);

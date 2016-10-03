@@ -6,6 +6,7 @@ This project follows [semantic versioning](http://semver.org).
 * [Especificar _arrays_ JSON como configuración de los módulos](https://github.com/geoladris/geoladris/issues/2).
 * [Soporte para Java 8](https://github.com/geoladris/geoladris/issues/20).
 * [Enviar al cliente únicamente las propiedades bien conocidas](https://github.com/geoladris/geoladris/issues/8).
+* [Posibilidad de tener un directorio de configuración distinto por aplicación](https://github.com/geoladris/core/issues/30).
 
 ## Añadido
 * Nuevo descriptor de aplicación `public-conf.json`. Permite activar y desactivar plugins. Sustituye a `plugin-conf.json`, que se mantiene temporalmente por compatibilidad hacia atrás.

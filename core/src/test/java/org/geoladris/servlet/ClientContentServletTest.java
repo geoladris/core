@@ -54,9 +54,12 @@ public class ClientContentServletTest {
     AppContextListener listener = new AppContextListener();
     ServletContextEvent servletContextEvent = mock(ServletContextEvent.class);
     ServletContext servletContext = mock(ServletContext.class);
-    when(servletContext.getInitParameter("PORTAL_CONFIG_DIR")).thenReturn(folder);
+    String confDir = folder.substring(0, folder.lastIndexOf('/'));
+    String context = folder.substring(folder.lastIndexOf('/') + 1);
+    when(servletContext.getInitParameter("PORTAL_CONFIG_DIR")).thenReturn(confDir);
     when(servletContext.getResourcePaths("/WEB-INF/lib")).thenReturn(new HashSet<String>());
     when(servletContext.getRealPath("/WEB-INF/classes/")).thenReturn(folder + "/WEB-INF/classes");
+    when(servletContext.getContextPath()).thenReturn(context);
     when(servletContextEvent.getServletContext()).thenReturn(servletContext);
     listener.contextInitialized(servletContextEvent);
 

@@ -1,6 +1,23 @@
-> TODO: Geoladris applications can be customized using a configuration folder.
+## Directorio de configuración
 
-> TODO: -DPORTAL_CONF_DIR & export PORTAL_CONF_DIR
+Las aplicaciones Geoladris se pueden configurar utilizando un directorio de configuración. Este directorio se puede especificar de diferentes maneras:
+
+* Variable de entorno: `export PORTAL_CONF_DIR=/var/geoladris`.
+* Propiedad Java: `-DPORTAL_CONF_DIR=/var/geoladris`.
+* Parámetro en `web.xml`:
+
+  ```
+	<context-param>
+		<param-name>PORTAL_CONF_DIR</param-name>
+		<param-value>/var/geoladris</param-value>
+	</context-param>
+  ```
+
+Este directorio deberá contener un subdirectorio por cada aplicación desplegada.
+
+Por ejemplo, si se han desplegado los paquetes `visor-demo.war` y `visor-bosques.war`, y `PORTAL_CONF_DIR` se ha establecido a `var/geoladris`, se utilizarán los siguientes directorios de configuración: `/var/geoladris/visor-demo` y `/var/geoladris/visor-bosques`.
+
+Si alguno de esos directorios no existe o si `PORTAL_CONF_DIR` no se ha configurado correctamente, se utilizará el directorio por defecto para esa aplicación concreta: `<directorio_despliegue_app>/WEB-INF/default_config`. Por ejemplo, si se ha desplegado el paquete `visor-demo.war` en `/var/lib/tomcat/webapps`, el directorio de configuración del visor sería `var/lib/tomcat/webapps/visor-demo/WEB-INF/default_config`.
 
 > TODO: Plugins can store configuration in two files:
 
