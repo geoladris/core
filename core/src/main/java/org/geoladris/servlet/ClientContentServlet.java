@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.FileNameMap;
 import java.net.URLConnection;
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 import javax.servlet.ServletException;
@@ -18,6 +19,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.geoladris.JEEContextAnalyzer;
+import org.geoladris.PluginDescriptor;
 import org.geoladris.StatusServletException;
 import org.geoladris.config.Config;
 
@@ -57,6 +59,19 @@ public class ClientContentServlet extends HttpServlet {
         String modulesOrStylesOrJsLib = parts[0];
         String pluginName = parts[1];
         String path = StringUtils.join(parts, File.separator, 2, parts.length);
+
+        Locale locale = (Locale) req.getAttribute(LangFilter.ATTR_LOCALE);
+        PluginDescriptor[] enabled = config.getPluginConfig(locale, req).getEnabled();
+        boolean found = false;
+        for (PluginDescriptor plugin : enabled) {
+          if (plugin.getName().equals(pluginName)) {
+            found = true;
+          }
+        }
+
+        if (!found) {
+          throw new StatusServletException(404, "The file could not be found: " + pathInfo);
+        }
 
         // Is it in the java plugin space?
         // Is it a no-java plugin resource?

@@ -3,8 +3,11 @@ package org.geoladris.servlet;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -147,6 +150,7 @@ public class ClientContentServletTest {
       HttpServletRequest request = mock(HttpServletRequest.class);
       when(request.getServletPath()).thenReturn(servletPath);
       when(request.getPathInfo()).thenReturn(pathInfo);
+      when(request.getSession()).thenReturn(mock(HttpSession.class));
       servlet.doGet(request, response);
 
       verify(response).setStatus(HttpServletResponse.SC_OK);
@@ -176,6 +180,7 @@ public class ClientContentServletTest {
     HttpServletRequest request = mock(HttpServletRequest.class);
     when(request.getServletPath()).thenReturn(servletPath);
     when(request.getPathInfo()).thenReturn(pathInfo);
+    when(request.getSession()).thenReturn(mock(HttpSession.class));
 
     try {
       servlet.doGet(request, response);
@@ -202,10 +207,32 @@ public class ClientContentServletTest {
     when(request.getServletPath()).thenReturn("/modules/plugin1/");
     when(request.getPathInfo()).thenReturn("a.js");
     when(request.getDateHeader("If-Modified-Since")).thenReturn(System.currentTimeMillis());
+    when(request.getSession()).thenReturn(mock(HttpSession.class));
 
     servlet.doGet(request, response);
 
     verify(response).setStatus(HttpServletResponse.SC_NOT_MODIFIED);
+  }
+
+  @Test
+  public void test404ForDisabledPlugins() throws ServletException, IOException {
+    setupConfigurationFolder("src/test/resources/testNoJavaPlugins");
+
+    PluginDescriptors pluginConfig = mock(PluginDescriptors.class);
+    when(pluginConfig.getEnabled()).thenReturn(new PluginDescriptor[0]);
+    Config config = spy(configCaptor.getValue());
+    doReturn(pluginConfig).when(config).getPluginConfig(any(Locale.class),
+        any(HttpServletRequest.class));
+
+    ClientContentServlet servlet = new ClientContentServlet();
+    servlet.setTestingClasspathRoot("/testNoJavaPlugins/WEB-INF/classes/");
+    ServletConfig servletConfig = mock(ServletConfig.class);
+    ServletContext servletContext = mock(ServletContext.class);
+    when(servletContext.getAttribute(AppContextListener.ATTR_CONFIG)).thenReturn(config);
+    when(servletConfig.getServletContext()).thenReturn(servletContext);
+    servlet.init(servletConfig);
+
+    check404(servlet, "/modules/", "plugin1/a.js");
   }
 
 }
