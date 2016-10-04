@@ -7,7 +7,7 @@
 	<parent>
 		<groupId>org.fao.unredd</groupId>
 		<artifactId>core-root</artifactId>
-		<version>5.0.0-beta3</version>
+		<version>5.0.0-beta4</version>
 	</parent>
 
 	<artifactId>jwebclient-analyzer-maven-plugin</artifactId>
@@ -29,7 +29,7 @@
 		<dependency>
 			<groupId>org.fao.unredd</groupId>
 			<artifactId>jwebclient-analyzer</artifactId>
-			<version>5.0.0-beta3</version>
+			<version>5.0.0-beta4</version>
 		</dependency>
 
 		<!-- Testing -->
