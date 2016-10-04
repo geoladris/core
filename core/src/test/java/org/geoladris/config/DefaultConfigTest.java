@@ -10,6 +10,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -22,17 +23,12 @@ import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 
-import net.sf.json.JSONObject;
-
 import org.geoladris.PluginDescriptor;
 import org.geoladris.PluginDescriptorFileReader;
 import org.geoladris.PortalRequestConfiguration;
-import org.geoladris.config.Config;
-import org.geoladris.config.ConfigFolder;
-import org.geoladris.config.DefaultConfig;
-import org.geoladris.config.ModuleConfigurationProvider;
-import org.geoladris.config.PluginDescriptors;
 import org.junit.Test;
+
+import net.sf.json.JSONObject;
 
 public class DefaultConfigTest {
 
@@ -164,8 +160,13 @@ public class DefaultConfigTest {
 
   @Test
   public void testNoConfigurationFolder() {
-    Config config = new DefaultConfig(new ConfigFolder("app", "doesnotexist", "doesnotexist"),
-        Collections.<PluginDescriptor>emptySet(), null, false);
+    ConfigFolder folder = mock(ConfigFolder.class);
+    when(folder.getFilePath()).thenReturn(new File("nonexisting"));
+    when(folder.getProperties()).thenReturn(new Properties());
+    when(folder.getMessages(any(Locale.class))).thenReturn(mock(ResourceBundle.class));
+
+    Config config =
+        new DefaultConfig(folder, Collections.<PluginDescriptor>emptySet(), null, false);
     assertNotNull(config.getDir());
     assertNotNull(config.getPluginConfig(Locale.getDefault(), mock(HttpServletRequest.class)));
     assertNotNull(config.getProperties());
@@ -175,7 +176,7 @@ public class DefaultConfigTest {
 
   @Test
   public void testFailingConfigurationProvider() throws Exception {
-    Config config = new DefaultConfig(new ConfigFolder("app", "doesnotexist", "doesnotexist"),
+    Config config = new DefaultConfig(mock(ConfigFolder.class),
         Collections.<PluginDescriptor>emptySet(), null, false);
     ModuleConfigurationProvider provider = mock(ModuleConfigurationProvider.class);
     when(provider.getPluginConfig(any(PortalRequestConfiguration.class),
@@ -191,8 +192,7 @@ public class DefaultConfigTest {
     new PluginDescriptorFileReader("{default-conf:{m1:true}}", true, "p1")
         .fillPluginDescriptor(pluginDescriptor);
     plugins.add(pluginDescriptor);
-    Config config = new DefaultConfig(new ConfigFolder("app", "doesnotexist", "doesnotexist"),
-        plugins, null, false);
+    Config config = new DefaultConfig(mock(ConfigFolder.class), plugins, null, false);
 
     Map<String, JSONObject> mergingConfiguration1 = new HashMap<String, JSONObject>();
     mergingConfiguration1.put("p1", JSONObject.fromObject("{m2:true}"));

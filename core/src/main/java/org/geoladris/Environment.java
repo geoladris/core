@@ -6,6 +6,9 @@ public class Environment {
   public static final String CONFIG_CACHE = "GEOLADRIS_CONFIG_CACHE";
   public static final String CONFIG_DIR = "GEOLADRIS_CONFIG_DIR";
 
+  @Deprecated
+  public static final String PORTAL_CONFIG_DIR = "PORTAL_CONFIG_DIR";
+
   public String get(String propertyName) {
     String property = System.getProperty(propertyName);
     return property != null ? property : System.getenv(propertyName);
@@ -22,5 +25,14 @@ public class Environment {
 
   public String getConfigDir(ServletContext context) {
     return get(CONFIG_DIR, context);
+  }
+
+  /**
+   * @deprecated Use {@link #getConfigDir(ServletContext)}.
+   * @param context
+   * @return
+   */
+  public String getPortalConfigDir(ServletContext context) {
+    return get(PORTAL_CONFIG_DIR, context);
   }
 }

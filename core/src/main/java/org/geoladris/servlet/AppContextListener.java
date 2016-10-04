@@ -24,9 +24,6 @@ import org.geoladris.config.RoleConfigurationProvider;
 public class AppContextListener implements ServletContextListener {
   private static final Logger logger = Logger.getLogger(AppContextListener.class);
 
-  // public static final String ENV_CONFIG_CACHE = "NFMS_CONFIG_CACHE";
-  // public static final String INIT_PARAM_DIR = "PORTAL_CONFIG_DIR";
-
   public static final String ATTR_CONFIG = "config";
   public static final String ATTR_ENV = "environment";
 
@@ -36,8 +33,7 @@ public class AppContextListener implements ServletContextListener {
 
     Environment env = new Environment();
     servletContext.setAttribute(ATTR_ENV, env);
-    ConfigFolder folder = new ConfigFolder(servletContext.getContextPath(),
-        servletContext.getRealPath("/"), env.getConfigDir(servletContext));
+    ConfigFolder folder = new ConfigFolder(servletContext, env);
 
     JEEContext context = new JEEContext(servletContext, new File(folder.getFilePath(), "plugins"));
     JEEContextAnalyzer analyzer = getAnalyzer(context);

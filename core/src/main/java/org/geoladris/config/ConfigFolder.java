@@ -11,42 +11,51 @@ import java.util.Locale;
 import java.util.Properties;
 import java.util.ResourceBundle;
 
+import javax.servlet.ServletContext;
+
 import org.apache.log4j.Logger;
 import org.geoladris.ConfigurationException;
+import org.geoladris.Environment;
 
 public class ConfigFolder {
   private static final Logger logger = Logger.getLogger(ConfigFolder.class);
   private File dir = null;
-  private String rootPath;
-  private String configInitParameter;
-  private String contextPath;
+  private Environment env;
+  private ServletContext context;
 
-  public ConfigFolder(String contextPath, String rootPath, String configInitParameter) {
-    this.contextPath = contextPath;
-    this.rootPath = rootPath;
-    this.configInitParameter = configInitParameter;
+  public ConfigFolder(ServletContext context, Environment env) {
+    this.context = context;
+    this.env = env;
   }
 
   public File getFilePath() {
     if (dir == null) {
-      String defaultDir = rootPath + File.separator + "WEB-INF" + File.separator + "default_config";
+      String defaultDir = this.context.getRealPath("WEB-INF/default_config");
 
-      if (configInitParameter == null) {
-        // if not set already, use the default portal config dir
-        logger.warn("PORTAL_CONFIG_DIR property not found. Using default config.");
-        dir = new File(defaultDir);
+      String configDir = env.getConfigDir(context);
+      if (configDir != null) {
+        // Directory provided by getConfigDir uses subdirectories for apps
+        dir = new File(configDir, context.getContextPath());
       } else {
-        // if set but not existing, use the default portal config dir
-        dir = new File(configInitParameter, contextPath);
-        if (!dir.exists()) {
-          logger.warn("PORTAL_CONFIG_DIR is set to " + dir.getAbsolutePath()
-              + ", but it doesn't exist. Using default config.");
-          dir = new File(defaultDir);
+        // Directory provided by getPortalConfigDir does not use subdirectories
+        configDir = env.getPortalConfigDir(context);
+        if (configDir != null) {
+          dir = new File(configDir);
         }
       }
 
+      if (dir == null) {
+        dir = new File(defaultDir);
+        logger.warn("GEOLADRIS_CONFIG_DIR and PORTAL_CONFIG_DIR properties " + "not found. Using "
+            + dir.getAbsolutePath() + " as configuration directory.");
+      } else if (!dir.exists()) {
+        dir = new File(defaultDir);
+        logger.warn("Configuration directory is set to " + dir.getAbsolutePath()
+            + ", but it doesn't exist. Using " + dir.getAbsolutePath() + ".");
+      }
+
       logger.info("============================================================================");
-      logger.info("PORTAL_CONFIG_DIR: " + dir.getAbsolutePath());
+      logger.info("Configuration directory: " + dir.getAbsolutePath());
       logger.info("============================================================================");
     }
 
