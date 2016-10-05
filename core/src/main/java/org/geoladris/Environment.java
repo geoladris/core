@@ -5,6 +5,7 @@ import javax.servlet.ServletContext;
 public class Environment {
   public static final String CONFIG_CACHE = "GEOLADRIS_CONFIG_CACHE";
   public static final String CONFIG_DIR = "GEOLADRIS_CONFIG_DIR";
+  public static final String MINIFIED = "GEOLADRIS_MINIFIED";
 
   @Deprecated
   public static final String PORTAL_CONFIG_DIR = "PORTAL_CONFIG_DIR";
@@ -34,5 +35,9 @@ public class Environment {
    */
   public String getPortalConfigDir(ServletContext context) {
     return get(PORTAL_CONFIG_DIR, context);
+  }
+
+  public boolean getMinified() {
+    return Boolean.parseBoolean(get(MINIFIED));
   }
 }

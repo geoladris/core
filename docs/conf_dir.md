@@ -6,12 +6,12 @@ Las aplicaciones Geoladris se pueden configurar utilizando un directorio de conf
 * Propiedad Java: `-DGEOLADRIS_CONF_DIR=/var/geoladris`.
 * Parámetro en `web.xml`:
 
-  ```
+```
 	<context-param>
 		<param-name>GEOLADRIS_CONF_DIR</param-name>
 		<param-value>/var/geoladris</param-value>
 	</context-param>
-  ```
+```
 
 Este directorio deberá contener un subdirectorio por cada aplicación desplegada.
 

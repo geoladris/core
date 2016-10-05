@@ -21,15 +21,13 @@ import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.runtime.resource.loader.StringResourceLoader;
 import org.apache.velocity.runtime.resource.util.StringResourceRepository;
+import org.geoladris.Environment;
 import org.geoladris.PluginDescriptor;
 import org.geoladris.config.Config;
 import org.geoladris.config.PluginDescriptors;
 
 public class IndexHTMLServlet extends HttpServlet {
   public static final String HTTP_PARAM_DEBUG = "debug";
-
-  // System properties
-  public static final String PROP_MINIFIED_JS = "MINIFIED_JS";
 
   // portal.properties
   public static final String PROP_TITLE = "title";
@@ -60,7 +58,8 @@ public class IndexHTMLServlet extends HttpServlet {
     if (debug != null && Boolean.parseBoolean(debug)) {
       minifiedjs = false;
     } else {
-      minifiedjs = Boolean.parseBoolean(System.getProperty(PROP_MINIFIED_JS));
+      Environment env = (Environment) getServletContext().getAttribute(AppContextListener.ATTR_ENV);
+      minifiedjs = env.getMinified();
     }
 
     Config config = (Config) getServletContext().getAttribute("config");

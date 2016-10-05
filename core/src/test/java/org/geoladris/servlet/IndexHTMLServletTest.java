@@ -21,6 +21,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.geoladris.Environment;
 import org.geoladris.PluginDescriptor;
 import org.geoladris.config.Config;
 import org.geoladris.config.PluginDescriptors;
@@ -49,6 +50,8 @@ public class IndexHTMLServletTest {
 
     this.servletContext = mock(ServletContext.class);
 
+    when(servletContext.getAttribute(AppContextListener.ATTR_ENV)).thenReturn(new Environment());
+
     ServletConfig servletConfig = mock(ServletConfig.class);
     when(servletConfig.getServletContext()).thenReturn(this.servletContext);
     this.servlet.init(servletConfig);
@@ -56,7 +59,7 @@ public class IndexHTMLServletTest {
 
   @After
   public void teardown() {
-    System.getProperties().remove(IndexHTMLServlet.PROP_MINIFIED_JS);
+    System.getProperties().remove(Environment.MINIFIED);
   }
 
   @Test
@@ -117,8 +120,8 @@ public class IndexHTMLServletTest {
   }
 
   /**
-   * Minimum ServletContext attributes, {@link IndexHTMLServlet#PROP_MINIFIED_JS} set to true and
-   * debug param in {@link #request} as given.
+   * Minimum ServletContext attributes, {@link Environment#MINIFIED} set to true and debug param in
+   * {@link #request} as given.
    * 
    * @param debugParam
    */
@@ -131,7 +134,7 @@ public class IndexHTMLServletTest {
     when(this.servletContext.getAttribute("config")).thenReturn(config);
     when(this.servletContext.getAttribute("css-paths")).thenReturn(new ArrayList<String>());
 
-    System.setProperty(IndexHTMLServlet.PROP_MINIFIED_JS, "true");
+    System.setProperty(Environment.MINIFIED, "true");
     when(this.request.getParameter(IndexHTMLServlet.HTTP_PARAM_DEBUG)).thenReturn(debugParam);
   }
 
