@@ -30,7 +30,7 @@ public class ConfigFolder {
 
   public File getFilePath() {
     if (dir == null) {
-      String defaultDir = this.context.getRealPath("WEB-INF/default_config");
+      File defaultDir = new File(this.context.getRealPath("WEB-INF/default_config"));
 
       String configDir = env.getConfigDir(context);
       if (configDir != null) {
@@ -45,13 +45,13 @@ public class ConfigFolder {
       }
 
       if (dir == null) {
-        dir = new File(defaultDir);
+        dir = defaultDir;
         logger.warn("GEOLADRIS_CONFIG_DIR and PORTAL_CONFIG_DIR properties " + "not found. Using "
             + dir.getAbsolutePath() + " as configuration directory.");
       } else if (!dir.exists()) {
-        dir = new File(defaultDir);
         logger.warn("Configuration directory is set to " + dir.getAbsolutePath()
-            + ", but it doesn't exist. Using " + dir.getAbsolutePath() + ".");
+            + ", but it doesn't exist. Using " + defaultDir.getAbsolutePath() + ".");
+        dir = defaultDir;
       }
 
       logger.info("============================================================================");
