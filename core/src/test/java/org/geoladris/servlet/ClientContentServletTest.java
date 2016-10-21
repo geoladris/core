@@ -5,6 +5,7 @@ import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.startsWith;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -38,6 +39,8 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.MockitoAnnotations;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 public class ClientContentServletTest {
   @Captor
@@ -65,7 +68,7 @@ public class ClientContentServletTest {
    * 
    * @param folder
    */
-  public void setupConfigurationFolder(String folder) {
+  public void setupConfigurationFolder(final String folder) {
     AppContextListener listener = new AppContextListener();
     ServletContextEvent servletContextEvent = mock(ServletContextEvent.class);
     ServletContext servletContext = mock(ServletContext.class);
@@ -73,7 +76,14 @@ public class ClientContentServletTest {
     String contextPath = folder.substring(folder.lastIndexOf('/') + 1);
     System.setProperty(Environment.CONFIG_DIR, confDir);
     when(servletContext.getResourcePaths("/WEB-INF/lib")).thenReturn(new HashSet<String>());
-    when(servletContext.getRealPath("/WEB-INF/classes/")).thenReturn(folder + "/WEB-INF/classes");
+    Answer<String> answer = new Answer<String>() {
+      @Override
+      public String answer(InvocationOnMock invocation) throws Throwable {
+        return folder + invocation.getArguments()[0];
+      }
+    };
+    when(servletContext.getRealPath(startsWith("/WEB-INF/"))).then(answer);
+    when(servletContext.getRealPath(startsWith("WEB-INF/"))).then(answer);
     when(servletContext.getContextPath()).thenReturn(contextPath);
     when(servletContextEvent.getServletContext()).thenReturn(servletContext);
     listener.contextInitialized(servletContextEvent);
