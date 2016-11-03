@@ -22,7 +22,6 @@ import java.util.ResourceBundle;
 import javax.servlet.http.HttpServletRequest;
 
 import org.geoladris.ConfigurationException;
-import org.geoladris.PluginDescriptor;
 
 public interface Config {
 
@@ -83,13 +82,4 @@ public interface Config {
    * @return
    */
   File getNoJavaPluginRoot();
-
-  /**
-   * Gets the plugin descriptor with the given name. If there is more than one plugin with the same
-   * name (which shouldn't happen) it returns one of them arbitrarily.
-   * 
-   * @param name The name of the plugin.
-   * @return The plugin descriptor.
-   */
-  PluginDescriptor getPlugin(String name);
 }

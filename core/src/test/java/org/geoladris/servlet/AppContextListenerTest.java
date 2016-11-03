@@ -13,7 +13,6 @@ import static org.mockito.Mockito.when;
 import java.io.File;
 import java.io.IOException;
 
-import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 
@@ -21,11 +20,9 @@ import org.apache.commons.io.FileUtils;
 import org.geoladris.Context;
 import org.geoladris.JEEContextAnalyzer;
 import org.geoladris.config.Config;
-import org.geoladris.config.DefaultConfProvider;
 import org.geoladris.config.DefaultConfig;
 import org.geoladris.config.PluginJSONConfigurationProvider;
 import org.geoladris.config.PublicConfProvider;
-import org.geoladris.servlet.AppContextListener;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -75,7 +72,6 @@ public class AppContextListenerTest {
 
     DefaultConfig config = (DefaultConfig) captor.getValue();
     assertTrue(config.hasModuleConfigurationProvider(PublicConfProvider.class));
-    assertTrue(config.hasModuleConfigurationProvider(DefaultConfProvider.class));
     assertFalse(config.hasModuleConfigurationProvider(PluginJSONConfigurationProvider.class));
   }
 
@@ -88,7 +84,6 @@ public class AppContextListenerTest {
 
     DefaultConfig config = (DefaultConfig) captor.getValue();
     assertFalse(config.hasModuleConfigurationProvider(PublicConfProvider.class));
-    assertTrue(config.hasModuleConfigurationProvider(DefaultConfProvider.class));
     assertTrue(config.hasModuleConfigurationProvider(PluginJSONConfigurationProvider.class));
   }
 }

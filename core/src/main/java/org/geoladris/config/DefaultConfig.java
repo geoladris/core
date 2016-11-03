@@ -46,14 +46,11 @@ public class DefaultConfig implements Config {
 
   private ArrayList<ModuleConfigurationProvider> moduleConfigurationProviders =
       new ArrayList<ModuleConfigurationProvider>();
-  private DefaultConfProvider defaultConfProvider;
   private Set<PluginDescriptor> plugins;
 
-  public DefaultConfig(ConfigFolder folder, Set<PluginDescriptor> plugins,
-      DefaultConfProvider defaultConfProvider, boolean useCache) {
+  public DefaultConfig(ConfigFolder folder, Set<PluginDescriptor> plugins, boolean useCache) {
     this.folder = folder;
     this.plugins = plugins;
-    this.defaultConfProvider = defaultConfProvider;
     this.useCache = useCache;
   }
 
@@ -208,16 +205,6 @@ public class DefaultConfig implements Config {
     moduleConfigurationProviders.add(provider);
   }
 
-  @Override
-  public PluginDescriptor getPlugin(String name) {
-    for (PluginDescriptor plugin : this.plugins) {
-      if (name.equals(plugin.getName())) {
-        return plugin;
-      }
-    }
-    return null;
-  }
-
   public boolean hasModuleConfigurationProvider(
       Class<? extends ModuleConfigurationProvider> clazz) {
     for (ModuleConfigurationProvider provider : this.moduleConfigurationProviders) {
@@ -226,7 +213,7 @@ public class DefaultConfig implements Config {
       }
     }
 
-    return clazz.isInstance(this.defaultConfProvider);
+    return false;
   }
 
   private class PortalConfigurationContextImpl implements PortalRequestConfiguration {

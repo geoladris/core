@@ -54,7 +54,7 @@ public class DefaultConfigTest {
     when(provider2.getPluginConfig(any(PortalRequestConfiguration.class),
         any(HttpServletRequest.class))).thenReturn(Collections.singletonMap("1", conf2));
 
-    Config config = new DefaultConfig(mock(ConfigFolder.class), plugins, null, false);
+    Config config = new DefaultConfig(mock(ConfigFolder.class), plugins, false);
 
     config.addModuleConfigurationProvider(provider1);
     config.addModuleConfigurationProvider(provider2);
@@ -109,7 +109,7 @@ public class DefaultConfigTest {
   private Config buildConfigReadOnceAndChangeFolderConfig(boolean useCache, String defaultLang,
       Locale locale, ResourceBundle resourceBundle, Properties firstProperties) {
     ConfigFolder folder = mock(ConfigFolder.class);
-    Config config = new DefaultConfig(folder, null, null, useCache);
+    Config config = new DefaultConfig(folder, null, useCache);
 
     when(folder.getMessages(locale)).thenReturn(resourceBundle);
     when(folder.getProperties()).thenReturn(firstProperties);
@@ -150,7 +150,7 @@ public class DefaultConfigTest {
     when(configurationProvider.canBeCached()).thenReturn(canBeCached);
 
     Config config = new DefaultConfig(mock(ConfigFolder.class),
-        Collections.<PluginDescriptor>emptySet(), null, useCache);
+        Collections.<PluginDescriptor>emptySet(), useCache);
     config.addModuleConfigurationProvider(configurationProvider);
 
     // Call twice
@@ -165,7 +165,7 @@ public class DefaultConfigTest {
   @Test
   public void testNoConfigurationFolder() {
     Config config = new DefaultConfig(new ConfigFolder("doesnotexist", "doesnotexist"),
-        Collections.<PluginDescriptor>emptySet(), null, false);
+        Collections.<PluginDescriptor>emptySet(), false);
     assertNotNull(config.getDir());
     assertNotNull(config.getPluginConfig(Locale.getDefault(), mock(HttpServletRequest.class)));
     assertNotNull(config.getProperties());
@@ -176,7 +176,7 @@ public class DefaultConfigTest {
   @Test
   public void testFailingConfigurationProvider() throws Exception {
     Config config = new DefaultConfig(new ConfigFolder("doesnotexist", "doesnotexist"),
-        Collections.<PluginDescriptor>emptySet(), null, false);
+        Collections.<PluginDescriptor>emptySet(), false);
     ModuleConfigurationProvider provider = mock(ModuleConfigurationProvider.class);
     when(provider.getPluginConfig(any(PortalRequestConfiguration.class),
         any(HttpServletRequest.class))).thenThrow(new IOException("mock"));
@@ -192,7 +192,7 @@ public class DefaultConfigTest {
         .fillPluginDescriptor(pluginDescriptor);
     plugins.add(pluginDescriptor);
     Config config =
-        new DefaultConfig(new ConfigFolder("doesnotexist", "doesnotexist"), plugins, null, false);
+        new DefaultConfig(new ConfigFolder("doesnotexist", "doesnotexist"), plugins, false);
 
     Map<String, JSONObject> mergingConfiguration1 = new HashMap<String, JSONObject>();
     mergingConfiguration1.put("p1", JSONObject.fromObject("{m2:true}"));

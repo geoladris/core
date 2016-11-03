@@ -13,7 +13,6 @@ import org.geoladris.Context;
 import org.geoladris.JEEContextAnalyzer;
 import org.geoladris.PluginDescriptor;
 import org.geoladris.config.ConfigFolder;
-import org.geoladris.config.DefaultConfProvider;
 import org.geoladris.config.DefaultConfig;
 import org.geoladris.config.ModuleConfigurationProvider;
 import org.geoladris.config.PluginJSONConfigurationProvider;
@@ -53,8 +52,7 @@ public class AppContextListener implements ServletContextListener {
 
     }
 
-    DefaultConfig config =
-        new DefaultConfig(folder, plugins, new DefaultConfProvider(plugins), configCache);
+    DefaultConfig config = new DefaultConfig(folder, plugins, configCache);
     config.addModuleConfigurationProvider(publicConfigurationProvider);
     config.addModuleConfigurationProvider(new RoleConfigurationProvider(folder.getFilePath()));
 
