@@ -3,8 +3,12 @@ package org.geoladris.servlet;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
+import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.startsWith;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -14,6 +18,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Properties;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
@@ -23,25 +28,38 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.geoladris.Environment;
 import org.geoladris.PluginDescriptor;
 import org.geoladris.StatusServletException;
 import org.geoladris.config.Config;
 import org.geoladris.config.PluginDescriptors;
-import org.geoladris.servlet.AppContextListener;
-import org.geoladris.servlet.ClientContentServlet;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.MockitoAnnotations;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 public class ClientContentServletTest {
   @Captor
   private ArgumentCaptor<Config> configCaptor;
 
+  private Properties systemProperties;
+
   @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
+    systemProperties = System.getProperties();
+    Properties props = new Properties();
+    props.putAll(systemProperties);
+    System.setProperties(props);
+  }
+
+  @After
+  public void teardown() {
+    System.setProperties(systemProperties);
   }
 
   /**
@@ -50,13 +68,23 @@ public class ClientContentServletTest {
    * 
    * @param folder
    */
-  public void setupConfigurationFolder(String folder) {
+  public void setupConfigurationFolder(final String folder) {
     AppContextListener listener = new AppContextListener();
     ServletContextEvent servletContextEvent = mock(ServletContextEvent.class);
     ServletContext servletContext = mock(ServletContext.class);
-    when(servletContext.getInitParameter("PORTAL_CONFIG_DIR")).thenReturn(folder);
+    String confDir = folder.substring(0, folder.lastIndexOf('/'));
+    String contextPath = folder.substring(folder.lastIndexOf('/') + 1);
+    System.setProperty(Environment.CONFIG_DIR, confDir);
     when(servletContext.getResourcePaths("/WEB-INF/lib")).thenReturn(new HashSet<String>());
-    when(servletContext.getRealPath("/WEB-INF/classes/")).thenReturn(folder + "/WEB-INF/classes");
+    Answer<String> answer = new Answer<String>() {
+      @Override
+      public String answer(InvocationOnMock invocation) throws Throwable {
+        return folder + invocation.getArguments()[0];
+      }
+    };
+    when(servletContext.getRealPath(startsWith("/WEB-INF/"))).then(answer);
+    when(servletContext.getRealPath(startsWith("WEB-INF/"))).then(answer);
+    when(servletContext.getContextPath()).thenReturn(contextPath);
     when(servletContextEvent.getServletContext()).thenReturn(servletContext);
     listener.contextInitialized(servletContextEvent);
 
@@ -144,6 +172,7 @@ public class ClientContentServletTest {
       HttpServletRequest request = mock(HttpServletRequest.class);
       when(request.getServletPath()).thenReturn(servletPath);
       when(request.getPathInfo()).thenReturn(pathInfo);
+      when(request.getSession()).thenReturn(mock(HttpSession.class));
       servlet.doGet(request, response);
 
       verify(response).setStatus(HttpServletResponse.SC_OK);
@@ -173,6 +202,7 @@ public class ClientContentServletTest {
     HttpServletRequest request = mock(HttpServletRequest.class);
     when(request.getServletPath()).thenReturn(servletPath);
     when(request.getPathInfo()).thenReturn(pathInfo);
+    when(request.getSession()).thenReturn(mock(HttpSession.class));
 
     try {
       servlet.doGet(request, response);
@@ -190,7 +220,8 @@ public class ClientContentServletTest {
     servlet.setTestingClasspathRoot("/testNoJavaPlugins/WEB-INF/classes/");
     ServletConfig servletConfig = mock(ServletConfig.class);
     ServletContext servletContext = mock(ServletContext.class);
-    when(servletContext.getAttribute("config")).thenReturn(configCaptor.getValue());
+    when(servletContext.getAttribute(AppContextListener.ATTR_CONFIG))
+        .thenReturn(configCaptor.getValue());
     when(servletConfig.getServletContext()).thenReturn(servletContext);
     servlet.init(servletConfig);
 
@@ -199,10 +230,32 @@ public class ClientContentServletTest {
     when(request.getServletPath()).thenReturn("/modules/plugin1/");
     when(request.getPathInfo()).thenReturn("a.js");
     when(request.getDateHeader("If-Modified-Since")).thenReturn(System.currentTimeMillis());
+    when(request.getSession()).thenReturn(mock(HttpSession.class));
 
     servlet.doGet(request, response);
 
     verify(response).setStatus(HttpServletResponse.SC_NOT_MODIFIED);
+  }
+
+  @Test
+  public void test404ForDisabledPlugins() throws ServletException, IOException {
+    setupConfigurationFolder("src/test/resources/testNoJavaPlugins");
+
+    PluginDescriptors pluginConfig = mock(PluginDescriptors.class);
+    when(pluginConfig.getEnabled()).thenReturn(new PluginDescriptor[0]);
+    Config config = spy(configCaptor.getValue());
+    doReturn(pluginConfig).when(config).getPluginConfig(any(Locale.class),
+        any(HttpServletRequest.class));
+
+    ClientContentServlet servlet = new ClientContentServlet();
+    servlet.setTestingClasspathRoot("/testNoJavaPlugins/WEB-INF/classes/");
+    ServletConfig servletConfig = mock(ServletConfig.class);
+    ServletContext servletContext = mock(ServletContext.class);
+    when(servletContext.getAttribute(AppContextListener.ATTR_CONFIG)).thenReturn(config);
+    when(servletConfig.getServletContext()).thenReturn(servletContext);
+    servlet.init(servletConfig);
+
+    check404(servlet, "/modules/", "plugin1/a.js");
   }
 
 }

@@ -10,6 +10,7 @@ import javax.servlet.ServletContextListener;
 
 import org.apache.log4j.Logger;
 import org.geoladris.Context;
+import org.geoladris.Environment;
 import org.geoladris.JEEContextAnalyzer;
 import org.geoladris.PluginDescriptor;
 import org.geoladris.config.ConfigFolder;
@@ -22,19 +23,16 @@ import org.geoladris.config.RoleConfigurationProvider;
 public class AppContextListener implements ServletContextListener {
   private static final Logger logger = Logger.getLogger(AppContextListener.class);
 
-  public static final String ENV_CONFIG_CACHE = "NFMS_CONFIG_CACHE";
-  public static final String INIT_PARAM_DIR = "PORTAL_CONFIG_DIR";
-
   public static final String ATTR_CONFIG = "config";
+  public static final String ATTR_ENV = "environment";
 
   @Override
   public void contextInitialized(ServletContextEvent sce) {
     ServletContext servletContext = sce.getServletContext();
 
-    String rootPath = servletContext.getRealPath("/");
-    String configInitParameter = servletContext.getInitParameter(INIT_PARAM_DIR);
-    boolean configCache = Boolean.parseBoolean(System.getenv(ENV_CONFIG_CACHE));
-    ConfigFolder folder = new ConfigFolder(rootPath, configInitParameter);
+    Environment env = new Environment();
+    servletContext.setAttribute(ATTR_ENV, env);
+    ConfigFolder folder = new ConfigFolder(servletContext, env);
 
     JEEContext context = new JEEContext(servletContext, new File(folder.getFilePath(), "plugins"));
     JEEContextAnalyzer analyzer = getAnalyzer(context);
@@ -52,7 +50,7 @@ public class AppContextListener implements ServletContextListener {
 
     }
 
-    DefaultConfig config = new DefaultConfig(folder, plugins, configCache);
+    DefaultConfig config = new DefaultConfig(folder, plugins, env.getConfigCache());
     config.addModuleConfigurationProvider(publicConfigurationProvider);
     config.addModuleConfigurationProvider(new RoleConfigurationProvider(folder.getFilePath()));
 

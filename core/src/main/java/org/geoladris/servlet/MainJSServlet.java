@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.geoladris.Environment;
 import org.geoladris.PluginDescriptor;
 import org.geoladris.RequireTemplate;
 import org.geoladris.config.Config;
@@ -23,9 +24,8 @@ public class MainJSServlet extends HttpServlet {
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {
-
-    if (output == null) {
-
+    Environment env = (Environment) getServletContext().getAttribute(AppContextListener.ATTR_ENV);
+    if (!env.getConfigCache() || output == null) {
       Config config = (Config) getServletContext().getAttribute(AppContextListener.ATTR_CONFIG);
       Locale locale = (Locale) req.getAttribute(LangFilter.ATTR_LOCALE);
       PluginDescriptors pluginDescriptors = config.getPluginConfig(locale, req);
@@ -44,5 +44,4 @@ public class MainJSServlet extends HttpServlet {
 
     resp.getWriter().print(output);
   }
-
 }

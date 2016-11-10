@@ -3,6 +3,7 @@ package org.geoladris.servlet;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -27,31 +28,39 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 public class AppContextListenerTest {
   private AppContextListener listener;
-  private File confDir;
+  private File confDir, root;
   private ServletContext context;
   private ServletContextEvent sce;
 
   @Before
   public void setup() throws IOException {
     this.listener = spy(new AppContextListener());
-    File root = File.createTempFile("geoladris_conf_dir", "");
-    root.delete();
+    this.root = File.createTempFile("geoladris_conf_dir", "");
+    this.root.delete();
     this.confDir = new File(root, "WEB-INF/default_config");
     this.confDir.mkdirs();
     this.context = mock(ServletContext.class);
     this.sce = mock(ServletContextEvent.class);
     when(sce.getServletContext()).thenReturn(context);
-    when(this.context.getRealPath("/")).thenReturn(root.getAbsolutePath());
+    when(this.context.getRealPath(anyString())).thenAnswer(new Answer<String>() {
+      @Override
+      public String answer(InvocationOnMock invocation) throws Throwable {
+        return AppContextListenerTest.this.root.getAbsolutePath() + "/"
+            + invocation.getArguments()[0].toString();
+      }
+    });
 
     doReturn(mock(JEEContextAnalyzer.class)).when(this.listener).getAnalyzer(any(Context.class));
   }
 
   @After
   public void teardown() throws IOException {
-    FileUtils.deleteDirectory(this.confDir);
+    FileUtils.deleteDirectory(this.root);
   }
 
   @Test

@@ -336,4 +336,14 @@ public class PluginDescriptorsTest {
     }
     assertEquals(0, pluginNames.size());
   }
+
+  @Test
+  public void qualifiedStyleWithSubdirectories() {
+    PluginDescriptor descriptor = new PluginDescriptor();
+    descriptor.setInstallInRoot(false);
+    descriptor.setName("myplugin");
+    descriptor.addStylesheet("styles/subdirectory/style.css");
+    String style = descriptor.getStylesheets().iterator().next();
+    assertEquals("styles/myplugin/subdirectory/style.css", style);
+  }
 }
