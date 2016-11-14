@@ -42,12 +42,10 @@ Un _plugin_ se puede empaquetar de varias maneras:
 
 > TODO El fichero de configuración `conf.json` está en la raíz del directorio del plugin. Contiene un objeto JSON con las siguientes propiedades:
 
-- `installInRoot`: Indica si los módulos RequireJS se instalarán en la raíz de la `baseURL` de RequireJS o dentro de un directorio con el nombre del plugin. Por defecto es `true` si el plugin se empaqueta como un fichero `.jar` y `false` si se empaqueta en el directorio `plugins` del directorio de configuración.
+- `installInRoot`: Indica si los módulos RequireJS se instalarán en la raíz de la `baseURL` de RequireJS o dentro de un directorio con el nombre del plugin. Por defecto es `false`.
 
   Hay que tener en cuenta que el lugar donde se instalen los módulos afecta a la manera en la que otros módulos los referencian. Por ejemplo, un módulo llamado `mi_modulo` en un _plugin_ `mi_plugin` se referenciará como `mi_modulo` si se instala en la raíz (`installInRoot : true`) y como  `mi_plugin/mi_modulo` en caso contrario (o como `./mi_modulo` cuando se referencia por otros módulos del mismo plugin).
   
-  También hay que tener en cuenta que a pesar de que por defecto es `true` para _plugins_ empaquetados como `.jar`, se recomienda definirlo como `false` para evitar colisiones de nombres con otros módulos instalados también en la raíz.  
-
 - `default-conf`: Configuración para los módulos RequireJS. Es un objeto donde los nombres de las propiedades son los nombres de los módulos a configurar y los valores la configuración a pasarles a dichos módulos. En este fichero es suficiente con especificar únicamente el nombre del módulo (sin el prefijo del _plugin_) independientemente del valor de `installInRoot`.
 
   La configuración se puede obtener en el módulo con la pseudodependencia `module`:

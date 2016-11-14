@@ -128,9 +128,10 @@ public class ConfigServletTest {
   @Test
   public void usesModulesFromPluginsInConfiguration() throws Exception {
     PluginDescriptor plugin1 = new PluginDescriptor();
+    plugin1.setName("plugin1");
     plugin1.addModule("module1");
-    new PluginDescriptorFileReader("{default-conf:{module1 : {prop1 : 42, prop2 : true}}}", true,
-        "plugin1").fillPluginDescriptor(plugin1);
+    new PluginDescriptorFileReader("{default-conf:{module1 : {prop1 : 42, prop2 : true}}}",
+        plugin1.getName()).fillPluginDescriptor(plugin1);
     Set<PluginDescriptor> plugins = new HashSet<PluginDescriptor>();
     plugins.add(plugin1);
     PluginDescriptors pluginDescriptors = new PluginDescriptors(plugins);
@@ -147,7 +148,7 @@ public class ConfigServletTest {
     JSONArray modules =
         json.getJSONObject("config").getJSONObject("customization").getJSONArray("modules");
     assertEquals(1, modules.size());
-    assertEquals("module1", modules.get(0));
+    assertEquals("plugin1/module1", modules.get(0));
   }
 
   @Test
@@ -157,10 +158,10 @@ public class ConfigServletTest {
     PluginDescriptor plugin2 = new PluginDescriptor();
     plugin2.getModules().add("module2");
     plugin2.getModules().add("module3");
-    new PluginDescriptorFileReader("{default-conf:{module1 : {prop1 : 42, prop2 : true}}}", true,
+    new PluginDescriptorFileReader("{default-conf:{module1 : {prop1 : 42, prop2 : true}}}",
         "plugin1").fillPluginDescriptor(plugin1);
     new PluginDescriptorFileReader(
-        "{default-conf:{module2 : {prop3 : 'test'}," + "module3 : [4, 2, 9]}}", true, "plugin2")
+        "{default-conf:{module2 : {prop3 : 'test'}," + "module3 : [4, 2, 9]}}", "plugin2")
             .fillPluginDescriptor(plugin2);
     Set<PluginDescriptor> plugins = new HashSet<PluginDescriptor>();
     plugins.add(plugin1);
@@ -177,9 +178,9 @@ public class ConfigServletTest {
     // It starts with var require = {...
     JSONObject json = JSONObject.fromObject(response().substring(content.indexOf('{')));
     JSONObject cfg = json.getJSONObject("config");
-    JSONObject module1 = cfg.getJSONObject("module1");
-    JSONObject module2 = cfg.getJSONObject("module2");
-    JSONArray module3 = cfg.getJSONArray("module3");
+    JSONObject module1 = cfg.getJSONObject("plugin1/module1");
+    JSONObject module2 = cfg.getJSONObject("plugin2/module2");
+    JSONArray module3 = cfg.getJSONArray("plugin2/module3");
 
     assertEquals(42, module1.getInt("prop1"));
     assertTrue(module1.getBoolean("prop2"));

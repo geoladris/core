@@ -22,12 +22,10 @@ public class PluginDescriptorFileReader {
   private String pluginName;
   private JSONObject configuration;
 
-  public PluginDescriptorFileReader(String content, boolean defaultInstallInRoot,
-      String pluginName) {
+  public PluginDescriptorFileReader(String content, String pluginName) {
     JSONObject jsonRoot = (JSONObject) JSONSerializer.toJSON(content);
 
-    this.installInRoot = jsonRoot.has(PROP_INSTALL_IN_ROOT)
-        ? jsonRoot.getBoolean(PROP_INSTALL_IN_ROOT) : defaultInstallInRoot;
+    this.installInRoot = jsonRoot.optBoolean(PROP_INSTALL_IN_ROOT, false);
     this.pluginName = pluginName;
 
     if (jsonRoot.has(PROP_REQUIREJS)) {

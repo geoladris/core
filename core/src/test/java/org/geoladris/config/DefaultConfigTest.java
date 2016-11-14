@@ -189,7 +189,7 @@ public class DefaultConfigTest {
   public void testMergeDoesNotAffectDefaultPluginConfiguration() throws IOException {
     Set<PluginDescriptor> plugins = new HashSet<PluginDescriptor>();
     PluginDescriptor pluginDescriptor = new PluginDescriptor();
-    new PluginDescriptorFileReader("{default-conf:{m1:true}}", true, "p1")
+    new PluginDescriptorFileReader("{default-conf:{m1:true}}", "p1")
         .fillPluginDescriptor(pluginDescriptor);
     plugins.add(pluginDescriptor);
     Config config = new DefaultConfig(mock(ConfigFolder.class), plugins, false);

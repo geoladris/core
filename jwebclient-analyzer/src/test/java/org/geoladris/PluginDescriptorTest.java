@@ -48,7 +48,7 @@ public class PluginDescriptorTest {
     String shim = "'fancy-box' : ['jquery']";
     String config =
         "{installInRoot:true, requirejs : { paths : {" + paths + "}, shim : {" + shim + "}}}";
-    new PluginDescriptorFileReader(config, false, null).fillPluginDescriptor(descriptor);
+    new PluginDescriptorFileReader(config, null).fillPluginDescriptor(descriptor);
 
     Map<String, String> pathsMap = descriptor.getRequireJSPathsMap();
     assertEquals(2, pathsMap.size());
@@ -94,7 +94,7 @@ public class PluginDescriptorTest {
     String shim = "'fancy-box' : ['jquery']";
     String config =
         "{installInRoot:false, requirejs : { paths : {" + paths + "}, shim : {" + shim + "}}}";
-    new PluginDescriptorFileReader(config, false, name).fillPluginDescriptor(descriptor);
+    new PluginDescriptorFileReader(config, name).fillPluginDescriptor(descriptor);
 
     Map<String, String> pathsMap = descriptor.getRequireJSPathsMap();
     assertEquals(2, pathsMap.size());

@@ -11,5 +11,6 @@
 		"shim" : {
 			"mustache": [ "jquery" ]
 		}
-	}
+	},
+	"installInRoot" : true
 }

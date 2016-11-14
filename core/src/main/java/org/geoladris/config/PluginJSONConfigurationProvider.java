@@ -42,7 +42,7 @@ public class PluginJSONConfigurationProvider implements ModuleConfigurationProvi
     stream.close();
 
     PluginDescriptor plugin = new PluginDescriptor();
-    new PluginDescriptorFileReader(content, false, null).fillPluginDescriptor(plugin);
+    new PluginDescriptorFileReader(content, null).fillPluginDescriptor(plugin);
 
     Map<String, JSONObject> ret = new HashMap<>();
     if (plugin != null) {

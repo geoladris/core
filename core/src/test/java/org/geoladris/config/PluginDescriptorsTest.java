@@ -60,7 +60,7 @@ public class PluginDescriptorsTest {
     Set<PluginDescriptor> plugins = new HashSet<PluginDescriptor>();
     PluginDescriptor pluginDescriptor = new PluginDescriptor();
     new PluginDescriptorFileReader("{default-conf:{ m1 : { a : 1, b : 2}, m2 : { c : 1, d : 2}}}",
-        true, "p1").fillPluginDescriptor(pluginDescriptor);
+        "p1").fillPluginDescriptor(pluginDescriptor);
     plugins.add(pluginDescriptor);
     PluginDescriptors pluginDescriptors = new PluginDescriptors(plugins);
     pluginDescriptors.merge("p1", JSONObject.fromObject(pluginConfiguration));
@@ -92,7 +92,7 @@ public class PluginDescriptorsTest {
       String pluginName) {
     Set<PluginDescriptor> plugins = new HashSet<PluginDescriptor>();
     PluginDescriptor pluginDescriptor = new PluginDescriptor();
-    new PluginDescriptorFileReader(pluginDefaultConfiguration, true, pluginName)
+    new PluginDescriptorFileReader(pluginDefaultConfiguration, pluginName)
         .fillPluginDescriptor(pluginDescriptor);
     plugins.add(pluginDescriptor);
     return plugins;
@@ -146,7 +146,7 @@ public class PluginDescriptorsTest {
         + "  },"//
         + "  shim:{ l2:[\"l1\"] }"//
         + " }"//
-        + "}", true, null).fillPluginDescriptor(pluginDescriptor1);
+        + "}", null).fillPluginDescriptor(pluginDescriptor1);
     pluginDescriptor1.addModule("m1");
     pluginDescriptor1.addStylesheet("m1.css");
     plugins.add(pluginDescriptor1);
@@ -159,7 +159,7 @@ public class PluginDescriptorsTest {
         + "  },"//
         + "  shim:{ l3:[\"l1\"] }"//
         + " }"//
-        + "}", true, null).fillPluginDescriptor(pluginDescriptor2);
+        + "}", null).fillPluginDescriptor(pluginDescriptor2);
     pluginDescriptor2.addModule("m2");
     pluginDescriptor2.addStylesheet("m2.css");
     plugins.add(pluginDescriptor2);
@@ -190,19 +190,19 @@ public class PluginDescriptorsTest {
     new PluginDescriptorFileReader("{"//
         + "installInRoot:true,"//
         + "default-conf:{ m1 : {value:1} }, "//
-        + "}", true, rootNamedPluginName).fillPluginDescriptor(rootNamedPluginDescriptor);
+        + "}", rootNamedPluginName).fillPluginDescriptor(rootNamedPluginDescriptor);
     plugins.add(rootNamedPluginDescriptor);
     PluginDescriptor qualifiedNamedPluginDescriptor = new PluginDescriptor();
     String qualifiedNamedPluginName = "qualifiedNamedPlugin";
     new PluginDescriptorFileReader("{"//
         + "installInRoot:false,"//
         + "default-conf:{ m2 : {value:2} }, "//
-        + "}", true, qualifiedNamedPluginName).fillPluginDescriptor(qualifiedNamedPluginDescriptor);
+        + "}", qualifiedNamedPluginName).fillPluginDescriptor(qualifiedNamedPluginDescriptor);
     plugins.add(qualifiedNamedPluginDescriptor);
     PluginDescriptor unnamedPluginDescriptor = new PluginDescriptor();
     new PluginDescriptorFileReader("{"//
         + "default-conf:{ m3 : {value:3} }, "//
-        + "}", true, null).fillPluginDescriptor(unnamedPluginDescriptor);
+        + "}", null).fillPluginDescriptor(unnamedPluginDescriptor);
     plugins.add(unnamedPluginDescriptor);
     PluginDescriptors pluginDescriptors = new PluginDescriptors(plugins);
 
@@ -281,7 +281,7 @@ public class PluginDescriptorsTest {
     PluginDescriptor pluginDescriptor = new PluginDescriptor();
     new PluginDescriptorFileReader("{"//
         + " default-conf:{ m2 : {value:0} }, "//
-        + "}", false, null).fillPluginDescriptor(pluginDescriptor);
+        + "}", null).fillPluginDescriptor(pluginDescriptor);
     plugins.add(pluginDescriptor);
     PluginDescriptors pluginDescriptors = new PluginDescriptors(plugins);
     pluginDescriptors.merge(PluginDescriptors.UNNAMED_GEOLADRIS_CORE_PLUGIN,

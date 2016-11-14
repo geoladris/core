@@ -3,5 +3,6 @@
 		"paths" : {
 			"jquery" : "../jslib/jquery-2.1.0"
 		}
-	}
+	},
+	"installInRoot" : true
 }

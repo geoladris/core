@@ -35,7 +35,7 @@ public class JEEContextAnalyzer {
 
   private void scanClasses(Context context) {
     PluginConfigEntryListener pluginConfListener =
-        new PluginConfigEntryListener(CLIENT_RESOURCES_DIR + File.separator, true);
+        new PluginConfigEntryListener(CLIENT_RESOURCES_DIR + File.separator);
     WebResourcesEntryListener webResourcesListener =
         new WebResourcesEntryListener(CLIENT_RESOURCES_DIR + File.separator);
 
@@ -50,7 +50,7 @@ public class JEEContextAnalyzer {
 
   private void scanJars(Context context) {
     PluginConfigEntryListener pluginConfListener =
-        new PluginConfigEntryListener(CLIENT_RESOURCES_DIR + File.separator, true);
+        new PluginConfigEntryListener(CLIENT_RESOURCES_DIR + File.separator);
     WebResourcesEntryListener webResourcesListener =
         new WebResourcesEntryListener(CLIENT_RESOURCES_DIR + File.separator);
 
@@ -65,7 +65,7 @@ public class JEEContextAnalyzer {
   }
 
   private void scanNoJava(Context context) {
-    PluginConfigEntryListener pluginConfListener = new PluginConfigEntryListener("", false);
+    PluginConfigEntryListener pluginConfListener = new PluginConfigEntryListener("");
     WebResourcesEntryListener webResourcesListener = new WebResourcesEntryListener("");
 
     File rootFolder = context.getNoJavaRoot();
@@ -182,11 +182,9 @@ public class JEEContextAnalyzer {
 
   private class PluginConfigEntryListener implements ContextEntryListener {
     private String pathPrefix;
-    private boolean defaultInstallInRoot;
 
-    public PluginConfigEntryListener(String pathPrefix, boolean defaultInstallInRoot) {
+    public PluginConfigEntryListener(String pathPrefix) {
       this.pathPrefix = pathPrefix;
-      this.defaultInstallInRoot = defaultInstallInRoot;
     }
 
     @Override
@@ -195,7 +193,7 @@ public class JEEContextAnalyzer {
         String name = new File(path).getName();
         name = name.substring(0, name.length() - "-conf.json".length());
         PluginDescriptorFileReader reader =
-            new PluginDescriptorFileReader(contentReader.getContent(), defaultInstallInRoot, name);
+            new PluginDescriptorFileReader(contentReader.getContent(), name);
         reader.fillPluginDescriptor(currentPlugin);
       }
     }
