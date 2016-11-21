@@ -6,6 +6,8 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.geoladris.PortalRequestConfiguration;
+
 import de.csgis.commons.JSONContentProvider;
 import net.sf.json.JSONObject;
 
@@ -33,8 +35,8 @@ public class PublicConfProvider implements ModuleConfigurationProvider {
 
   @SuppressWarnings("unchecked")
   @Override
-  public Map<String, JSONObject> getPluginConfig(Config config, HttpServletRequest request)
-      throws IOException {
+  public Map<String, JSONObject> getPluginConfig(PortalRequestConfiguration requestConfig,
+      HttpServletRequest request) throws IOException {
     return file.exists() ? this.contents.get().get(FILE_BASE) : null;
   }
 

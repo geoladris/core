@@ -21,6 +21,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.log4j.Logger;
 import org.geoladris.ConfigurationException;
 import org.geoladris.PluginDescriptor;
+import org.geoladris.PortalRequestConfiguration;
 
 import net.sf.json.JSONObject;
 
@@ -174,13 +175,15 @@ public class DefaultConfig implements Config {
       namePluginDescriptor.put(clonedDescriptor.getName(), clonedDescriptor);
     }
 
+    PortalRequestConfiguration requestConfig = new PortalRequestConfigurationImpl(locale);
+
     // Get the providers configuration and merge it
     for (ModuleConfigurationProvider provider : moduleConfigurationProviders) {
 
       Map<String, JSONObject> providerConfiguration = cachedConfigurations.get(provider);
       if (providerConfiguration == null || !useCache || !provider.canBeCached()) {
         try {
-          providerConfiguration = provider.getPluginConfig(this, request);
+          providerConfiguration = provider.getPluginConfig(requestConfig, request);
           cachedConfigurations.put(provider, providerConfiguration);
         } catch (IOException e) {
           logger.info("Provider failed to contribute configuration: " + provider.getClass());
@@ -195,6 +198,9 @@ public class DefaultConfig implements Config {
       for (String pluginName : providerConfiguration.keySet()) {
         JSONObject pluginConf = providerConfiguration.get(pluginName);
         PluginDescriptor pluginDescriptor = namePluginDescriptor.get(pluginName);
+        if (pluginDescriptor == null) {
+          logger.warn("Configuration has been defined for a non-existing plugin: " + pluginName);
+        }
         pluginDescriptor.setConfiguration(pluginConf);
       }
     }
@@ -229,5 +235,28 @@ public class DefaultConfig implements Config {
   @Override
   public File getNoJavaPluginRoot() {
     return new File(getDir(), "plugins");
+  }
+
+  private class PortalRequestConfigurationImpl implements PortalRequestConfiguration {
+    private Locale locale;
+
+    public PortalRequestConfigurationImpl(Locale locale) {
+      this.locale = locale;
+    }
+
+    @Override
+    public String localize(String template) {
+      return DefaultConfig.this.localize(template, locale);
+    }
+
+    @Override
+    public File getConfigDir() {
+      return DefaultConfig.this.getDir();
+    }
+
+    @Override
+    public boolean usingCache() {
+      return DefaultConfig.this.useCache;
+    }
   }
 }

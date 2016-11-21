@@ -13,6 +13,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.io.IOUtils;
 import org.geoladris.PluginDescriptor;
 import org.geoladris.PluginDescriptorFileReader;
+import org.geoladris.PortalRequestConfiguration;
 
 import net.sf.json.JSONObject;
 
@@ -21,16 +22,16 @@ import net.sf.json.JSONObject;
  * @author victorzinho
  */
 public class PluginJSONConfigurationProvider implements ModuleConfigurationProvider {
-  private static final String PSEUDO_PLUGIN_NAME = "__plugin-json__";
+  private static final String PLUGIN_NAME = "core";
 
   @Override
-  public Map<String, JSONObject> getPluginConfig(Config config, HttpServletRequest request)
-      throws IOException {
+  public Map<String, JSONObject> getPluginConfig(PortalRequestConfiguration requestConfig,
+      HttpServletRequest request) throws IOException {
     // We create return a pseudo-plugin descriptor containing all the
     // configuration to override/merge
     // The modules, stylesheets and RequireJS data is empty since it is
     // taken from all the other real plugins.
-    File configProperties = new File(config.getDir(), "plugin-conf.json");
+    File configProperties = new File(requestConfig.getConfigDir(), "plugin-conf.json");
     BufferedInputStream stream;
     try {
       stream = new BufferedInputStream(new FileInputStream(configProperties));
@@ -40,11 +41,11 @@ public class PluginJSONConfigurationProvider implements ModuleConfigurationProvi
     String content = IOUtils.toString(stream);
     stream.close();
 
-    PluginDescriptor plugin = new PluginDescriptorFileReader().read(content, PSEUDO_PLUGIN_NAME);
+    PluginDescriptor plugin = new PluginDescriptorFileReader().read(content, PLUGIN_NAME);
 
     Map<String, JSONObject> ret = new HashMap<>();
     if (plugin != null) {
-      ret.put(PSEUDO_PLUGIN_NAME, plugin.getConfiguration());
+      ret.put(PLUGIN_NAME, plugin.getConfiguration());
     }
     return ret;
   }

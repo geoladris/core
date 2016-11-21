@@ -7,6 +7,7 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 
 import org.geoladris.Geoladris;
+import org.geoladris.PortalRequestConfiguration;
 
 import de.csgis.commons.JSONContentProvider;
 import net.sf.json.JSONObject;
@@ -36,8 +37,8 @@ public class RoleConfigurationProvider implements ModuleConfigurationProvider {
 
   @SuppressWarnings("unchecked")
   @Override
-  public Map<String, JSONObject> getPluginConfig(Config config, HttpServletRequest request)
-      throws IOException {
+  public Map<String, JSONObject> getPluginConfig(PortalRequestConfiguration requestConfig,
+      HttpServletRequest request) throws IOException {
     String role = getRole(request);
     return role != null ? this.contents.get().get(role) : null;
   }

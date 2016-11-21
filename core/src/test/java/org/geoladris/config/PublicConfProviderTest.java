@@ -14,6 +14,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.geoladris.PortalRequestConfiguration;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,8 +41,8 @@ public class PublicConfProviderTest {
 
   @Test
   public void missingPublicConfFile() throws Exception {
-    Map<String, JSONObject> conf =
-        provider.getPluginConfig(mock(Config.class), mock(HttpServletRequest.class));
+    Map<String, JSONObject> conf = provider.getPluginConfig(mock(PortalRequestConfiguration.class),
+        mock(HttpServletRequest.class));
     assertNull(conf);
   }
 
@@ -53,8 +54,8 @@ public class PublicConfProviderTest {
     IOUtils.write("{ '" + pluginName + "' : { mymodule : {'a' : true }}}", writer);
     writer.close();
 
-    Map<String, JSONObject> conf =
-        provider.getPluginConfig(mock(Config.class), mock(HttpServletRequest.class));
+    Map<String, JSONObject> conf = provider.getPluginConfig(mock(PortalRequestConfiguration.class),
+        mock(HttpServletRequest.class));
     assertEquals(1, conf.size());
     assertTrue(conf.containsKey(pluginName));
     JSONObject pluginConf = conf.get(pluginName);
