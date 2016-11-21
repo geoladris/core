@@ -22,6 +22,7 @@ import java.util.ResourceBundle;
 import javax.servlet.http.HttpServletRequest;
 
 import org.geoladris.ConfigurationException;
+import org.geoladris.PluginDescriptor;
 
 public interface Config {
 
@@ -61,13 +62,13 @@ public interface Config {
   /**
    * Plugin configuration provided by the list of {@link ModuleConfigurationProvider}. Only
    * configuration for the active plugins are provided. Any disabled plugins won't be contained in
-   * the key set of the returning map.
+   * the array.
    * 
    * @param locale
    * @param request
    * @return
    */
-  PluginDescriptors getPluginConfig(Locale locale, HttpServletRequest request);
+  PluginDescriptor[] getPluginConfig(Locale locale, HttpServletRequest request);
 
   /**
    * Add providers to modify the behavior of {@link #getPluginConfig(Locale, HttpServletRequest)}.

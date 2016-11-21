@@ -12,16 +12,13 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
-import java.util.Set;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
@@ -29,18 +26,14 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
-
 import org.geoladris.PluginDescriptor;
 import org.geoladris.PluginDescriptorFileReader;
 import org.geoladris.config.Config;
-import org.geoladris.config.PluginDescriptors;
-import org.geoladris.servlet.AppContextListener;
-import org.geoladris.servlet.ConfigServlet;
-import org.geoladris.servlet.LangFilter;
 import org.junit.Before;
 import org.junit.Test;
+
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
 
 public class ConfigServletTest {
   private ConfigServlet servlet;
@@ -49,6 +42,7 @@ public class ConfigServletTest {
   private ServletContext context;
   private Config config;
   private ByteArrayOutputStream stream;
+  private PluginDescriptorFileReader reader;
 
   @Before
   public void setup() throws IOException {
@@ -58,6 +52,7 @@ public class ConfigServletTest {
     this.config = mock(Config.class);
     this.context = mock(ServletContext.class);
     this.stream = new ByteArrayOutputStream();
+    this.reader = new PluginDescriptorFileReader();
     PrintWriter writer = new PrintWriter(this.stream);
     when(this.context.getAttribute(AppContextListener.ATTR_CONFIG)).thenReturn(this.config);
     when(this.response.getWriter()).thenReturn(writer);
@@ -85,10 +80,8 @@ public class ConfigServletTest {
     when(config.getPropertyAsArray(Config.PROPERTY_MAP_CENTER)).thenReturn(new String[] {"0", "0"});
     when(config.getPropertyAsArray(Config.PROPERTY_CLIENT_MODULES)).thenReturn(new String[0]);
 
-    PluginDescriptors pluginDescriptors =
-        new PluginDescriptors(Collections.<PluginDescriptor>emptySet());
     when(config.getPluginConfig(any(Locale.class), any(HttpServletRequest.class)))
-        .thenReturn(pluginDescriptors);
+        .thenReturn(new PluginDescriptor[0]);
 
     HttpServletRequest req = mock(HttpServletRequest.class);
     when(req.getAttribute("locale")).thenReturn(new Locale("es"));
@@ -127,18 +120,14 @@ public class ConfigServletTest {
 
   @Test
   public void usesModulesFromPluginsInConfiguration() throws Exception {
-    PluginDescriptor plugin1 = new PluginDescriptor();
-    plugin1.setName("plugin1");
+    String defaultConf = "{default-conf:{module1 : {prop1 : 42, prop2 : true}}}";
+    PluginDescriptor plugin1 = reader.read(defaultConf, "plugin1");
     plugin1.addModule("module1");
-    new PluginDescriptorFileReader("{default-conf:{module1 : {prop1 : 42, prop2 : true}}}",
-        plugin1.getName()).fillPluginDescriptor(plugin1);
-    Set<PluginDescriptor> plugins = new HashSet<PluginDescriptor>();
-    plugins.add(plugin1);
-    PluginDescriptors pluginDescriptors = new PluginDescriptors(plugins);
 
+    PluginDescriptor[] plugin = new PluginDescriptor[] {plugin1};
     mockEmptyConfig();
     when(request.getAttribute(LangFilter.ATTR_LOCALE)).thenReturn(Locale.ROOT);
-    when(config.getPluginConfig(Locale.ROOT, request)).thenReturn(pluginDescriptors);
+    when(config.getPluginConfig(Locale.ROOT, request)).thenReturn(plugin);
 
     servlet.doGet(request, response, context);
 
@@ -153,24 +142,19 @@ public class ConfigServletTest {
 
   @Test
   public void writesRequireJSConfigurationAsReturnedByConfig() throws Exception {
-    PluginDescriptor plugin1 = new PluginDescriptor();
+    PluginDescriptor plugin1 =
+        reader.read("{default-conf:{module1 : {prop1 : 42, prop2 : true}}}", "plugin1");
     plugin1.getModules().add("module1");
-    PluginDescriptor plugin2 = new PluginDescriptor();
+    PluginDescriptor plugin2 = reader
+        .read("{default-conf:{module2 : {prop3 : 'test'}," + "module3 : [4, 2, 9]}}", "plugin2");
     plugin2.getModules().add("module2");
     plugin2.getModules().add("module3");
-    new PluginDescriptorFileReader("{default-conf:{module1 : {prop1 : 42, prop2 : true}}}",
-        "plugin1").fillPluginDescriptor(plugin1);
-    new PluginDescriptorFileReader(
-        "{default-conf:{module2 : {prop3 : 'test'}," + "module3 : [4, 2, 9]}}", "plugin2")
-            .fillPluginDescriptor(plugin2);
-    Set<PluginDescriptor> plugins = new HashSet<PluginDescriptor>();
-    plugins.add(plugin1);
-    plugins.add(plugin2);
-    PluginDescriptors pluginDescriptors = new PluginDescriptors(plugins);
+
+    PluginDescriptor[] plugins = new PluginDescriptor[] {plugin1, plugin2};
 
     mockEmptyConfig();
     when(request.getAttribute(LangFilter.ATTR_LOCALE)).thenReturn(Locale.ROOT);
-    when(config.getPluginConfig(Locale.ROOT, request)).thenReturn(pluginDescriptors);
+    when(config.getPluginConfig(Locale.ROOT, request)).thenReturn(plugins);
 
     servlet.doGet(request, response, context);
 

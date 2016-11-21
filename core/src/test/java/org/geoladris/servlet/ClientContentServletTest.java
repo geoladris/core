@@ -32,7 +32,6 @@ import org.geoladris.Environment;
 import org.geoladris.PluginDescriptor;
 import org.geoladris.StatusServletException;
 import org.geoladris.config.Config;
-import org.geoladris.config.PluginDescriptors;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -123,12 +122,10 @@ public class ClientContentServletTest {
     HttpServletRequest request = mock(HttpServletRequest.class);
     when(request.getSession()).thenReturn(mock(HttpSession.class));
 
-    PluginDescriptors pluginDescriptors = config.getPluginConfig(Locale.ROOT, request);
-
     List<String> modules = new ArrayList<>();
     List<String> styles = new ArrayList<>();
     List<String> nonRequirePaths = new ArrayList<>();
-    PluginDescriptor[] enabled = pluginDescriptors.getEnabled();
+    PluginDescriptor[] enabled = config.getPluginConfig(Locale.ROOT, request);
 
     for (PluginDescriptor plugin : enabled) {
       modules.addAll(plugin.getModules());
@@ -241,10 +238,8 @@ public class ClientContentServletTest {
   public void test404ForDisabledPlugins() throws ServletException, IOException {
     setupConfigurationFolder("src/test/resources/testNoJavaPlugins");
 
-    PluginDescriptors pluginConfig = mock(PluginDescriptors.class);
-    when(pluginConfig.getEnabled()).thenReturn(new PluginDescriptor[0]);
     Config config = spy(configCaptor.getValue());
-    doReturn(pluginConfig).when(config).getPluginConfig(any(Locale.class),
+    doReturn(new PluginDescriptor[0]).when(config).getPluginConfig(any(Locale.class),
         any(HttpServletRequest.class));
 
     ClientContentServlet servlet = new ClientContentServlet();

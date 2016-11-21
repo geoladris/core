@@ -11,10 +11,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Locale;
-import java.util.Set;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
@@ -24,9 +21,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.geoladris.Environment;
 import org.geoladris.PluginDescriptor;
 import org.geoladris.config.Config;
-import org.geoladris.config.PluginDescriptors;
-import org.geoladris.servlet.AppContextListener;
-import org.geoladris.servlet.IndexHTMLServlet;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -64,17 +58,14 @@ public class IndexHTMLServletTest {
 
   @Test
   public void cssOrder() throws Exception {
-    PluginDescriptor plugin = new PluginDescriptor();
-    plugin.setInstallInRoot(true);
+    PluginDescriptor plugin = new PluginDescriptor("myplugin", true);
     plugin.addStylesheet("theme/a.css");
     plugin.addStylesheet("styles/a.css");
     plugin.addStylesheet("theme/b.css");
-    Set<PluginDescriptor> plugins = new HashSet<PluginDescriptor>();
-    plugins.add(plugin);
-    PluginDescriptors pluginDescriptors = new PluginDescriptors(plugins);
+    PluginDescriptor[] plugins = new PluginDescriptor[] {plugin};
 
     Config config = mock(Config.class);
-    when(config.getPluginConfig(any(Locale.class), eq(this.request))).thenReturn(pluginDescriptors);
+    when(config.getPluginConfig(any(Locale.class), eq(this.request))).thenReturn(plugins);
     when(this.servletContext.getAttribute(AppContextListener.ATTR_CONFIG)).thenReturn(config);
 
     this.servlet.doGet(this.request, this.response);
@@ -127,10 +118,8 @@ public class IndexHTMLServletTest {
    */
   private void mockDebugParam(String debugParam) {
     Config config = mock(Config.class);
-    PluginDescriptors pluginDescriptors =
-        new PluginDescriptors(Collections.<PluginDescriptor>emptySet());
     when(config.getPluginConfig(any(Locale.class), any(HttpServletRequest.class)))
-        .thenReturn(pluginDescriptors);
+        .thenReturn(new PluginDescriptor[0]);
     when(this.servletContext.getAttribute("config")).thenReturn(config);
     when(this.servletContext.getAttribute("css-paths")).thenReturn(new ArrayList<String>());
 

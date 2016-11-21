@@ -15,12 +15,11 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import net.sf.json.JSONObject;
-import net.sf.json.JSONSerializer;
-
 import org.geoladris.PluginDescriptor;
 import org.geoladris.config.Config;
-import org.geoladris.config.PluginDescriptors;
+
+import net.sf.json.JSONObject;
+import net.sf.json.JSONSerializer;
 
 public class ConfigServlet extends HttpServlet {
   private static final long serialVersionUID = 1L;
@@ -45,18 +44,16 @@ public class ConfigServlet extends HttpServlet {
       title = "Untitled";
     }
 
-    PluginDescriptors descriptors = config.getPluginConfig(locale, req);
-
     JSONObject moduleConfig = new JSONObject();
     // Fixed elements
-    PluginDescriptor[] enabledPluginDescriptors = descriptors.getEnabled();
+    PluginDescriptor[] enabledPluginDescriptors = config.getPluginConfig(locale, req);
     moduleConfig.element("customization",
         buildCustomizationObject(context, config, locale, title, enabledPluginDescriptors));
     moduleConfig.element("i18n", buildI18NObject(bundle));
     moduleConfig.element("url-parameters", JSONSerializer.toJSON(req.getParameterMap()));
 
     for (PluginDescriptor pluginDescriptor : enabledPluginDescriptors) {
-      JSONObject configuration = descriptors.getQualifiedConfiguration(pluginDescriptor.getName());
+      JSONObject configuration = pluginDescriptor.getConfiguration();
       if (configuration != null) {
         moduleConfig.putAll(configuration);
       }

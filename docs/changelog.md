@@ -21,7 +21,7 @@ This project follows [semantic versioning](http://semver.org).
 ## Modificado
 * El soporte para el fichero `layers.json` se ha movido al plugin `base`.
 * El directorio `nfms` que contiene los recursos se ha renombrado a `geoladris`.
-* `installInRoot` por defecto a `false` para todos los plugins, independientemente del empaquetado; `core` y `base` se mantienen con `installInRoot : true` para que sus módulos se puedan referenciar de manera sencilla desde otros plugins.
+* `installInRoot` por defecto a `false` para todos los plugins, independientemente del empaquetado; `core` se mantiene con `installInRoot : true` para que sus módulos se puedan referenciar de manera sencilla desde otros plugins.
 
 ## Bugs conocidos
 * [Minificación no funciona para plugins con installInRoot:false](https://github.com/geoladris/geoladris/issues/24).

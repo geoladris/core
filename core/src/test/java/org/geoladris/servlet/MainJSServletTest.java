@@ -19,7 +19,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.geoladris.Environment;
 import org.geoladris.PluginDescriptor;
 import org.geoladris.config.Config;
-import org.geoladris.config.PluginDescriptors;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -43,52 +42,50 @@ public class MainJSServletTest {
 
   @Test
   public void dontCacheIfDisabledGlobally() throws Exception {
-    PluginDescriptor p1 = new PluginDescriptor();
-    p1.getRequireJSPathsMap().put("ol", "jslib/ol");
-    PluginDescriptor p2 = new PluginDescriptor();
-    p2.getRequireJSPathsMap().put("jquery-ui", "jslib/jquery-ui");
+    PluginDescriptor p1 = new PluginDescriptor("p1", true);
+    p1.addRequireJSPath("ol", "jslib/ol");
+    PluginDescriptor p2 = new PluginDescriptor("p2", true);
+    p2.addRequireJSPath("jquery-ui", "jslib/jquery-ui");
 
-    PluginDescriptors descriptors = mock(PluginDescriptors.class);
     Config config = mock(Config.class);
-    when(config.getPluginConfig(any(Locale.class), any(HttpServletRequest.class)))
-        .thenReturn(descriptors);
     Environment env = mockEnv(false);
     when(servletContext.getAttribute(AppContextListener.ATTR_CONFIG)).thenReturn(config);
     when(servletContext.getAttribute(AppContextListener.ATTR_ENV)).thenReturn(env);
 
     HttpServletResponse response = mockResponse();
-    when(descriptors.getEnabled()).thenReturn(new PluginDescriptor[] {p1, p2});
+    when(config.getPluginConfig(any(Locale.class), any(HttpServletRequest.class)))
+        .thenReturn(new PluginDescriptor[] {p1, p2});
     this.servlet.doGet(this.request, response);
     assertTrue(content(response).contains("jslib/jquery-ui"));
 
     response = mockResponse();
-    when(descriptors.getEnabled()).thenReturn(new PluginDescriptor[] {p1});
+    when(config.getPluginConfig(any(Locale.class), any(HttpServletRequest.class)))
+        .thenReturn(new PluginDescriptor[] {p1});
     this.servlet.doGet(this.request, response);
     assertFalse(content(response).contains("jslib/jquery-ui"));
   }
 
   @Test
   public void useCache() throws Exception {
-    PluginDescriptor p1 = new PluginDescriptor();
-    p1.getRequireJSPathsMap().put("ol", "jslib/ol");
-    PluginDescriptor p2 = new PluginDescriptor();
-    p2.getRequireJSPathsMap().put("jquery-ui", "jslib/jquery-ui");
+    PluginDescriptor p1 = new PluginDescriptor("p1", true);
+    p1.addRequireJSPath("ol", "jslib/ol");
+    PluginDescriptor p2 = new PluginDescriptor("p2", true);
+    p2.addRequireJSPath("jquery-ui", "jslib/jquery-ui");
 
-    PluginDescriptors descriptors = mock(PluginDescriptors.class);
     Config config = mock(Config.class);
     Environment env = mockEnv(true);
-    when(config.getPluginConfig(any(Locale.class), any(HttpServletRequest.class)))
-        .thenReturn(descriptors);
     when(servletContext.getAttribute(AppContextListener.ATTR_CONFIG)).thenReturn(config);
     when(servletContext.getAttribute(AppContextListener.ATTR_ENV)).thenReturn(env);
 
     HttpServletResponse response = mockResponse();
-    when(descriptors.getEnabled()).thenReturn(new PluginDescriptor[] {p1, p2});
+    when(config.getPluginConfig(any(Locale.class), any(HttpServletRequest.class)))
+        .thenReturn(new PluginDescriptor[] {p1, p2});
     this.servlet.doGet(this.request, response);
     assertTrue(content(response).contains("jslib/jquery-ui"));
 
     response = mockResponse();
-    when(descriptors.getEnabled()).thenReturn(new PluginDescriptor[] {p1});
+    when(config.getPluginConfig(any(Locale.class), any(HttpServletRequest.class)))
+        .thenReturn(new PluginDescriptor[] {p1, p2});
     this.servlet.doGet(this.request, response);
     assertTrue(content(response).contains("jslib/jquery-ui"));
   }

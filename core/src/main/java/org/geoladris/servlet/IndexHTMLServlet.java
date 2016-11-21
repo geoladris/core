@@ -24,7 +24,6 @@ import org.apache.velocity.runtime.resource.util.StringResourceRepository;
 import org.geoladris.Environment;
 import org.geoladris.PluginDescriptor;
 import org.geoladris.config.Config;
-import org.geoladris.config.PluginDescriptors;
 
 public class IndexHTMLServlet extends HttpServlet {
   public static final String HTTP_PARAM_DEBUG = "debug";
@@ -68,9 +67,8 @@ public class IndexHTMLServlet extends HttpServlet {
       styleSheets.add(OPTIMIZED_FOLDER + "/portal-style.css");
     } else {
       Locale locale = (Locale) req.getAttribute(LangFilter.ATTR_LOCALE);
-      PluginDescriptors pluginDescriptors = config.getPluginConfig(locale, req);
       List<String> classPathStylesheets = new ArrayList<>();
-      for (PluginDescriptor plugin : pluginDescriptors.getEnabled()) {
+      for (PluginDescriptor plugin : config.getPluginConfig(locale, req)) {
         classPathStylesheets.addAll(plugin.getStylesheets());
       }
 

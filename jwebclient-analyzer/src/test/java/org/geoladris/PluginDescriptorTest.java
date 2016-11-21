@@ -1,28 +1,28 @@
 package org.geoladris;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.Map;
 import java.util.Set;
 
-import org.geoladris.PluginDescriptor;
-import org.geoladris.PluginDescriptorFileReader;
 import org.junit.Test;
 
 public class PluginDescriptorTest {
+  private PluginDescriptorFileReader reader = new PluginDescriptorFileReader();
 
-  @Test
-  public void canHaveNullName() {
-    PluginDescriptor descriptor = new PluginDescriptor();
-    assertNull(descriptor.getName());
+  public void cannotHaveNullName() {
+    try {
+      new PluginDescriptor(null, false);
+      fail();
+    } catch (IllegalArgumentException e) {
+    }
   }
 
   @Test
   public void modulesAndStylesInstalledInRoot() throws Exception {
-    PluginDescriptor descriptor = new PluginDescriptor();
-    descriptor.setInstallInRoot(true);
+    PluginDescriptor descriptor = new PluginDescriptor("p1", true);
 
     descriptor.addModule("m1");
     descriptor.addStylesheet("modules/s1.css");
@@ -41,14 +41,13 @@ public class PluginDescriptorTest {
 
   @Test
   public void requirePathsAndShimsInstalledInRoot() throws Exception {
-    PluginDescriptor descriptor = new PluginDescriptor();
-
     String paths = "jquery : '../jslib/jquery/jquery', "
         + "openlayers : '../jslib/OpenLayers/OpenLayers.unredd'";
     String shim = "'fancy-box' : ['jquery']";
     String config =
         "{installInRoot:true, requirejs : { paths : {" + paths + "}, shim : {" + shim + "}}}";
-    new PluginDescriptorFileReader(config, null).fillPluginDescriptor(descriptor);
+
+    PluginDescriptor descriptor = reader.read(config, "p1");
 
     Map<String, String> pathsMap = descriptor.getRequireJSPathsMap();
     assertEquals(2, pathsMap.size());
@@ -64,10 +63,8 @@ public class PluginDescriptorTest {
 
   @Test
   public void modulesAndStylesInstalledOutsideRoot() throws Exception {
-    PluginDescriptor descriptor = new PluginDescriptor();
-    descriptor.setInstallInRoot(false);
     String name = "myplugin";
-    descriptor.setName(name);
+    PluginDescriptor descriptor = new PluginDescriptor(name, false);
 
     descriptor.addModule("m1");
     descriptor.addStylesheet("modules/s1.css");
@@ -86,7 +83,6 @@ public class PluginDescriptorTest {
 
   @Test
   public void requirePathsAndShimsInstalledOutsideRoot() throws Exception {
-    PluginDescriptor descriptor = new PluginDescriptor();
     String name = "myplugin";
 
     String paths = "jquery : '../jslib/jquery/jquery', "
@@ -94,7 +90,8 @@ public class PluginDescriptorTest {
     String shim = "'fancy-box' : ['jquery']";
     String config =
         "{installInRoot:false, requirejs : { paths : {" + paths + "}, shim : {" + shim + "}}}";
-    new PluginDescriptorFileReader(config, name).fillPluginDescriptor(descriptor);
+
+    PluginDescriptor descriptor = reader.read(config, name);
 
     Map<String, String> pathsMap = descriptor.getRequireJSPathsMap();
     assertEquals(2, pathsMap.size());

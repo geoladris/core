@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.Set;
 
 import org.geoladris.Context;
+import org.geoladris.JEEContextAnalyzer;
 
 public class ExpandedClientContext implements Context {
 
@@ -26,13 +27,8 @@ public class ExpandedClientContext implements Context {
   }
 
   @Override
-  public File getClientRoot() {
-    return new File(jeeContextFolder);
+  public File[] getDirs() {
+    return new File[] {
+        new File(jeeContextFolder + File.separator + JEEContextAnalyzer.CLIENT_RESOURCES_DIR)};
   }
-
-  @Override
-  public File getNoJavaRoot() {
-    return null;
-  }
-
 }

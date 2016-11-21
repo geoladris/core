@@ -1,8 +1,5 @@
 package org.geoladris;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import net.sf.json.JSONObject;
 import net.sf.json.JSONSerializer;
 
@@ -16,69 +13,49 @@ public class PluginDescriptorFileReader {
   private static final String PROP_REQUIREJS = "requirejs";
   private static final String PROP_INSTALL_IN_ROOT = "installInRoot";
 
-  private HashMap<String, String> requireJSPathsMap = new HashMap<>();
-  private HashMap<String, String> requireJSShims = new HashMap<>();
-  private boolean installInRoot;
-  private String pluginName;
-  private JSONObject configuration;
+  private PluginDescriptor plugin;
 
-  public PluginDescriptorFileReader(String content, String pluginName) {
+  public PluginDescriptorFileReader() {}
+
+  /**
+   * Obtains a {@link PluginDescriptor} with the specified name by parsing the given content.
+   * 
+   * @param content The contents of the &lt;plugin&gt;-conf.json descriptor.
+   * @param pluginName The name of the plugin. It cannot be null or empty.
+   * @return The plugin descriptor.
+   */
+  public PluginDescriptor read(String content, String pluginName) {
     JSONObject jsonRoot = (JSONObject) JSONSerializer.toJSON(content);
 
-    this.installInRoot = jsonRoot.optBoolean(PROP_INSTALL_IN_ROOT, false);
-    this.pluginName = pluginName;
+    boolean installInRoot = jsonRoot.optBoolean(PROP_INSTALL_IN_ROOT, false);
+    this.plugin = new PluginDescriptor(pluginName, installInRoot);
 
     if (jsonRoot.has(PROP_REQUIREJS)) {
       JSONObject requireJS = jsonRoot.getJSONObject(PROP_REQUIREJS);
-      if (requireJS != null) {
-        requireJSPathsMap = new HashMap<String, String>();
-        requireJSShims = new HashMap<String, String>();
-        fill(requireJSPathsMap, (JSONObject) requireJS.get("paths"));
-        fill(requireJSShims, (JSONObject) requireJS.get("shim"));
+      JSONObject paths = requireJS.getJSONObject("paths");
+      JSONObject shim = requireJS.getJSONObject("shim");
+      // if (requireJS != null) {
+
+      if (paths != null) {
+        for (Object keyObj : paths.keySet()) {
+          String key = keyObj.toString();
+          this.plugin.addRequireJSPath(key, paths.get(key).toString());
+        }
+      }
+
+      if (shim != null) {
+        for (Object keyObj : shim.keySet()) {
+          String key = keyObj.toString();
+          this.plugin.addRequireJSShim(key, shim.get(key).toString());
+        }
       }
     }
+    // }
+
     if (jsonRoot.has(PROP_DEFAULT_CONF)) {
-      configuration = jsonRoot.getJSONObject(PROP_DEFAULT_CONF);
-    }
-  }
-
-  private void fill(Map<String, String> map, JSONObject jsonMap) {
-    if (jsonMap == null) {
-      return;
+      plugin.setConfiguration(jsonRoot.getJSONObject(PROP_DEFAULT_CONF));
     }
 
-    for (Object key : jsonMap.keySet()) {
-      Object value = jsonMap.get(key.toString());
-      map.put(key.toString(), buildJSLibURL(value.toString()));
-    }
-  }
-
-  private String buildJSLibURL(String jsLibPath) {
-    return this.installInRoot ? jsLibPath
-        : jsLibPath.replace("jslib/", "jslib/" + this.pluginName + "/");
-  }
-
-  private JSONObject getConfiguration() {
-    return configuration;
-  }
-
-  private HashMap<String, String> getRequireJSPathsMap() {
-    return requireJSPathsMap;
-  }
-
-  private HashMap<String, String> getRequireJSShims() {
-    return requireJSShims;
-  }
-
-  private boolean isInstallInRoot() {
-    return installInRoot;
-  }
-
-  public void fillPluginDescriptor(PluginDescriptor plugin) {
-    plugin.setInstallInRoot(isInstallInRoot());
-    plugin.mergeConfiguration(getConfiguration());
-    plugin.mergeRequireJSPaths(getRequireJSPathsMap());
-    plugin.mergeRequireJSShims(getRequireJSShims());
-    plugin.setName(pluginName);
+    return plugin;
   }
 }

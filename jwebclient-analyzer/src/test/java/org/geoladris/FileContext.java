@@ -48,13 +48,8 @@ public class FileContext implements Context {
   }
 
   @Override
-  public File getClientRoot() {
-    return new File(root, "WEB-INF/classes");
+  public File[] getDirs() {
+    return new File[] {new File(root, "WEB-INF/classes/" + JEEContextAnalyzer.CLIENT_RESOURCES_DIR),
+        new File(root, "plugins")};
   }
-
-  @Override
-  public File getNoJavaRoot() {
-    return new File(root, "plugins");
-  }
-
 }

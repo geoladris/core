@@ -25,7 +25,6 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.geoladris.PluginDescriptor;
 import org.geoladris.PluginDescriptorFileReader;
-import org.geoladris.PortalRequestConfiguration;
 import org.junit.Test;
 
 import net.sf.json.JSONObject;
@@ -35,29 +34,28 @@ public class DefaultConfigTest {
   @Test
   public void testConfigurationProvidersMerge() throws Exception {
     Set<PluginDescriptor> plugins = new HashSet<>();
-    PluginDescriptor plugin1 = new PluginDescriptor();
-    plugin1.setInstallInRoot(true);
-    plugin1.setName("1");
+    PluginDescriptor plugin1 = new PluginDescriptor("1", true);
     plugins.add(plugin1);
 
     JSONObject conf1 = JSONObject.fromObject("{ module : { a : 1, b : 2 }}");
     JSONObject conf2 = JSONObject.fromObject("{ module : { a : 10, c : 3 }}");
 
     ModuleConfigurationProvider provider1 = mock(ModuleConfigurationProvider.class);
-    when(provider1.getPluginConfig(any(PortalRequestConfiguration.class),
-        any(HttpServletRequest.class))).thenReturn(Collections.singletonMap("1", conf1));
+    when(provider1.getPluginConfig(any(Config.class), any(HttpServletRequest.class)))
+        .thenReturn(Collections.singletonMap("1", conf1));
     ModuleConfigurationProvider provider2 = mock(ModuleConfigurationProvider.class);
-    when(provider2.getPluginConfig(any(PortalRequestConfiguration.class),
-        any(HttpServletRequest.class))).thenReturn(Collections.singletonMap("1", conf2));
+    when(provider2.getPluginConfig(any(Config.class), any(HttpServletRequest.class)))
+        .thenReturn(Collections.singletonMap("1", conf2));
 
     Config config = new DefaultConfig(mock(ConfigFolder.class), plugins, false);
 
     config.addModuleConfigurationProvider(provider1);
     config.addModuleConfigurationProvider(provider2);
 
-    PluginDescriptors c =
+    PluginDescriptor[] c =
         config.getPluginConfig(Locale.getDefault(), mock(HttpServletRequest.class));
-    JSONObject pluginConf = c.get("1").getConfiguration().getJSONObject("module");
+
+    JSONObject pluginConf = c[0].getConfiguration().getJSONObject("module");
 
     assertTrue(pluginConf.has("a") && pluginConf.has("b") && pluginConf.has("c"));
     assertEquals(3, pluginConf.get("c"));
@@ -154,8 +152,8 @@ public class DefaultConfigTest {
     config.getPluginConfig(Locale.getDefault(), mock(HttpServletRequest.class));
 
     // Check num calls
-    verify(configurationProvider, times(numCalls))
-        .getPluginConfig(any(PortalRequestConfiguration.class), any(HttpServletRequest.class));
+    verify(configurationProvider, times(numCalls)).getPluginConfig(any(Config.class),
+        any(HttpServletRequest.class));
   }
 
   @Test
@@ -165,8 +163,7 @@ public class DefaultConfigTest {
     when(folder.getProperties()).thenReturn(new Properties());
     when(folder.getMessages(any(Locale.class))).thenReturn(mock(ResourceBundle.class));
 
-    Config config =
-        new DefaultConfig(folder, Collections.<PluginDescriptor>emptySet(), false);
+    Config config = new DefaultConfig(folder, Collections.<PluginDescriptor>emptySet(), false);
     assertNotNull(config.getDir());
     assertNotNull(config.getPluginConfig(Locale.getDefault(), mock(HttpServletRequest.class)));
     assertNotNull(config.getProperties());
@@ -179,8 +176,8 @@ public class DefaultConfigTest {
     Config config = new DefaultConfig(mock(ConfigFolder.class),
         Collections.<PluginDescriptor>emptySet(), false);
     ModuleConfigurationProvider provider = mock(ModuleConfigurationProvider.class);
-    when(provider.getPluginConfig(any(PortalRequestConfiguration.class),
-        any(HttpServletRequest.class))).thenThrow(new IOException("mock"));
+    when(provider.getPluginConfig(any(Config.class), any(HttpServletRequest.class)))
+        .thenThrow(new IOException("mock"));
     config.addModuleConfigurationProvider(provider);
     assertNotNull(config.getPluginConfig(Locale.getDefault(), mock(HttpServletRequest.class)));
   }
@@ -188,9 +185,8 @@ public class DefaultConfigTest {
   @Test
   public void testMergeDoesNotAffectDefaultPluginConfiguration() throws IOException {
     Set<PluginDescriptor> plugins = new HashSet<PluginDescriptor>();
-    PluginDescriptor pluginDescriptor = new PluginDescriptor();
-    new PluginDescriptorFileReader("{default-conf:{m1:true}}", "p1")
-        .fillPluginDescriptor(pluginDescriptor);
+    PluginDescriptor pluginDescriptor =
+        new PluginDescriptorFileReader().read("{default-conf:{m1:true}}", "p1");
     plugins.add(pluginDescriptor);
     Config config = new DefaultConfig(mock(ConfigFolder.class), plugins, false);
 
@@ -199,19 +195,16 @@ public class DefaultConfigTest {
     Map<String, JSONObject> mergingConfiguration2 = new HashMap<String, JSONObject>();
     mergingConfiguration2.put("p1", JSONObject.fromObject("{}"));
     ModuleConfigurationProvider provider = mock(ModuleConfigurationProvider.class);
-    when(provider.getPluginConfig(any(PortalRequestConfiguration.class),
-        any(HttpServletRequest.class))).thenReturn(mergingConfiguration1)
-            .thenReturn(mergingConfiguration2);
+    when(provider.getPluginConfig(any(Config.class), any(HttpServletRequest.class)))
+        .thenReturn(mergingConfiguration1).thenReturn(mergingConfiguration2);
     config.addModuleConfigurationProvider(provider);
 
     JSONObject configuration =
-        config.getPluginConfig(Locale.ROOT, mock(HttpServletRequest.class)).getEnabled()[0]
-            .getConfiguration();
+        config.getPluginConfig(Locale.ROOT, mock(HttpServletRequest.class))[0].getConfiguration();
     assertEquals(2, configuration.keySet().size());
 
     configuration =
-        config.getPluginConfig(Locale.ROOT, mock(HttpServletRequest.class)).getEnabled()[0]
-            .getConfiguration();
+        config.getPluginConfig(Locale.ROOT, mock(HttpServletRequest.class))[0].getConfiguration();
     assertEquals(1, configuration.keySet().size());
   }
 }

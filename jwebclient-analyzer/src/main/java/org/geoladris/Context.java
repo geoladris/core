@@ -10,7 +10,5 @@ public interface Context {
 
   InputStream getLibAsStream(String jarFileName);
 
-  File getClientRoot();
-
-  File getNoJavaRoot();
+  File[] getDirs();
 }
