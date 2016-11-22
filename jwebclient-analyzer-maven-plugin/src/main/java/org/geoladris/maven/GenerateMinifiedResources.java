@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +21,7 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.geoladris.Context;
 import org.geoladris.JEEContextAnalyzer;
 import org.geoladris.PluginDescriptor;
 import org.geoladris.RequireTemplate;
@@ -44,8 +46,7 @@ public class GenerateMinifiedResources extends AbstractMojo {
 
   @Override
   public void execute() throws MojoExecutionException, MojoFailureException {
-    JEEContextAnalyzer analyzer =
-        new JEEContextAnalyzer(new ExpandedClientContext(webResourcesDir));
+    JEEContextAnalyzer analyzer = new JEEContextAnalyzer(new ExpandedClientContext());
 
     // main.js
     String mainSrc = this.webResourcesDir + File.separator + "main.js";
@@ -118,5 +119,23 @@ public class GenerateMinifiedResources extends AbstractMojo {
     String name = plugin.getName();
     path = path.replace(name + "/", "");
     return name + "/modules/" + path;
+  }
+
+  private class ExpandedClientContext implements Context {
+    @Override
+    public Set<String> getLibPaths() {
+      return Collections.emptySet();
+    }
+
+    @Override
+    public InputStream getLibAsStream(String jarFileName) {
+      throw new UnsupportedOperationException("Internal error");
+    }
+
+    @Override
+    public File[] getDirs() {
+      return new File[] {
+          new File(webResourcesDir + File.separator + JEEContextAnalyzer.CLIENT_RESOURCES_DIR)};
+    }
   }
 }
