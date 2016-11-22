@@ -45,10 +45,6 @@ public class PluginDescriptor {
     return name;
   }
 
-  public void setName(String name) {
-    this.name = name;
-  }
-
   /**
    * Get the RequireJS paths. It returns a new copied map each time; if you want to add a new module
    * use {@link #addRequireJSPath(String, String)}.

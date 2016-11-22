@@ -34,7 +34,6 @@ public class PluginDescriptorFileReader {
       JSONObject requireJS = jsonRoot.getJSONObject(PROP_REQUIREJS);
       JSONObject paths = requireJS.getJSONObject("paths");
       JSONObject shim = requireJS.getJSONObject("shim");
-      // if (requireJS != null) {
 
       if (paths != null) {
         for (Object keyObj : paths.keySet()) {
@@ -50,7 +49,6 @@ public class PluginDescriptorFileReader {
         }
       }
     }
-    // }
 
     if (jsonRoot.has(PROP_DEFAULT_CONF)) {
       plugin.setConfiguration(jsonRoot.getJSONObject(PROP_DEFAULT_CONF));
