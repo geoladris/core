@@ -25,16 +25,13 @@ import org.geoladris.PluginDescriptor;
 import org.geoladris.RequireTemplate;
 
 /**
- * Generates a RequireJS main.js module and configuration file for the requirejs minification
- * process.
- * 
- * The plugin operates on a folder that contains all the client resources, expects to find the
- * RequireJS modules in a "modules" folder and CSS stylesheets in the "styles" folder
+ * Generates a RequireJS main.js module and configuration file for the requirejs and CSS
+ * minification process.
  * 
  * @author fergonco
  */
-@Mojo(name = "generate-buildconfig")
-public class GenerateRequireJSBuildConfig extends AbstractMojo {
+@Mojo(name = "generate-minified")
+public class GenerateMinifiedResources extends AbstractMojo {
 
   @Parameter(defaultValue = "${project.build.directory}/requirejs")
   protected String webResourcesDir;
