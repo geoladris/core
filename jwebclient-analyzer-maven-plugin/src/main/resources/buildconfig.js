@@ -1,5 +1,5 @@
 ({
-	baseUrl : "${project.build.directory}/requirejs/$webResourcesDir/modules",
+	baseUrl : "$webResourcesDir",
 	$paths,
 	$shim,
 	out: "${basedir}/src/main/webapp/optimized/portal.js",

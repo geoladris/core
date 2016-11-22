@@ -38,11 +38,11 @@ public class RequireTemplateTest {
 
   @Test
   public void checkWebResourcesDir() throws IOException {
+    String webResourcesDir = "requirejs/" + JEEContextAnalyzer.CLIENT_RESOURCES_DIR;
     RequireTemplate template = new RequireTemplate(getClass().getResourceAsStream("/test.js"),
-        new HashMap<String, String>(), new HashMap<String, String>(), new ArrayList<String>());
+        new HashMap<String, String>(), new HashMap<String, String>(), new ArrayList<String>(),
+        webResourcesDir);
 
-    String output = template.generate();
-    assertTrue(
-        output.indexOf("requirejs/" + JEEContextAnalyzer.CLIENT_RESOURCES_DIR + "/modules") != -1);
+    assertTrue(template.generate().contains(webResourcesDir + "/modules"));
   }
 }
