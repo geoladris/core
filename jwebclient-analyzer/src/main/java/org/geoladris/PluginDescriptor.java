@@ -154,7 +154,7 @@ public class PluginDescriptor {
 
   public void setConfiguration(JSONObject configuration) {
     boolean override = configuration.optBoolean(CONF_OVERRIDE, false);
-    this.enabled = configuration.optBoolean(CONF_ENABLED, true);
+    this.enabled = configuration.optBoolean(CONF_ENABLED, this.enabled);
 
     JSONObject newConfig = JSONObject.fromObject(configuration.toString());
     newConfig.remove(CONF_ENABLED);

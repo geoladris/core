@@ -243,4 +243,14 @@ public class PluginDescriptorTest {
     assertFalse(pluginConfig.has(PluginDescriptor.CONF_ENABLED));
     assertFalse(pluginConfig.has(PluginDescriptor.CONF_OVERRIDE));
   }
+
+  @Test
+  public void keepEnabledStateIfNotSpecified() {
+    PluginDescriptor plugin = new PluginDescriptor("p", false);
+    plugin.setConfiguration(
+        JSONObject.fromObject("{'" + PluginDescriptor.CONF_ENABLED + "' : false}"));
+    assertFalse(plugin.isEnabled());
+    plugin.setConfiguration(new JSONObject());
+    assertFalse(plugin.isEnabled());
+  }
 }
