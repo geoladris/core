@@ -2,6 +2,10 @@ This project follows [semantic versioning](http://semver.org).
 
 # Sin publicar
 
+(nada)
+
+# 5.0.0
+
 ## Corregido
 * [Especificar _arrays_ JSON como configuración de los módulos](https://github.com/geoladris/geoladris/issues/2).
 * [Soporte para Java 8](https://github.com/geoladris/geoladris/issues/20).
