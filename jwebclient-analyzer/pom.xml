@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>org.fao.unredd</groupId>
 		<artifactId>core-root</artifactId>
-		<version>5.0.0-beta5</version>
+		<version>5.0.0</version>
 	</parent>
 	<artifactId>jwebclient-analyzer</artifactId>
 	<name>jwebclient-analyzer</name>
