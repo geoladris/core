@@ -9,8 +9,8 @@ import javax.servlet.http.HttpServletRequest;
 import org.geoladris.Geoladris;
 import org.geoladris.PortalRequestConfiguration;
 
-import net.sf.json.JSONObject;
 import de.csgis.commons.JSONContentProvider;
+import net.sf.json.JSONObject;
 
 /**
  * <p>
@@ -28,18 +28,19 @@ import de.csgis.commons.JSONContentProvider;
 public class RoleConfigurationProvider implements ModuleConfigurationProvider {
   public static final String ROLE_DIR = "role_conf";
 
-  private ConfigurationProviderHelper helper;
+  private JSONContentProvider contents;
 
   public RoleConfigurationProvider(File configDir) {
     String roleDir = new File(configDir, ROLE_DIR).getAbsolutePath();
-    this.helper = new ConfigurationProviderHelper(new JSONContentProvider(roleDir));
+    this.contents = new JSONContentProvider(roleDir);
   }
 
+  @SuppressWarnings("unchecked")
   @Override
-  public Map<String, JSONObject> getPluginConfig(PortalRequestConfiguration configurationContext,
+  public Map<String, JSONObject> getPluginConfig(PortalRequestConfiguration requestConfig,
       HttpServletRequest request) throws IOException {
     String role = getRole(request);
-    return role != null ? this.helper.getPluginConfig(role) : null;
+    return role != null ? this.contents.get().get(role) : null;
   }
 
   private String getRole(HttpServletRequest request) {

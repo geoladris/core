@@ -18,12 +18,12 @@ import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 
-import net.sf.json.JSONObject;
-
 import org.apache.log4j.Logger;
 import org.geoladris.ConfigurationException;
 import org.geoladris.PluginDescriptor;
 import org.geoladris.PortalRequestConfiguration;
+
+import net.sf.json.JSONObject;
 
 /**
  * Utility class to access the custom resources placed in PORTAL_CONFIG_DIR.
@@ -167,18 +167,23 @@ public class DefaultConfig implements Config {
   }
 
   @Override
-  public PluginDescriptors getPluginConfig(Locale locale, HttpServletRequest request) {
-    PluginDescriptors ret = new PluginDescriptors(plugins);
+  public PluginDescriptor[] getPluginConfig(Locale locale, HttpServletRequest request) {
+    // Get a map: name -> cloned descriptor
+    Map<String, PluginDescriptor> namePluginDescriptor = new HashMap<String, PluginDescriptor>();
+    for (PluginDescriptor pluginDescriptor : this.plugins) {
+      PluginDescriptor clonedDescriptor = pluginDescriptor.cloneDescriptor();
+      namePluginDescriptor.put(clonedDescriptor.getName(), clonedDescriptor);
+    }
 
-    /*
-     * Get the providers configuration and merge it, it includes public and role configuration
-     */
+    PortalRequestConfiguration requestConfig = new PortalRequestConfigurationImpl(locale);
+
+    // Get the providers configuration and merge it
     for (ModuleConfigurationProvider provider : moduleConfigurationProviders) {
+
       Map<String, JSONObject> providerConfiguration = cachedConfigurations.get(provider);
       if (providerConfiguration == null || !useCache || !provider.canBeCached()) {
         try {
-          providerConfiguration =
-              provider.getPluginConfig(new PortalConfigurationContextImpl(locale), request);
+          providerConfiguration = provider.getPluginConfig(requestConfig, request);
           cachedConfigurations.put(provider, providerConfiguration);
         } catch (IOException e) {
           logger.info("Provider failed to contribute configuration: " + provider.getClass());
@@ -192,12 +197,23 @@ public class DefaultConfig implements Config {
       // Merge the configuration in the result
       for (String pluginName : providerConfiguration.keySet()) {
         JSONObject pluginConf = providerConfiguration.get(pluginName);
-        ret.merge(pluginName, pluginConf);
+        PluginDescriptor pluginDescriptor = namePluginDescriptor.get(pluginName);
+        if (pluginDescriptor == null) {
+          logger.warn("Configuration has been defined for a non-existing plugin: " + pluginName);
+        }
+        pluginDescriptor.setConfiguration(pluginConf);
       }
-
     }
 
-    return ret;
+    // Get only enabled plugins
+    List<PluginDescriptor> enabled = new ArrayList<>();
+    for (PluginDescriptor plugin : namePluginDescriptor.values()) {
+      if (plugin.isEnabled()) {
+        enabled.add(plugin);
+      }
+    }
+
+    return enabled.toArray(new PluginDescriptor[enabled.size()]);
   }
 
   @Override
@@ -216,11 +232,15 @@ public class DefaultConfig implements Config {
     return false;
   }
 
-  private class PortalConfigurationContextImpl implements PortalRequestConfiguration {
+  @Override
+  public File getNoJavaPluginRoot() {
+    return new File(getDir(), "plugins");
+  }
 
+  private class PortalRequestConfigurationImpl implements PortalRequestConfiguration {
     private Locale locale;
 
-    public PortalConfigurationContextImpl(Locale locale) {
+    public PortalRequestConfigurationImpl(Locale locale) {
       this.locale = locale;
     }
 
@@ -230,18 +250,13 @@ public class DefaultConfig implements Config {
     }
 
     @Override
-    public File getConfigurationDirectory() {
-      return getDir();
+    public File getConfigDir() {
+      return DefaultConfig.this.getDir();
     }
 
     @Override
     public boolean usingCache() {
-      return useCache;
+      return DefaultConfig.this.useCache;
     }
-  }
-
-  @Override
-  public File getNoJavaPluginRoot() {
-    return new File(getDir(), "plugins");
   }
 }

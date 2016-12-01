@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.fao.unredd</groupId>
 	<artifactId>core-root</artifactId>
-	<version>5.1-SNAPSHOT</version>
+	<version>6.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<name>geoladris core - parent</name>
 

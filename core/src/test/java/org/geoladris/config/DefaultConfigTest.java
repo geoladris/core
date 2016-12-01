@@ -35,9 +35,7 @@ public class DefaultConfigTest {
   @Test
   public void testConfigurationProvidersMerge() throws Exception {
     Set<PluginDescriptor> plugins = new HashSet<>();
-    PluginDescriptor plugin1 = new PluginDescriptor();
-    plugin1.setInstallInRoot(true);
-    plugin1.setName("1");
+    PluginDescriptor plugin1 = new PluginDescriptor("1", true);
     plugins.add(plugin1);
 
     JSONObject conf1 = JSONObject.fromObject("{ module : { a : 1, b : 2 }}");
@@ -55,9 +53,10 @@ public class DefaultConfigTest {
     config.addModuleConfigurationProvider(provider1);
     config.addModuleConfigurationProvider(provider2);
 
-    PluginDescriptors c =
+    PluginDescriptor[] c =
         config.getPluginConfig(Locale.getDefault(), mock(HttpServletRequest.class));
-    JSONObject pluginConf = c.get("1").getConfiguration().getJSONObject("module");
+
+    JSONObject pluginConf = c[0].getConfiguration().getJSONObject("module");
 
     assertTrue(pluginConf.has("a") && pluginConf.has("b") && pluginConf.has("c"));
     assertEquals(3, pluginConf.get("c"));
@@ -165,8 +164,7 @@ public class DefaultConfigTest {
     when(folder.getProperties()).thenReturn(new Properties());
     when(folder.getMessages(any(Locale.class))).thenReturn(mock(ResourceBundle.class));
 
-    Config config =
-        new DefaultConfig(folder, Collections.<PluginDescriptor>emptySet(), false);
+    Config config = new DefaultConfig(folder, Collections.<PluginDescriptor>emptySet(), false);
     assertNotNull(config.getDir());
     assertNotNull(config.getPluginConfig(Locale.getDefault(), mock(HttpServletRequest.class)));
     assertNotNull(config.getProperties());
@@ -188,9 +186,8 @@ public class DefaultConfigTest {
   @Test
   public void testMergeDoesNotAffectDefaultPluginConfiguration() throws IOException {
     Set<PluginDescriptor> plugins = new HashSet<PluginDescriptor>();
-    PluginDescriptor pluginDescriptor = new PluginDescriptor();
-    new PluginDescriptorFileReader("{default-conf:{m1:true}}", "p1")
-        .fillPluginDescriptor(pluginDescriptor);
+    PluginDescriptor pluginDescriptor =
+        new PluginDescriptorFileReader().read("{default-conf:{m1:true}}", "p1");
     plugins.add(pluginDescriptor);
     Config config = new DefaultConfig(mock(ConfigFolder.class), plugins, false);
 
@@ -205,13 +202,11 @@ public class DefaultConfigTest {
     config.addModuleConfigurationProvider(provider);
 
     JSONObject configuration =
-        config.getPluginConfig(Locale.ROOT, mock(HttpServletRequest.class)).getEnabled()[0]
-            .getConfiguration();
+        config.getPluginConfig(Locale.ROOT, mock(HttpServletRequest.class))[0].getConfiguration();
     assertEquals(2, configuration.keySet().size());
 
     configuration =
-        config.getPluginConfig(Locale.ROOT, mock(HttpServletRequest.class)).getEnabled()[0]
-            .getConfiguration();
+        config.getPluginConfig(Locale.ROOT, mock(HttpServletRequest.class))[0].getConfiguration();
     assertEquals(1, configuration.keySet().size());
   }
 }

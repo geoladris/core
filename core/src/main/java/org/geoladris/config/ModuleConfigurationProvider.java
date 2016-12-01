@@ -14,18 +14,13 @@ public interface ModuleConfigurationProvider {
    * Returns a map where the keys are the configured plugins and the JSONObjects are the
    * configuration for the modules contained in the plugin.
    * 
-   * It is possible to use the anonymous plugin
-   * {@link PluginDescriptors#UNNAMED_GEOLADRIS_CORE_PLUGIN} as plugin name but in that case the
-   * configuration will not be associated to a plugin and therefore it will not be possible to
-   * enable/disable it
-   * 
-   * @param configurationContext
+   * @param requestConfig
    * @param request Request that loads the application
    * 
    * @return
    * @throws IOException
    */
-  Map<String, JSONObject> getPluginConfig(PortalRequestConfiguration configurationContext,
+  Map<String, JSONObject> getPluginConfig(PortalRequestConfiguration requestConfig,
       HttpServletRequest request) throws IOException;
 
   /**

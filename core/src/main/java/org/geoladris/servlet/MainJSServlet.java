@@ -15,7 +15,6 @@ import org.geoladris.Environment;
 import org.geoladris.PluginDescriptor;
 import org.geoladris.RequireTemplate;
 import org.geoladris.config.Config;
-import org.geoladris.config.PluginDescriptors;
 
 public class MainJSServlet extends HttpServlet {
   private static final long serialVersionUID = 1L;
@@ -28,10 +27,9 @@ public class MainJSServlet extends HttpServlet {
     if (!env.getConfigCache() || output == null) {
       Config config = (Config) getServletContext().getAttribute(AppContextListener.ATTR_CONFIG);
       Locale locale = (Locale) req.getAttribute(LangFilter.ATTR_LOCALE);
-      PluginDescriptors pluginDescriptors = config.getPluginConfig(locale, req);
       Map<String, String> paths = new HashMap<>();
       Map<String, String> shims = new HashMap<>();
-      for (PluginDescriptor plugin : pluginDescriptors.getEnabled()) {
+      for (PluginDescriptor plugin : config.getPluginConfig(locale, req)) {
         paths.putAll(plugin.getRequireJSPathsMap());
         shims.putAll(plugin.getRequireJSShims());
       }

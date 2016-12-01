@@ -15,16 +15,15 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
-import net.sf.json.JSONObject;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.geoladris.Geoladris;
 import org.geoladris.PortalRequestConfiguration;
-import org.geoladris.config.RoleConfigurationProvider;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import net.sf.json.JSONObject;
 
 public class RoleConfigurationProviderTest {
   private File configDir, roleDir;

@@ -11,7 +11,7 @@ public interface PortalRequestConfiguration {
 
   String localize(String template);
 
-  File getConfigurationDirectory();
+  File getConfigDir();
 
   /**
    * Whether the portal is configured to cache the configuration or not

@@ -45,23 +45,26 @@ public class ClientContentServlet extends HttpServlet {
       file = confStaticFile;
     } else {
       String[] parts = pathInfo.substring(1).split(Pattern.quote("/"));
+      Locale locale = (Locale) req.getAttribute(LangFilter.ATTR_LOCALE);
+      PluginDescriptor[] enabled = config.getPluginConfig(locale, req);
 
-      {// is it in the root plugin?
+      // is it in the root plugin?
+      for (PluginDescriptor plugin : enabled) {
         String resourcePath = testingClasspathRoot + File.separator
-            + JEEContextAnalyzer.CLIENT_RESOURCES_DIR + File.separator + parts[0] + File.separator
-            + StringUtils.join(parts, File.separator, 1, parts.length);
+            + JEEContextAnalyzer.CLIENT_RESOURCES_DIR + File.separator + plugin.getName()
+            + File.separator + StringUtils.join(parts, File.separator);
         InputStream classPathResource = this.getClass().getResourceAsStream(resourcePath);
         if (classPathResource != null) {
           stream = new BufferedInputStream(classPathResource);
+          break;
         }
       }
+
       if (stream == null && parts.length >= 3) {
         String modulesOrStylesOrJsLib = parts[0];
         String pluginName = parts[1];
         String path = StringUtils.join(parts, File.separator, 2, parts.length);
 
-        Locale locale = (Locale) req.getAttribute(LangFilter.ATTR_LOCALE);
-        PluginDescriptor[] enabled = config.getPluginConfig(locale, req).getEnabled();
         boolean found = false;
         for (PluginDescriptor plugin : enabled) {
           if (plugin.getName().equals(pluginName)) {
@@ -82,9 +85,9 @@ public class ClientContentServlet extends HttpServlet {
           file = noJavaPluginFile;
         } else {
           // It is a Java named plugin
-          String resourcePath =
-              testingClasspathRoot + File.separator + JEEContextAnalyzer.CLIENT_RESOURCES_DIR
-                  + File.separator + modulesOrStylesOrJsLib + File.separator + path;
+          String resourcePath = testingClasspathRoot + File.separator
+              + JEEContextAnalyzer.CLIENT_RESOURCES_DIR + File.separator + pluginName
+              + File.separator + modulesOrStylesOrJsLib + File.separator + path;
           InputStream classPathResource = this.getClass().getResourceAsStream(resourcePath);
           if (classPathResource != null) {
             stream = new BufferedInputStream(classPathResource);

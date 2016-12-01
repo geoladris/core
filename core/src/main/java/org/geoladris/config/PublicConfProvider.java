@@ -8,8 +8,8 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.geoladris.PortalRequestConfiguration;
 
-import net.sf.json.JSONObject;
 import de.csgis.commons.JSONContentProvider;
+import net.sf.json.JSONObject;
 
 /**
  * <p>
@@ -25,19 +25,19 @@ public class PublicConfProvider implements ModuleConfigurationProvider {
 
   public static final String ROLE_DIR = "role_conf";
 
-  private ConfigurationProviderHelper helper;
+  private JSONContentProvider contents;
   private File file;
 
   public PublicConfProvider(File configDir) {
-    JSONContentProvider contents = new JSONContentProvider(configDir.getAbsolutePath());
-    this.helper = new ConfigurationProviderHelper(contents);
+    this.contents = new JSONContentProvider(configDir.getAbsolutePath());
     this.file = new File(configDir, FILE);
   }
 
+  @SuppressWarnings("unchecked")
   @Override
-  public Map<String, JSONObject> getPluginConfig(PortalRequestConfiguration configurationContext,
+  public Map<String, JSONObject> getPluginConfig(PortalRequestConfiguration requestConfig,
       HttpServletRequest request) throws IOException {
-    return file.exists() ? helper.getPluginConfig(FILE_BASE) : null;
+    return file.exists() ? this.contents.get().get(FILE_BASE) : null;
   }
 
   @Override

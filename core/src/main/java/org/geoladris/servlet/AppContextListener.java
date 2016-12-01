@@ -89,13 +89,11 @@ public class AppContextListener implements ServletContextListener {
     }
 
     @Override
-    public File getClientRoot() {
-      return new File(servletContext.getRealPath("/WEB-INF/classes/"));
-    }
-
-    @Override
-    public File getNoJavaRoot() {
-      return noJavaRoot;
+    public File[] getDirs() {
+      return new File[] {
+          new File(servletContext
+              .getRealPath("/WEB-INF/classes/" + JEEContextAnalyzer.CLIENT_RESOURCES_DIR)),
+          noJavaRoot};
     }
   }
 }
