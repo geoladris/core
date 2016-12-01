@@ -5,6 +5,5 @@ pages:
 - 'Directorio de configuración': conf_dir.md
 - 'Minificando Javascript y CSS': minify_js_css.md
 - 'Plugins': plugins.md
-- 'Configuración de Travis': travis.md
 - 'Desarrollador': developer.md
 
