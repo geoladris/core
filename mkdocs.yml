@@ -1,10 +1,10 @@
 site_name: Geoladris - Core
 pages:
 - Home: index.md
-- 'Change log': changelog.md
+- 'Plugins': plugins.md
 - 'Directorio de configuración': conf_dir.md
 - 'Minificando Javascript y CSS': minify_js_css.md
-- 'Plugins': plugins.md
 - 'Migrando plugins': migrating.md
+- 'Change log': changelog.md
 - 'Desarrollador': developer.md
 
