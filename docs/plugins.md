@@ -4,7 +4,7 @@ Las aplicaciones Geoladris utilizan una arquitectura cliente/servidor. El client
 
 Los plugins aprovechan la API Servlet 3.0 en el servidor. Es suficiente tener un paquete `.jar` en el _classpath_ que contenga un fichero `web-fragment.xml` con los _servlets_, filtros, etc. a utilizar por el plugin.
 
-# Cliente 
+# Cliente
 
 En el cliente es necesario:
 
@@ -23,8 +23,7 @@ Un _plugin_ es un directorio con:
 - `jslib/`: Contiene librerías (no RequireJS) utilizadas por los módulos.
 - `styles/`: Contiene ficheros CSS e imágenes de librerías externas.
 - `theme/`: Contiene ficheros CSS que definen el estilo de la aplicacion, sobreescribiendo los estilos de `modules` y `styles`.
-
-> TODO - `conf.json`: Define la [configuración](#config) del módulo.
+- `<plugin>-conf.json`: Define la [configuración](#config) del módulo. El nombre del fichero debe empezar obligatoriamente por el nombre del plugin. El nombre del plugin es siempre el nombre del directorio que contiene estos recursos.
 
 *Importante*: Los ficheros CSS se sobreescriben entre sí. El orden de carga es `styles`, `modules` y `theme`; es decir, `modules` tiene preferencia sobre `styles` y `theme` sobre todos los demás.
 
@@ -32,20 +31,18 @@ Un _plugin_ es un directorio con:
 
 Un _plugin_ se puede empaquetar de varias maneras:
 
-- Como un paquete `.jar`. As a Jar file: El directorio del plugin se empaqueta dentro de un directorio `/geoladris` en el _classpath_. Si el _plugin_ tiene parte servidor, el fichero `.jar` también incluye el código Java y el fichero `web-fragment.xml` para definir los servlets.
+- Como un paquete `.jar`. El directorio del plugin se empaqueta dentro de un directorio `/geoladris` en el _classpath_. Si el _plugin_ tiene parte servidor, el fichero `.jar` también incluye el código Java y el fichero `web-fragment.xml` para definir los servlets.
 
 - Como un directorio: El directorio del plugin se empaqueta dentro de un directorio `plugins` en el [directorio de configuración](conf_dir.md).
 
-> TODO: En ambos casos, el nombre del plugin será el nombre del directorio.
-
 ## <a name="config"></a> Configuración
 
-> TODO El fichero de configuración `conf.json` está en la raíz del directorio del plugin. Contiene un objeto JSON con las siguientes propiedades:
+El fichero `<plugin>-conf.json` (en la raíz del directorio del plugin) contiene un objeto JSON con las siguientes propiedades:
 
 - `installInRoot`: Indica si los módulos RequireJS se instalarán en la raíz de la `baseURL` de RequireJS o dentro de un directorio con el nombre del plugin. Por defecto es `false`.
 
   Hay que tener en cuenta que el lugar donde se instalen los módulos afecta a la manera en la que otros módulos los referencian. Por ejemplo, un módulo llamado `mi_modulo` en un _plugin_ `mi_plugin` se referenciará como `mi_modulo` si se instala en la raíz (`installInRoot : true`) y como  `mi_plugin/mi_modulo` en caso contrario (o como `./mi_modulo` cuando se referencia por otros módulos del mismo plugin).
-  
+
 - `default-conf`: Configuración para los módulos RequireJS. Es un objeto donde los nombres de las propiedades son los nombres de los módulos a configurar y los valores la configuración a pasarles a dichos módulos. En este fichero es suficiente con especificar únicamente el nombre del módulo (sin el prefijo del _plugin_) independientemente del valor de `installInRoot`.
 
   La configuración se puede obtener en el módulo con la pseudodependencia `module`:
