@@ -46,6 +46,7 @@ public class AppContextListenerTest {
     this.confDir.mkdirs();
     this.context = mock(ServletContext.class);
     this.sce = mock(ServletContextEvent.class);
+    when(context.getContextPath()).thenReturn("/test");
     when(sce.getServletContext()).thenReturn(context);
     when(this.context.getRealPath(anyString())).thenAnswer(new Answer<String>() {
       @Override

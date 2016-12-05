@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.InputStream;
 import java.util.Set;
 
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
@@ -14,6 +16,7 @@ import org.geoladris.Environment;
 import org.geoladris.JEEContextAnalyzer;
 import org.geoladris.PluginDescriptor;
 import org.geoladris.config.ConfigFolder;
+import org.geoladris.config.DBConfigurationProvider;
 import org.geoladris.config.DefaultConfig;
 import org.geoladris.config.ModuleConfigurationProvider;
 import org.geoladris.config.PluginJSONConfigurationProvider;
@@ -37,19 +40,36 @@ public class AppContextListener implements ServletContextListener {
     JEEContext context = new JEEContext(servletContext, new File(folder.getFilePath(), "plugins"));
     JEEContextAnalyzer analyzer = getAnalyzer(context);
 
-    Set<PluginDescriptor> plugins = analyzer.getPluginDescriptors();
-    File publicConf = new File(folder.getFilePath(), PublicConfProvider.FILE);
-    boolean hasPublicConf = publicConf.exists() && publicConf.isFile();
-    ModuleConfigurationProvider publicConfigurationProvider;
-    if (hasPublicConf) {
-      publicConfigurationProvider = new PublicConfProvider(folder.getFilePath());
-    } else {
-      publicConfigurationProvider = new PluginJSONConfigurationProvider();
-      logger.warn("plugin-conf.json file for configuration has been "
-          + "deprecated. Use public-conf.json instead.");
+    ModuleConfigurationProvider publicConfigurationProvider = null;
 
+    try {
+      String app = servletContext.getContextPath();
+      if (app.startsWith("/")) {
+        app = app.substring(1);
+      }
+
+      DBConfigurationProvider dbConfigProvider =
+          new DBConfigurationProvider(app, new InitialContext());
+      if (dbConfigProvider.isEnabled()) {
+        publicConfigurationProvider = dbConfigProvider;
+      }
+    } catch (NamingException e) {
+      // Cannot obtain config from database. Ignore.
     }
 
+    if (publicConfigurationProvider == null) {
+      File publicConf = new File(folder.getFilePath(), PublicConfProvider.FILE);
+      if (publicConf.exists() && publicConf.isFile()) {
+        publicConfigurationProvider = new PublicConfProvider(folder.getFilePath());
+      } else {
+        publicConfigurationProvider = new PluginJSONConfigurationProvider();
+        logger.warn("plugin-conf.json file for configuration has been "
+            + "deprecated. Use public-conf.json instead.");
+
+      }
+    }
+
+    Set<PluginDescriptor> plugins = analyzer.getPluginDescriptors();
     DefaultConfig config = new DefaultConfig(folder, plugins, env.getConfigCache());
     config.addModuleConfigurationProvider(publicConfigurationProvider);
     config.addModuleConfigurationProvider(new RoleConfigurationProvider(folder.getFilePath()));
