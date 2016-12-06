@@ -253,4 +253,31 @@ public class ClientContentServletTest {
     check404(servlet, "/modules/", "plugin1/a.js");
   }
 
+  @Test
+  public void svgContentType() throws Exception {
+    setupConfigurationFolder("src/test/resources/testNoJavaPlugins");
+
+    PluginDescriptors pluginConfig = mock(PluginDescriptors.class);
+    when(pluginConfig.getEnabled()).thenReturn(new PluginDescriptor[0]);
+    Config config = spy(configCaptor.getValue());
+    doReturn(pluginConfig).when(config).getPluginConfig(any(Locale.class),
+        any(HttpServletRequest.class));
+
+    ClientContentServlet servlet = new ClientContentServlet();
+    servlet.setTestingClasspathRoot("/testNoJavaPlugins/WEB-INF/classes/");
+    ServletConfig servletConfig = mock(ServletConfig.class);
+    ServletContext servletContext = mock(ServletContext.class);
+    when(servletContext.getAttribute(AppContextListener.ATTR_CONFIG)).thenReturn(config);
+    when(servletConfig.getServletContext()).thenReturn(servletContext);
+    servlet.init(servletConfig);
+
+    HttpServletRequest req = mock(HttpServletRequest.class);
+    HttpServletResponse resp = mock(HttpServletResponse.class);
+    when(req.getServletPath()).thenReturn("/modules/");
+    when(req.getPathInfo()).thenReturn("images/image.svg");
+
+    servlet.doGet(req, resp);
+
+    verify(resp).setContentType("image/svg+xml");
+  }
 }

@@ -12,6 +12,12 @@ This project follows [semantic versioning](http://semver.org).
 
 * [Minificación no funciona para plugins con `installInRoot : false`](https://github.com/geoladris/geoladris/issues/24).
 
+# 5.0.1 [2016-12-06]
+
+## Corregido
+
+* [Devolver `Content-type` correcto para imágenes SVG](https://github.com/geoladris/geoladris/issues/34).
+
 # 5.0.0 [2016-11-25]
 
 ## Corregido

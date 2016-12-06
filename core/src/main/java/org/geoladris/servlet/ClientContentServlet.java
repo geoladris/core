@@ -115,6 +115,8 @@ public class ClientContentServlet extends HttpServlet {
       type = "text/css";
     } else if (pathInfo.endsWith("js")) {
       type = "application/javascript";
+    } else if (pathInfo.endsWith("svg")) {
+      type = "image/svg+xml";
     } else {
       FileNameMap fileNameMap = URLConnection.getFileNameMap();
       type = fileNameMap.getContentTypeFor(pathInfo);
