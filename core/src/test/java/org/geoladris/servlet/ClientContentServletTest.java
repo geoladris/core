@@ -30,6 +30,7 @@ import javax.servlet.http.HttpSession;
 
 import org.geoladris.Environment;
 import org.geoladris.PluginDescriptor;
+import org.geoladris.PluginDescriptorFileReader;
 import org.geoladris.StatusServletException;
 import org.geoladris.config.Config;
 import org.junit.After;
@@ -257,11 +258,9 @@ public class ClientContentServletTest {
   public void svgContentType() throws Exception {
     setupConfigurationFolder("src/test/resources/testNoJavaPlugins");
 
-    PluginDescriptors pluginConfig = mock(PluginDescriptors.class);
-    when(pluginConfig.getEnabled()).thenReturn(new PluginDescriptor[0]);
     Config config = spy(configCaptor.getValue());
-    doReturn(pluginConfig).when(config).getPluginConfig(any(Locale.class),
-        any(HttpServletRequest.class));
+    doReturn(new PluginDescriptor[] {new PluginDescriptor("plugin1", false)}).when(config)
+        .getPluginConfig(any(Locale.class), any(HttpServletRequest.class));
 
     ClientContentServlet servlet = new ClientContentServlet();
     servlet.setTestingClasspathRoot("/testNoJavaPlugins/WEB-INF/classes/");
@@ -274,7 +273,7 @@ public class ClientContentServletTest {
     HttpServletRequest req = mock(HttpServletRequest.class);
     HttpServletResponse resp = mock(HttpServletResponse.class);
     when(req.getServletPath()).thenReturn("/modules/");
-    when(req.getPathInfo()).thenReturn("images/image.svg");
+    when(req.getPathInfo()).thenReturn("plugin1/images/image.svg");
 
     servlet.doGet(req, resp);
 
