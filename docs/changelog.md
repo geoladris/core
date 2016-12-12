@@ -12,6 +12,10 @@ This project follows [semantic versioning](http://semver.org).
 
 * [Minificación no funciona para plugins con `installInRoot : false`](https://github.com/geoladris/geoladris/issues/24).
 
+## Añadido
+
+* Script (`geoladris_build.sh`) para generar paquetes `.war` a partir de un descriptor `build.json` y un directorio de configuración.
+
 # 5.0.1 [2016-12-06]
 
 ## Corregido
