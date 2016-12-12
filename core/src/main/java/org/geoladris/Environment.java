@@ -3,6 +3,11 @@ package org.geoladris;
 import javax.servlet.ServletContext;
 
 public class Environment {
+  public static final String JDBC_URL = "JDBC_CONNECTION_URL";
+  public static final String JDBC_USER = "JDBC_CONNECTION_USER";
+  public static final String JDBC_PASS = "JDBC_CONNECTION_PASS";
+  public static final String JDBC_SCHEMA = "JDBC_CONNECTION_SCHEMA";
+
   public static final String CONFIG_CACHE = "GEOLADRIS_CONFIG_CACHE";
   public static final String CONFIG_DIR = "GEOLADRIS_CONFIG_DIR";
   public static final String MINIFIED = "GEOLADRIS_MINIFIED";

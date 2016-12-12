@@ -15,6 +15,7 @@ This project follows [semantic versioning](http://semver.org).
 ## Añadido
 
 * Script (`geoladris_build.sh`) para generar paquetes `.war` a partir de un descriptor `build.json` y un directorio de configuración.
+* Posibilidad de obtener la configuración de los plugins desde una base de datos.
 
 # 5.0.1 [2016-12-06]
 
