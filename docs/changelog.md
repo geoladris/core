@@ -12,6 +12,10 @@ This project follows [semantic versioning](http://semver.org).
 
 * [Minificación no funciona para plugins con `installInRoot : false`](https://github.com/geoladris/geoladris/issues/24).
 
+## Añadido
+
+* Posibilidad de obtener la configuración de los plugins desde una base de datos.
+
 # 5.0.0 [2016-11-25]
 
 ## Corregido
