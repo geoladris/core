@@ -29,7 +29,13 @@ define([ "jquery" ], function($) {
 	 *            the sequence of parameters specified in the call to send.
 	 */
 	function listen(name, callBack) {
-		messageBus.bind(name, callBack);
+		messageBus.bind(name, function() {
+			try {
+				callBack.apply(this, arguments);
+			} catch (e) {
+				console.error(e);
+			}
+		});
 	}
 
 	/**
