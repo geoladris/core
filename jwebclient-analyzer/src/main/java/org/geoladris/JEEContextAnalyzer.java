@@ -50,7 +50,7 @@ public class JEEContextAnalyzer {
     }
 
     for (File pluginDir : plugins) {
-      if (!dir.isDirectory()) {
+      if (!pluginDir.isDirectory()) {
         continue;
       }
 
