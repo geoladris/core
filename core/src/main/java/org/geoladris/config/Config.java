@@ -21,7 +21,6 @@ import java.util.ResourceBundle;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.geoladris.ConfigurationException;
 import org.geoladris.PluginDescriptor;
 
 public interface Config {
@@ -43,7 +42,7 @@ public interface Config {
    */
   Map<String, String>[] getLanguages();
 
-  ResourceBundle getMessages(Locale locale) throws ConfigurationException;
+  ResourceBundle getMessages(Locale locale) throws ConfigException;
 
   /**
    * Returns the property as an array or null if the property does not exist

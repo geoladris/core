@@ -14,7 +14,6 @@ import java.util.ResourceBundle;
 import javax.servlet.ServletContext;
 
 import org.apache.log4j.Logger;
-import org.geoladris.ConfigurationException;
 import org.geoladris.Environment;
 
 public class ConfigFolder {
@@ -91,7 +90,7 @@ public class ConfigFolder {
       urlClassLoader = new URLClassLoader(new URL[] {getTranslationFolder().toURI().toURL()});
     } catch (MalformedURLException e) {
       logger.error("Something is wrong with the configuration directory", e);
-      throw new ConfigurationException(e);
+      throw new ConfigException(e);
     }
     return ResourceBundle.getBundle("messages", locale, urlClassLoader);
   }

@@ -1,4 +1,4 @@
-package org.geoladris;
+package org.geoladris.servlet;
 
 import javax.servlet.ServletException;
 

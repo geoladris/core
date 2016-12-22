@@ -19,7 +19,6 @@ import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.log4j.Logger;
-import org.geoladris.ConfigurationException;
 import org.geoladris.PluginDescriptor;
 import org.geoladris.PortalRequestConfiguration;
 
@@ -89,13 +88,13 @@ public class DefaultConfig implements Config {
         ret.add(langObject);
       }
       return ret.toArray(new Map[ret.size()]);
-    } catch (ConfigurationException e) {
+    } catch (ConfigException e) {
       return null;
     }
   }
 
   @Override
-  public ResourceBundle getMessages(Locale locale) throws ConfigurationException {
+  public ResourceBundle getMessages(Locale locale) throws ConfigException {
     ResourceBundle bundle = localeBundles.get(locale);
     if (bundle == null || !useCache) {
       try {
@@ -113,7 +112,7 @@ public class DefaultConfig implements Config {
     return bundle;
   }
 
-  private String localize(String template, Locale locale) throws ConfigurationException {
+  private String localize(String template, Locale locale) throws ConfigException {
     Pattern patt = Pattern.compile("\\$\\{([\\w.]*)\\}");
     Matcher m = patt.matcher(template);
     StringBuffer sb = new StringBuffer(template.length());
@@ -135,7 +134,7 @@ public class DefaultConfig implements Config {
   public String[] getPropertyAsArray(String property) {
     try {
       return getProperty(property).split(",");
-    } catch (ConfigurationException e) {
+    } catch (ConfigException e) {
       return null;
     }
   }
@@ -144,7 +143,7 @@ public class DefaultConfig implements Config {
   public String getDefaultLang() {
     try {
       return getProperty(PROPERTY_DEFAULT_LANG);
-    } catch (ConfigurationException e) {
+    } catch (ConfigException e) {
       Map<String, String>[] langs = getLanguages();
       if (langs != null && langs.length > 0) {
         return langs[0].get("code");
@@ -154,13 +153,13 @@ public class DefaultConfig implements Config {
     }
   }
 
-  private String getProperty(String propertyName) throws ConfigurationException {
+  private String getProperty(String propertyName) throws ConfigException {
     Properties props = getProperties();
     String value = props.getProperty(propertyName);
     if (value != null) {
       return value;
     } else {
-      throw new ConfigurationException(
+      throw new ConfigException(
           "No \"" + propertyName + "\" property in configuration. Conf folder: "
               + folder.getFilePath().getAbsolutePath() + ". Contents: " + props.keySet().size());
     }

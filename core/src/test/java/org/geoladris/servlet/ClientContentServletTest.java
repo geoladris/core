@@ -30,7 +30,6 @@ import javax.servlet.http.HttpSession;
 
 import org.geoladris.Environment;
 import org.geoladris.PluginDescriptor;
-import org.geoladris.StatusServletException;
 import org.geoladris.config.Config;
 import org.junit.After;
 import org.junit.Before;

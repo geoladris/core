@@ -14,7 +14,6 @@ import javax.servlet.http.HttpServletResponse;
 import net.sf.json.JSONSerializer;
 
 import org.apache.log4j.Logger;
-import org.geoladris.StatusServletException;
 
 public class ErrorFilter implements Filter {
 

@@ -19,7 +19,6 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.geoladris.JEEContextAnalyzer;
 import org.geoladris.PluginDescriptor;
-import org.geoladris.StatusServletException;
 import org.geoladris.config.Config;
 
 public class ClientContentServlet extends HttpServlet {
