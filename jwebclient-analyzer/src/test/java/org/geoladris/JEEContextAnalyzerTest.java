@@ -4,6 +4,8 @@ import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -23,21 +25,24 @@ import java.util.Set;
 import java.util.jar.JarOutputStream;
 import java.util.zip.ZipEntry;
 
-import net.sf.json.JSONObject;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.io.input.BoundedInputStream;
-import org.geoladris.JEEContextAnalyzer;
-import org.geoladris.PluginDescriptor;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
+import net.sf.json.JSONObject;
 
 public class JEEContextAnalyzerTest {
   private static File test1LibFolder = new File("src/test/resources/test1/WEB-INF/lib");
   private static File testOnlyLibFolder = new File("src/test/resources/testOnlyLib/WEB-INF/lib");
+
+  @Rule
+  public TemporaryFolder tmp = new TemporaryFolder();
 
   @BeforeClass
   public static void packAsJar() throws IOException {
@@ -269,6 +274,31 @@ public class JEEContextAnalyzerTest {
     PluginDescriptor plugin = plugins.iterator().next();
     checkList(plugin.getModules(), "subdirs/lib/module");
     checkList(plugin.getStylesheets(), "modules/subdirs/lib/style.css");
+  }
+
+  @Test
+  public void reuseAnalyzer() throws Exception {
+    Context context = mock(Context.class);
+    when(context.getLibPaths()).thenReturn(new HashSet<String>());
+    when(context.getDirs()).thenReturn(new File[] {tmp.getRoot()});
+
+    File p1 = tmp.newFolder("p1");
+    IOUtils.write("{}", new FileOutputStream(new File(p1, "p1-conf.json")));
+
+    JEEContextAnalyzer analyzer = new JEEContextAnalyzer(context);
+    Set<PluginDescriptor> plugins = analyzer.getPluginDescriptors();
+    assertEquals(1, plugins.size());
+    assertEquals("p1", plugins.iterator().next().getName());
+
+    File p2 = tmp.newFolder("p2");
+    IOUtils.write("{}", new FileOutputStream(new File(p2, "p2-conf.json")));
+
+    analyzer.reload();
+    plugins = analyzer.getPluginDescriptors();
+    assertEquals(2, plugins.size());
+    for (PluginDescriptor plugin : plugins) {
+      assertTrue(plugin.getName().equals("p1") || plugin.getName().equals("p2"));
+    }
   }
 
   private void checkList(Collection<String> result, String... testEntries) {

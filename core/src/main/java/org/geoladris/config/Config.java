@@ -18,6 +18,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.ResourceBundle;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -82,4 +83,6 @@ public interface Config {
    * @return
    */
   File getNoJavaPluginRoot();
+
+  void updatePlugins(Set<PluginDescriptor> plugins);
 }

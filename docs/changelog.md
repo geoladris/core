@@ -18,6 +18,7 @@ This project follows [semantic versioning](http://semver.org).
 * Script (`geoladris_build.sh`) para generar paquetes `.war` a partir de un descriptor `build.json` y un directorio de configuración.
 * Posibilidad de obtener la configuración de los plugins desde una base de datos.
 * [Posibilidad de añadir módulos en subdirectorios](https://github.com/geoladris/core/issues/10).
+* [Detectar cambios en los directorios de plugins](https://github.com/geoladris/core/issues/33).
 
 # 5.0.1 [2016-12-06]
 

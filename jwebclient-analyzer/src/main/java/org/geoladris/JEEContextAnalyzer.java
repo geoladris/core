@@ -19,10 +19,17 @@ public class JEEContextAnalyzer {
 
   private Set<PluginDescriptor> pluginDescriptors;
   private PluginDescriptorFileReader reader;
+  private Context context;
 
   public JEEContextAnalyzer(Context context) {
-    this.pluginDescriptors = new HashSet<>();
+    this.context = context;
     this.reader = new PluginDescriptorFileReader();
+
+    reload();
+  }
+
+  public void reload() {
+    this.pluginDescriptors = new HashSet<>();
 
     File jarsDir = ZipUtils.unzipJars(context);
 

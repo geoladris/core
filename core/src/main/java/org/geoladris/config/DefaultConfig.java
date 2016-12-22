@@ -65,6 +65,11 @@ public class DefaultConfig implements Config {
     return properties;
   }
 
+  @Override
+  public void updatePlugins(Set<PluginDescriptor> plugins) {
+    this.plugins = plugins;
+  }
+
   /**
    * Returns an array of <code>Map&lt;String, String&gt;</code>. For each element of the array, a
    * {@link Map} is returned containing two keys/values: <code>code</code> (for language code) and

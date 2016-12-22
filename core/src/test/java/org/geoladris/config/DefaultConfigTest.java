@@ -208,4 +208,32 @@ public class DefaultConfigTest {
         config.getPluginConfig(Locale.ROOT, mock(HttpServletRequest.class))[0].getConfiguration();
     assertEquals(1, configuration.keySet().size());
   }
+
+  @Test
+  public void updatesPlugins() {
+    Set<PluginDescriptor> plugins = new HashSet<PluginDescriptor>();
+    PluginDescriptor plugin = new PluginDescriptor("p1", true);
+    plugin.addModule("m1");
+    plugins.add(plugin);
+
+    Config config = new DefaultConfig(mock(ConfigFolder.class), plugins, false);
+    PluginDescriptor[] pluginConfig =
+        config.getPluginConfig(Locale.getDefault(), mock(HttpServletRequest.class));
+    assertEquals(1, pluginConfig.length);
+    assertEquals("p1", pluginConfig[0].getName());
+    assertEquals(1, pluginConfig[0].getModules().size());
+    assertEquals("m1", pluginConfig[0].getModules().iterator().next());
+
+    plugins = new HashSet<PluginDescriptor>();
+    plugin = new PluginDescriptor("p2", false);
+    plugin.addModule("m2");
+    plugins.add(plugin);
+
+    config.updatePlugins(plugins);
+    pluginConfig = config.getPluginConfig(Locale.getDefault(), mock(HttpServletRequest.class));
+    assertEquals(1, pluginConfig.length);
+    assertEquals("p2", pluginConfig[0].getName());
+    assertEquals(1, pluginConfig[0].getModules().size());
+    assertEquals("p2/m2", pluginConfig[0].getModules().iterator().next());
+  }
 }

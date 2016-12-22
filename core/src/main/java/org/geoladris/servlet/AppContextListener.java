@@ -1,7 +1,7 @@
 package org.geoladris.servlet;
 
 import java.io.File;
-import java.io.InputStream;
+import java.io.IOException;
 import java.util.Set;
 
 import javax.naming.InitialContext;
@@ -13,8 +13,10 @@ import javax.servlet.ServletContextListener;
 import org.apache.log4j.Logger;
 import org.geoladris.Context;
 import org.geoladris.Environment;
+import org.geoladris.JEEContext;
 import org.geoladris.JEEContextAnalyzer;
 import org.geoladris.PluginDescriptor;
+import org.geoladris.PluginUpdater;
 import org.geoladris.config.ConfigFolder;
 import org.geoladris.config.DBConfigurationProvider;
 import org.geoladris.config.DefaultConfig;
@@ -75,6 +77,13 @@ public class AppContextListener implements ServletContextListener {
     config.addModuleConfigurationProvider(new RoleConfigurationProvider(folder.getFilePath()));
 
     servletContext.setAttribute(ATTR_CONFIG, config);
+
+    try {
+      PluginUpdater updater = new PluginUpdater(analyzer, config, context.getDirs());
+      new Thread(updater).start();
+    } catch (IOException e) {
+      logger.warn("Cannot start plugin updater. Plugins descriptor won't be updated");
+    }
   }
 
   /**
@@ -86,34 +95,4 @@ public class AppContextListener implements ServletContextListener {
 
   @Override
   public void contextDestroyed(ServletContextEvent sce) {}
-
-  private class JEEContext implements Context {
-
-    private ServletContext servletContext;
-    private File noJavaRoot;
-
-    public JEEContext(ServletContext servletContext, File noJavaRoot) {
-      this.servletContext = servletContext;
-      this.noJavaRoot = noJavaRoot;
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public Set<String> getLibPaths() {
-      return servletContext.getResourcePaths("/WEB-INF/lib");
-    }
-
-    @Override
-    public InputStream getLibAsStream(String jarFileName) {
-      return servletContext.getResourceAsStream(jarFileName);
-    }
-
-    @Override
-    public File[] getDirs() {
-      return new File[] {
-          new File(servletContext
-              .getRealPath("/WEB-INF/classes/" + JEEContextAnalyzer.CLIENT_RESOURCES_DIR)),
-          noJavaRoot};
-    }
-  }
 }
