@@ -1,6 +1,5 @@
 package org.geoladris.servlet;
 
-import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -36,53 +35,53 @@ public class ClientContentServlet extends HttpServlet {
     Config config = (Config) getServletContext().getAttribute(AppContextListener.ATTR_CONFIG);
 
     String pathInfo = req.getServletPath() + req.getPathInfo();
-    File file = null;
-    InputStream stream = null;
 
     // Is this just a file in static folder?
     File confStaticFile = new File(config.getDir(), pathInfo);
     if (confStaticFile.isFile()) {
-      file = confStaticFile;
-    } else {
-      String[] parts = pathInfo.substring(1).split(Pattern.quote("/"));
-      Locale locale = (Locale) req.getAttribute(LangFilter.ATTR_LOCALE);
-      PluginDescriptor[] enabled = config.getPluginConfig(locale, req);
+      sendFile(confStaticFile, pathInfo, req, resp);
+      return;
+    }
 
-      // is it in the root plugin?
-      for (PluginDescriptor plugin : enabled) {
-        String resourcePath = testingClasspathRoot + File.separator
-            + JEEContextAnalyzer.CLIENT_RESOURCES_DIR + File.separator + plugin.getName()
-            + File.separator + StringUtils.join(parts, File.separator);
-        InputStream classPathResource = this.getClass().getResourceAsStream(resourcePath);
-        if (classPathResource != null) {
-          stream = new BufferedInputStream(classPathResource);
-          break;
-        }
+    String[] parts = pathInfo.substring(1).split(Pattern.quote("/"));
+    Locale locale = (Locale) req.getAttribute(LangFilter.ATTR_LOCALE);
+    PluginDescriptor[] enabled = config.getPluginConfig(locale, req);
+
+    // is it in the root plugin?
+    for (PluginDescriptor plugin : enabled) {
+      if (!plugin.isInstallInRoot()) {
+        continue;
       }
 
-      if (stream == null && parts.length >= 3) {
-        String modulesOrStylesOrJsLib = parts[0];
-        String pluginName = parts[1];
-        String path = StringUtils.join(parts, File.separator, 2, parts.length);
+      String resourcePath = testingClasspathRoot + File.separator
+          + JEEContextAnalyzer.CLIENT_RESOURCES_DIR + File.separator + plugin.getName()
+          + File.separator + StringUtils.join(parts, File.separator);
+      InputStream classPathResource = this.getClass().getResourceAsStream(resourcePath);
+      if (classPathResource != null) {
+        sendStream(classPathResource, pathInfo, resp);
+        return;
+      }
+    }
 
-        boolean found = false;
-        for (PluginDescriptor plugin : enabled) {
-          if (plugin.getName().equals(pluginName)) {
-            found = true;
-          }
-        }
+    if (parts.length < 3) {
+      throw new StatusServletException(404, "The file could not be found: " + pathInfo);
+    }
 
-        if (!found) {
-          throw new StatusServletException(404, "The file could not be found: " + pathInfo);
-        }
+    String modulesOrStylesOrJsLib = parts[0];
+    String pluginName = parts[1];
+    String path = StringUtils.join(parts, File.separator, 2, parts.length);
 
-        // Is it in the java plugin space?
-        // Is it a no-java plugin resource?
+    for (PluginDescriptor plugin : enabled) {
+      if (plugin.isInstallInRoot()) {
+        continue;
+      }
+
+      if (plugin.getName().equals(pluginName)) {
         File noJavaPluginFile = new File(config.getNoJavaPluginRoot(),
             pluginName + File.separator + modulesOrStylesOrJsLib + File.separator + path);
         if (noJavaPluginFile.isFile()) {
-          // It is a no-java plugin resource
-          file = noJavaPluginFile;
+          sendFile(noJavaPluginFile, pathInfo, req, resp);
+          return;
         } else {
           // It is a Java named plugin
           String resourcePath = testingClasspathRoot + File.separator
@@ -90,51 +89,60 @@ public class ClientContentServlet extends HttpServlet {
               + File.separator + modulesOrStylesOrJsLib + File.separator + path;
           InputStream classPathResource = this.getClass().getResourceAsStream(resourcePath);
           if (classPathResource != null) {
-            stream = new BufferedInputStream(classPathResource);
+            sendStream(classPathResource, pathInfo, resp);
+            return;
           }
         }
       }
-
     }
 
-    if (file != null) { // it was a file
-      // Manage cache headers: Last-Modified and If-Modified-Since
-      long ifModifiedSince = req.getDateHeader("If-Modified-Since");
-      long lastModified = file.lastModified();
-      if (ifModifiedSince >= (lastModified / 1000 * 1000)) {
-        resp.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
-        return;
-      }
-      resp.setDateHeader("Last-Modified", lastModified);
-      stream = new BufferedInputStream(new FileInputStream(file));
-    }
+    throw new StatusServletException(404, "The file could not be found: " + pathInfo);
+  }
 
-    // Set content type
-    String type;
-    if (pathInfo.endsWith("css")) {
-      type = "text/css";
-    } else if (pathInfo.endsWith("js")) {
-      type = "application/javascript";
-    } else if (pathInfo.endsWith("svg")) {
-      type = "image/svg+xml";
-    } else {
-      FileNameMap fileNameMap = URLConnection.getFileNameMap();
-      type = fileNameMap.getContentTypeFor(pathInfo);
+  void sendFile(File file, String resource, HttpServletRequest request,
+      HttpServletResponse response) throws StatusServletException, IOException {
+    // Manage cache headers: Last-Modified and If-Modified-Since
+    long ifModifiedSince = request.getDateHeader("If-Modified-Since");
+    long lastModified = file.lastModified();
+    if (ifModifiedSince >= (lastModified / 1000 * 1000)) {
+      response.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
+      return;
     }
-    resp.setContentType(type);
+    response.setDateHeader("Last-Modified", lastModified);
+    sendStream(new FileInputStream(file), resource, response);
+  }
+
+  void sendStream(InputStream stream, String resource, HttpServletResponse response)
+      throws StatusServletException {
+    setContentType(resource, response);
 
     if (stream == null) {
-      throw new StatusServletException(404, "The file could not be found: " + pathInfo);
+      throw new StatusServletException(404, "The file could not be found: " + resource);
     } else {
       // Send contents
       try {
-        IOUtils.copy(stream, resp.getOutputStream());
-        resp.setStatus(HttpServletResponse.SC_OK);
+        IOUtils.copy(stream, response.getOutputStream());
+        response.setStatus(HttpServletResponse.SC_OK);
       } catch (IOException e) {
         logger.error("Error reading file", e);
         throw new StatusServletException(500, "Could transfer the resource");
       }
     }
+  }
+
+  void setContentType(String resource, HttpServletResponse response) {
+    String type;
+    if (resource.endsWith("css")) {
+      type = "text/css";
+    } else if (resource.endsWith("js")) {
+      type = "application/javascript";
+    } else if (resource.endsWith("svg")) {
+      type = "image/svg+xml";
+    } else {
+      FileNameMap fileNameMap = URLConnection.getFileNameMap();
+      type = fileNameMap.getContentTypeFor(resource);
+    }
+    response.setContentType(type);
   }
 
   public void setTestingClasspathRoot(String testingClasspathRoot) {

@@ -30,7 +30,6 @@ import javax.servlet.http.HttpSession;
 
 import org.geoladris.Environment;
 import org.geoladris.PluginDescriptor;
-import org.geoladris.PluginDescriptorFileReader;
 import org.geoladris.StatusServletException;
 import org.geoladris.config.Config;
 import org.junit.After;
@@ -67,8 +66,10 @@ public class ClientContentServletTest {
    * instance.
    * 
    * @param folder
+   * @throws ServletException
    */
-  public void setupConfigurationFolder(final String folder) {
+  public ClientContentServlet setupConfigurationFolder(final String folder)
+      throws ServletException {
     AppContextListener listener = new AppContextListener();
     ServletContextEvent servletContextEvent = mock(ServletContextEvent.class);
     ServletContext servletContext = mock(ServletContext.class);
@@ -89,6 +90,14 @@ public class ClientContentServletTest {
     listener.contextInitialized(servletContextEvent);
 
     verify(servletContext).setAttribute(eq(AppContextListener.ATTR_CONFIG), configCaptor.capture());
+
+    ClientContentServlet servlet = new ClientContentServlet();
+    ServletConfig servletConfig = mock(ServletConfig.class);
+    when(servletConfig.getServletContext()).thenReturn(servletContext);
+    when(servletContext.getAttribute(AppContextListener.ATTR_CONFIG))
+        .thenReturn(configCaptor.getValue());
+    servlet.init(servletConfig);
+    return servlet;
   }
 
   @Test
@@ -212,16 +221,9 @@ public class ClientContentServletTest {
 
   @Test
   public void test304NotModified() throws ServletException, IOException {
-    setupConfigurationFolder("src/test/resources/testNoJavaPlugins");
-
-    ClientContentServlet servlet = new ClientContentServlet();
+    ClientContentServlet servlet = setupConfigurationFolder("src/test/resources/testNoJavaPlugins");
     servlet.setTestingClasspathRoot("/testNoJavaPlugins/WEB-INF/classes/");
-    ServletConfig servletConfig = mock(ServletConfig.class);
-    ServletContext servletContext = mock(ServletContext.class);
-    when(servletContext.getAttribute(AppContextListener.ATTR_CONFIG))
-        .thenReturn(configCaptor.getValue());
-    when(servletConfig.getServletContext()).thenReturn(servletContext);
-    servlet.init(servletConfig);
+
 
     HttpServletResponse response = mock(HttpServletResponse.class);
     HttpServletRequest request = mock(HttpServletRequest.class);
@@ -237,46 +239,46 @@ public class ClientContentServletTest {
 
   @Test
   public void test404ForDisabledPlugins() throws ServletException, IOException {
-    setupConfigurationFolder("src/test/resources/testNoJavaPlugins");
+    ClientContentServlet servlet = setupConfigurationFolder("src/test/resources/testNoJavaPlugins");
+    servlet.setTestingClasspathRoot("/testNoJavaPlugins/WEB-INF/classes/");
 
     Config config = spy(configCaptor.getValue());
     doReturn(new PluginDescriptor[0]).when(config).getPluginConfig(any(Locale.class),
         any(HttpServletRequest.class));
-
-    ClientContentServlet servlet = new ClientContentServlet();
-    servlet.setTestingClasspathRoot("/testNoJavaPlugins/WEB-INF/classes/");
-    ServletConfig servletConfig = mock(ServletConfig.class);
-    ServletContext servletContext = mock(ServletContext.class);
-    when(servletContext.getAttribute(AppContextListener.ATTR_CONFIG)).thenReturn(config);
-    when(servletConfig.getServletContext()).thenReturn(servletContext);
-    servlet.init(servletConfig);
-
+    when(servlet.getServletContext().getAttribute(AppContextListener.ATTR_CONFIG))
+        .thenReturn(config);
     check404(servlet, "/modules/", "plugin1/a.js");
   }
 
   @Test
   public void svgContentType() throws Exception {
-    setupConfigurationFolder("src/test/resources/testNoJavaPlugins");
-
-    Config config = spy(configCaptor.getValue());
-    doReturn(new PluginDescriptor[] {new PluginDescriptor("plugin1", false)}).when(config)
-        .getPluginConfig(any(Locale.class), any(HttpServletRequest.class));
-
-    ClientContentServlet servlet = new ClientContentServlet();
+    ClientContentServlet servlet = setupConfigurationFolder("src/test/resources/testNoJavaPlugins");
     servlet.setTestingClasspathRoot("/testNoJavaPlugins/WEB-INF/classes/");
-    ServletConfig servletConfig = mock(ServletConfig.class);
-    ServletContext servletContext = mock(ServletContext.class);
-    when(servletContext.getAttribute(AppContextListener.ATTR_CONFIG)).thenReturn(config);
-    when(servletConfig.getServletContext()).thenReturn(servletContext);
-    servlet.init(servletConfig);
 
     HttpServletRequest req = mock(HttpServletRequest.class);
-    HttpServletResponse resp = mock(HttpServletResponse.class);
+    when(req.getSession()).thenReturn(mock(HttpSession.class));
     when(req.getServletPath()).thenReturn("/modules/");
     when(req.getPathInfo()).thenReturn("plugin1/images/image.svg");
+    HttpServletResponse resp = mock(HttpServletResponse.class);
 
     servlet.doGet(req, resp);
 
     verify(resp).setContentType("image/svg+xml");
+  }
+
+  @Test
+  public void doesNotReturnUnqualifiedResourcesAsQualified() throws Exception {
+    ClientContentServlet servlet =
+        setupConfigurationFolder("src/test/resources/testJavaNonRootModules");
+    servlet.setTestingClasspathRoot("/testJavaNonRootModules/WEB-INF/classes/");
+    check404(servlet, "/modules/", "testJavaRootSubfolders/module.js");
+  }
+
+  @Test
+  public void doesNotReturnQualifiedResourcesAsUnqualified() throws Exception {
+    ClientContentServlet servlet =
+        setupConfigurationFolder("src/test/resources/testJavaNonRootModules");
+    servlet.setTestingClasspathRoot("/testJavaNonRootModules/WEB-INF/classes/");
+    check404(servlet, "/modules/", "module1.js");
   }
 }

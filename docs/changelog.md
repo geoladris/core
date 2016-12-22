@@ -11,6 +11,7 @@ This project follows [semantic versioning](http://semver.org).
 ## Corregido
 
 * [Minificación no funciona para plugins con `installInRoot : false`](https://github.com/geoladris/geoladris/issues/24).
+* [Peticiones a recursos cualificados devuelven recursos sin cualificar (y viceversa)](https://github.com/geoladris/geoladris/issues/26).
 
 ## Añadido
 
