@@ -85,8 +85,7 @@ public class JEEContextAnalyzer {
         if (path.endsWith(".css")) {
           plugin.addStylesheet(path);
         } else if (path.endsWith(".js")) {
-          String module = new File(path).getName();
-          module = module.substring(0, module.length() - 3);
+          String module = path.substring("modules/".length(), path.length() - 3);
           plugin.addModule(module);
         }
       } else if ((path.startsWith("styles") || path.startsWith("theme")) && path.endsWith(".css")) {

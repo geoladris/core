@@ -79,8 +79,7 @@ public class JEEContextAnalyzerTest {
 
   @Test
   public void checkTest1() {
-    JEEContextAnalyzer context =
-        new JEEContextAnalyzer(new FileContext("src/test/resources/test1"));
+    JEEContextAnalyzer context = new JEEContextAnalyzer(new FileContext("test1"));
 
     Set<PluginDescriptor> plugins = context.getPluginDescriptors();
     assertEquals(2, plugins.size());
@@ -114,8 +113,7 @@ public class JEEContextAnalyzerTest {
 
   @Test
   public void scanNoJavaPlugins() {
-    JEEContextAnalyzer context =
-        new JEEContextAnalyzer(new FileContext("src/test/resources/testNoJava"));
+    JEEContextAnalyzer context = new JEEContextAnalyzer(new FileContext("testNoJava"));
     Set<PluginDescriptor> plugins = context.getPluginDescriptors();
     assertEquals(3, plugins.size());
     for (PluginDescriptor plugin : plugins) {
@@ -163,8 +161,7 @@ public class JEEContextAnalyzerTest {
   @Test
   public void scanJavaNonRootModules() {
     String name = "testJavaNonRootModules";
-    JEEContextAnalyzer context =
-        new JEEContextAnalyzer(new FileContext("src/test/resources/" + name));
+    JEEContextAnalyzer context = new JEEContextAnalyzer(new FileContext(name));
     PluginDescriptor plugin = context.getPluginDescriptors().iterator().next();
 
     checkList(plugin.getModules(), name + "/module1");
@@ -177,8 +174,7 @@ public class JEEContextAnalyzerTest {
 
   @Test
   public void scanJavaNonRootModulesAsJar() {
-    JEEContextAnalyzer context =
-        new JEEContextAnalyzer(new FileContext("src/test/resources/testOnlyLib"));
+    JEEContextAnalyzer context = new JEEContextAnalyzer(new FileContext("testOnlyLib"));
 
     Set<PluginDescriptor> plugins = context.getPluginDescriptors();
     assertEquals(2, plugins.size());
@@ -208,8 +204,7 @@ public class JEEContextAnalyzerTest {
   }
 
   public void checkThemePath() {
-    JEEContextAnalyzer context =
-        new JEEContextAnalyzer(new FileContext("src/test/resources/test_theme"));
+    JEEContextAnalyzer context = new JEEContextAnalyzer(new FileContext("test_theme"));
 
     PluginDescriptor plugin = context.getPluginDescriptors().iterator().next();
     checkList(plugin.getStylesheets(), "styles/general.css", "theme/theme.css");
@@ -217,8 +212,7 @@ public class JEEContextAnalyzerTest {
 
   @Test
   public void checkPluginDescriptors() {
-    JEEContextAnalyzer context =
-        new JEEContextAnalyzer(new FileContext("src/test/resources/test1"));
+    JEEContextAnalyzer context = new JEEContextAnalyzer(new FileContext("test1"));
 
     Set<PluginDescriptor> plugins = context.getPluginDescriptors();
     assertEquals(2, plugins.size());
@@ -267,6 +261,16 @@ public class JEEContextAnalyzerTest {
     }
   }
 
+  @Test
+  public void testResourcesInSubdirectories() {
+    JEEContextAnalyzer context = new JEEContextAnalyzer(new FileContext("testSubdirectories"));
+    Set<PluginDescriptor> plugins = context.getPluginDescriptors();
+    assertEquals(1, plugins.size());
+    PluginDescriptor plugin = plugins.iterator().next();
+    checkList(plugin.getModules(), "subdirs/lib/module");
+    checkList(plugin.getStylesheets(), "modules/subdirs/lib/style.css");
+  }
+
   private void checkList(Collection<String> result, String... testEntries) {
     for (String entry : testEntries) {
       assertTrue(entry + " not in " + result, result.contains(entry));
@@ -288,7 +292,7 @@ public class JEEContextAnalyzerTest {
     private File root;
 
     public FileContext(String root) {
-      this.root = new File(root);
+      this.root = new File("src/test/resources/" + root);
     }
 
     @Override
