@@ -5,8 +5,6 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.geoladris.PortalRequestConfiguration;
-
 import net.sf.json.JSONObject;
 
 public interface ModuleConfigurationProvider {

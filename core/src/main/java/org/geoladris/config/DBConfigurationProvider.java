@@ -16,7 +16,6 @@ import org.apache.commons.dbcp2.BasicDataSource;
 import org.apache.log4j.Logger;
 import org.geoladris.Environment;
 import org.geoladris.Geoladris;
-import org.geoladris.PortalRequestConfiguration;
 import org.postgresql.Driver;
 
 import net.sf.json.JSONObject;

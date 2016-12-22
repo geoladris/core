@@ -14,7 +14,6 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.geoladris.PortalRequestConfiguration;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

@@ -1,4 +1,4 @@
-package org.geoladris;
+package org.geoladris.config;
 
 import java.io.File;
 

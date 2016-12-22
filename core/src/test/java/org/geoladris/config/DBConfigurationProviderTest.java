@@ -27,7 +27,6 @@ import javax.sql.DataSource;
 import org.apache.commons.dbcp2.BasicDataSource;
 import org.geoladris.Environment;
 import org.geoladris.Geoladris;
-import org.geoladris.PortalRequestConfiguration;
 import org.junit.Test;
 
 import net.sf.json.JSONObject;

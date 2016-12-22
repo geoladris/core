@@ -6,8 +6,6 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.geoladris.PortalRequestConfiguration;
-
 import de.csgis.commons.JSONContentProvider;
 import net.sf.json.JSONObject;
 

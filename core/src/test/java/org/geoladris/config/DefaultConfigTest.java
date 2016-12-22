@@ -25,7 +25,6 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.geoladris.PluginDescriptor;
 import org.geoladris.PluginDescriptorFileReader;
-import org.geoladris.PortalRequestConfiguration;
 import org.junit.Test;
 
 import net.sf.json.JSONObject;

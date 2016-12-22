@@ -13,7 +13,6 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.io.IOUtils;
 import org.geoladris.PluginDescriptor;
 import org.geoladris.PluginDescriptorFileReader;
-import org.geoladris.PortalRequestConfiguration;
 
 import net.sf.json.JSONObject;
 
