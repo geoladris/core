@@ -62,10 +62,8 @@ public class JEEContextAnalyzer {
       }
 
       PluginDescriptor plugin = createPluginDescriptor(pluginDir);
-      if (plugin != null) {
-        fillPluginDescriptor(plugin, pluginDir);
-        this.pluginDescriptors.add(plugin);
-      }
+      fillPluginDescriptor(plugin, pluginDir);
+      this.pluginDescriptors.add(plugin);
     }
   }
 
@@ -75,8 +73,7 @@ public class JEEContextAnalyzer {
     try {
       return reader.read(IOUtils.toString(conf.toURI()), name);
     } catch (IOException e) {
-      logger.warn("Cannot read -conf.json file for plugin: " + name + ". Ignoring plugin", e);
-      return null;
+      return new PluginDescriptor(name, false);
     }
   }
 

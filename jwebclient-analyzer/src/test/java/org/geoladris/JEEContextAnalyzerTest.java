@@ -301,6 +301,14 @@ public class JEEContextAnalyzerTest {
     }
   }
 
+  @Test
+  public void testNoPluginDescriptor() {
+    JEEContextAnalyzer context = new JEEContextAnalyzer(new FileContext("testNoPluginDescriptor"));
+    Set<PluginDescriptor> plugins = context.getPluginDescriptors();
+    assertEquals(1, plugins.size());
+    checkList(plugins.iterator().next().getModules(), "plugin/module");
+  }
+
   private void checkList(Collection<String> result, String... testEntries) {
     for (String entry : testEntries) {
       assertTrue(entry + " not in " + result, result.contains(entry));

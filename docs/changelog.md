@@ -19,6 +19,7 @@ This project follows [semantic versioning](http://semver.org).
 * Posibilidad de obtener la configuración de los plugins desde una base de datos.
 * [Posibilidad de añadir módulos en subdirectorios](https://github.com/geoladris/core/issues/10).
 * [Detectar cambios en los directorios de plugins](https://github.com/geoladris/core/issues/33).
+* [Fichero descriptor de plugin (`<plugin>-conf.json`) opcional](https://github.com/geoladris/core/issues/36).
 
 # 5.0.1 [2016-12-06]
 
