@@ -236,4 +236,21 @@ public class DefaultConfigTest {
     assertEquals(1, pluginConfig[0].getModules().size());
     assertEquals("p2/m2", pluginConfig[0].getModules().iterator().next());
   }
+
+  @Test
+  public void ignoresConfigurationForNonExistingPlugins() throws IOException {
+    Set<PluginDescriptor> plugins = Collections.singleton(new PluginDescriptor("p1", true));
+    Config config = new DefaultConfig(mock(ConfigFolder.class), plugins, false);
+
+    ModuleConfigurationProvider provider = mock(ModuleConfigurationProvider.class);
+    Map<String, JSONObject> providerConf =
+        Collections.singletonMap("another_plugin", new JSONObject());
+    when(provider.getPluginConfig(any(PortalRequestConfiguration.class),
+        any(HttpServletRequest.class))).thenReturn(providerConf);
+    config.addModuleConfigurationProvider(provider);
+
+    PluginDescriptor[] pluginConfig =
+        config.getPluginConfig(Locale.getDefault(), mock(HttpServletRequest.class));
+    assertEquals(1, pluginConfig.length);
+  }
 }

@@ -203,8 +203,9 @@ public class DefaultConfig implements Config {
         PluginDescriptor pluginDescriptor = namePluginDescriptor.get(pluginName);
         if (pluginDescriptor == null) {
           logger.warn("Configuration has been defined for a non-existing plugin: " + pluginName);
+        } else {
+          pluginDescriptor.setConfiguration(pluginConf);
         }
-        pluginDescriptor.setConfiguration(pluginConf);
       }
     }
 
