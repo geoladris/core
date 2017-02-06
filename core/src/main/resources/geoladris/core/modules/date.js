@@ -1,37 +1,8 @@
-define(["i18n"], function(i18n) {
+define(["iso8601", "i18n"], function(iso8601, i18n) {
 	Date.prototype.setISO8601 = function(str) {
-		var regexp = "([0-9]{4})(-([0-9]{2})(-([0-9]{2})" + "(T([0-9]{2}):([0-9]{2})(:([0-9]{2})(\\.([0-9]+))?)?"
-				+ "(Z|(([-+])([0-9]{2}):([0-9]{2})))?)?)?)?";
-		var d = str.match(new RegExp(regexp));
-		if (d) {
-			var date = new Date(Date.UTC(d[1], 0, 1)), offset = 0, time;
-
-			if (d[3]) {
-				date.setUTCMonth(d[3] - 1);
-			}
-			if (d[5]) {
-				date.setUTCDate(d[5]);
-			}
-			if (d[7]) {
-				date.setUTCHours(d[7]);
-			}
-			if (d[8]) {
-				date.setUTCMinutes(d[8]);
-			}
-			if (d[10]) {
-				date.setUTCSeconds(d[10]);
-			}
-			if (d[12]) {
-				date.setUTCMilliseconds(Number("0." + d[12]) * 1000);
-			}
-			if (d[14]) {
-				offset = (Number(d[16]) * 60) + Number(d[17]);
-				offset *= ((d[15] === '-') ? 1 : -1);
-			}
-
-			time = (Number(date) + (offset * 60 * 1000));
-
-			this.setTime(Number(time));
+		var millis = iso8601.parse(str);
+		if (millis != null) {
+			this.setTime(millis);
 			return true;
 		} else {
 			return false;
@@ -39,16 +10,7 @@ define(["i18n"], function(i18n) {
 	};
 	
 	Date.prototype.toISO8601String = function() {
-		function pad(n) {
-			return n < 10 ? '0' + n : n;
-		}
-		return this.getFullYear() + '-'//
-				+ pad(this.getMonth() + 1) + '-'//
-				+ pad(this.getDate()) + 'T'//
-				+ pad(this.getHours()) + ':'//
-				+ pad(this.getMinutes()) + ':'//
-				+ pad(this.getSeconds()) + '.'//
-				+ pad(this.getMilliseconds()) + 'Z';
+		return iso8601.toString(this);
 	};
 
 	Date.prototype.getLocalizedDate = function() {
