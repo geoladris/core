@@ -92,7 +92,7 @@ public class RoleConfigurationProviderTest {
 
     HttpSession session = mock(HttpSession.class);
     when(request.getSession()).thenReturn(session);
-    when(session.getAttribute(Geoladris.SESSION_ATTR_ROLE)).thenReturn(role);
+    when(session.getAttribute(Geoladris.ATTR_ROLE)).thenReturn(role);
 
     return request;
   }

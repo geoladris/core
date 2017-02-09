@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.geoladris.Environment;
+import org.geoladris.Geoladris;
 import org.geoladris.PluginDescriptor;
 import org.geoladris.RequireTemplate;
 import org.geoladris.config.Config;
@@ -23,13 +24,13 @@ public class MainJSServlet extends HttpServlet {
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {
-    Environment env = (Environment) getServletContext().getAttribute(AppContextListener.ATTR_ENV);
+    Environment env = Environment.getInstance();
     if (!env.getConfigCache() || output == null) {
-      Config config = (Config) getServletContext().getAttribute(AppContextListener.ATTR_CONFIG);
-      Locale locale = (Locale) req.getAttribute(LangFilter.ATTR_LOCALE);
+      Config config = (Config) req.getAttribute(Geoladris.ATTR_CONFIG);
+      Locale locale = (Locale) req.getAttribute(Geoladris.ATTR_LOCALE);
       Map<String, String> paths = new HashMap<>();
       Map<String, String> shims = new HashMap<>();
-      for (PluginDescriptor plugin : config.getPluginConfig(locale, req)) {
+      for (PluginDescriptor plugin : config.getPluginConfig(locale)) {
         paths.putAll(plugin.getRequireJSPathsMap());
         shims.putAll(plugin.getRequireJSShims());
       }

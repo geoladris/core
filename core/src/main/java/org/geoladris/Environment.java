@@ -12,6 +12,14 @@ public class Environment {
   public static final String CONFIG_DIR = "GEOLADRIS_CONFIG_DIR";
   public static final String MINIFIED = "GEOLADRIS_MINIFIED";
 
+  private static final Environment instance = new Environment();
+
+  public static Environment getInstance() {
+    return instance;
+  }
+
+  private Environment() {}
+
   @Deprecated
   public static final String PORTAL_CONFIG_DIR = "PORTAL_CONFIG_DIR";
 

@@ -25,10 +25,9 @@ import javax.servlet.http.HttpServletRequest;
 import org.geoladris.PluginDescriptor;
 
 public interface Config {
-
-  public static final String PROPERTY_CLIENT_MODULES = "client.modules";
-  public static final String PROPERTY_MAP_CENTER = "map.centerLonLat";
-  public static final String PROPERTY_LANGUAGES = "languages";
+  String PROPERTY_CLIENT_MODULES = "client.modules";
+  String PROPERTY_MAP_CENTER = "map.centerLonLat";
+  String PROPERTY_LANGUAGES = "languages";
 
   File getDir();
 
@@ -68,14 +67,7 @@ public interface Config {
    * @param request
    * @return
    */
-  PluginDescriptor[] getPluginConfig(Locale locale, HttpServletRequest request);
-
-  /**
-   * Add providers to modify the behavior of {@link #getPluginConfig(Locale, HttpServletRequest)}.
-   * 
-   * @param provider
-   */
-  void addModuleConfigurationProvider(ModuleConfigurationProvider provider);
+  PluginDescriptor[] getPluginConfig(Locale locale);
 
   /**
    * Gets the folder in the configuration directory where no-java plugins are to be found
@@ -84,5 +76,7 @@ public interface Config {
    */
   File getNoJavaPluginRoot();
 
-  void updatePlugins(Set<PluginDescriptor> plugins);
+  void setPlugins(Set<PluginDescriptor> plugins);
+
+  void setRequest(HttpServletRequest request);
 }

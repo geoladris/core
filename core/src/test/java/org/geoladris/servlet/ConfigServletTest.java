@@ -26,6 +26,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.geoladris.Geoladris;
 import org.geoladris.PluginDescriptor;
 import org.geoladris.PluginDescriptorFileReader;
 import org.geoladris.config.Config;
@@ -54,14 +55,13 @@ public class ConfigServletTest {
     this.stream = new ByteArrayOutputStream();
     this.reader = new PluginDescriptorFileReader();
     PrintWriter writer = new PrintWriter(this.stream);
-    when(this.context.getAttribute(AppContextListener.ATTR_CONFIG)).thenReturn(this.config);
+    when(this.request.getAttribute(Geoladris.ATTR_CONFIG)).thenReturn(this.config);
     when(this.response.getWriter()).thenReturn(writer);
   }
 
   @SuppressWarnings("unchecked")
   @Test
   public void testCustomizationModule() throws ServletException, IOException {
-    Config config = mock(Config.class);
     when(config.getMessages(any(Locale.class)))
         .thenReturn(new PropertyResourceBundle(new ByteArrayInputStream(new byte[0])));
     Properties portalProperties = new Properties();
@@ -80,18 +80,16 @@ public class ConfigServletTest {
     when(config.getPropertyAsArray(Config.PROPERTY_MAP_CENTER)).thenReturn(new String[] {"0", "0"});
     when(config.getPropertyAsArray(Config.PROPERTY_CLIENT_MODULES)).thenReturn(new String[0]);
 
-    when(config.getPluginConfig(any(Locale.class), any(HttpServletRequest.class)))
-        .thenReturn(new PluginDescriptor[0]);
+    when(config.getPluginConfig(any(Locale.class))).thenReturn(new PluginDescriptor[0]);
 
-    HttpServletRequest req = mock(HttpServletRequest.class);
-    when(req.getAttribute("locale")).thenReturn(new Locale("es"));
+    when(request.getAttribute(Geoladris.ATTR_LOCALE)).thenReturn(new Locale("es"));
     HttpServletResponse resp = mock(HttpServletResponse.class);
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     PrintWriter writer = new PrintWriter(baos);
     when(resp.getWriter()).thenReturn(writer);
 
     ConfigServlet servlet = getInitializedServlet(config);
-    servlet.doGet(req, resp);
+    servlet.doGet(request, resp);
     writer.close();
 
     String response = new String(baos.toByteArray());
@@ -126,8 +124,8 @@ public class ConfigServletTest {
 
     PluginDescriptor[] plugin = new PluginDescriptor[] {plugin1};
     mockEmptyConfig();
-    when(request.getAttribute(LangFilter.ATTR_LOCALE)).thenReturn(Locale.ROOT);
-    when(config.getPluginConfig(Locale.ROOT, request)).thenReturn(plugin);
+    when(request.getAttribute(Geoladris.ATTR_LOCALE)).thenReturn(Locale.ROOT);
+    when(config.getPluginConfig(Locale.ROOT)).thenReturn(plugin);
 
     servlet.doGet(request, response, context);
 
@@ -153,8 +151,8 @@ public class ConfigServletTest {
     PluginDescriptor[] plugins = new PluginDescriptor[] {plugin1, plugin2};
 
     mockEmptyConfig();
-    when(request.getAttribute(LangFilter.ATTR_LOCALE)).thenReturn(Locale.ROOT);
-    when(config.getPluginConfig(Locale.ROOT, request)).thenReturn(plugins);
+    when(request.getAttribute(Geoladris.ATTR_LOCALE)).thenReturn(Locale.ROOT);
+    when(config.getPluginConfig(Locale.ROOT)).thenReturn(plugins);
 
     servlet.doGet(request, response, context);
 

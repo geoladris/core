@@ -9,6 +9,16 @@
 		<listener-class>org.geoladris.servlet.AppContextListener</listener-class>
 	</listener>
 
+	<!-- Filters -->
+	<filter>
+		<filter-name>config-filter</filter-name>
+		<filter-class>org.geoladris.servlet.ConfigFilter</filter-class>
+	</filter>
+	<filter-mapping>
+		<filter-name>config-filter</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+
 	<filter>
 		<filter-name>lang-filter</filter-name>
 		<filter-class>org.geoladris.servlet.LangFilter</filter-class>
@@ -18,51 +28,6 @@
 		<url-pattern>/*</url-pattern>
 	</filter-mapping>
 
-	<!-- index call -->
-	<servlet>
-		<servlet-name>index-servlet</servlet-name>
-		<servlet-class>org.geoladris.servlet.IndexHTMLServlet</servlet-class>
-	</servlet>
-	<servlet-mapping>
-		<servlet-name>index-servlet</servlet-name>
-		<url-pattern>/index.html</url-pattern>
-	</servlet-mapping>
-
-	<!-- main requirejs module -->
-	<servlet>
-		<servlet-name>mainjs-servlet</servlet-name>
-		<servlet-class>org.geoladris.servlet.MainJSServlet</servlet-class>
-	</servlet>
-	<servlet-mapping>
-		<servlet-name>mainjs-servlet</servlet-name>
-		<url-pattern>/modules/main.js</url-pattern>
-	</servlet-mapping>
-
-	<!-- static folder content -->
-	<servlet>
-		<servlet-name>static-content-servlet</servlet-name>
-		<servlet-class>org.geoladris.servlet.ClientContentServlet</servlet-class>
-	</servlet>
-	<servlet-mapping>
-		<servlet-name>static-content-servlet</servlet-name>
-		<url-pattern>/static/*</url-pattern>
-		<url-pattern>/modules/*</url-pattern>
-		<url-pattern>/jslib/*</url-pattern>
-		<url-pattern>/styles/*</url-pattern>
-		<url-pattern>/theme/*</url-pattern>
-	</servlet-mapping>
-
-	<!-- config call -->
-	<servlet>
-		<servlet-name>config-servlet</servlet-name>
-		<servlet-class>org.geoladris.servlet.ConfigServlet</servlet-class>
-	</servlet>
-	<servlet-mapping>
-		<servlet-name>config-servlet</servlet-name>
-		<url-pattern>/config.js</url-pattern>
-	</servlet-mapping>
-
-	<!-- Error management -->
 	<filter>
 		<filter-name>error-filter</filter-name>
 		<filter-class>org.geoladris.servlet.ErrorFilter</filter-class>
@@ -72,10 +37,18 @@
 		<url-pattern>/*</url-pattern>
 	</filter-mapping>
 
+	<!-- Servlet -->
+	<servlet>
+		<servlet-name>delegate-servlet</servlet-name>
+		<servlet-class>org.geoladris.servlet.DelegateServlet</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>delegate-servlet</servlet-name>
+		<url-pattern>/*</url-pattern>
+	</servlet-mapping>
+
+	<!-- Session config -->
 	<session-config>
 		<session-timeout>30</session-timeout>
 	</session-config>
-	<welcome-file-list>
-		<welcome-file>index.html</welcome-file>
-	</welcome-file-list>
 </web-fragment>

@@ -17,6 +17,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.geoladris.Environment;
+import org.geoladris.Geoladris;
 import org.geoladris.PluginDescriptor;
 import org.geoladris.config.Config;
 import org.junit.Before;
@@ -48,19 +49,16 @@ public class MainJSServletTest {
     p2.addRequireJSPath("jquery-ui", "jslib/jquery-ui");
 
     Config config = mock(Config.class);
-    Environment env = mockEnv(false);
-    when(servletContext.getAttribute(AppContextListener.ATTR_CONFIG)).thenReturn(config);
-    when(servletContext.getAttribute(AppContextListener.ATTR_ENV)).thenReturn(env);
+    System.setProperty(Environment.CONFIG_CACHE, "false");
+    when(request.getAttribute(Geoladris.ATTR_CONFIG)).thenReturn(config);
 
     HttpServletResponse response = mockResponse();
-    when(config.getPluginConfig(any(Locale.class), any(HttpServletRequest.class)))
-        .thenReturn(new PluginDescriptor[] {p1, p2});
+    when(config.getPluginConfig(any(Locale.class))).thenReturn(new PluginDescriptor[] {p1, p2});
     this.servlet.doGet(this.request, response);
     assertTrue(content(response).contains("jslib/jquery-ui"));
 
     response = mockResponse();
-    when(config.getPluginConfig(any(Locale.class), any(HttpServletRequest.class)))
-        .thenReturn(new PluginDescriptor[] {p1});
+    when(config.getPluginConfig(any(Locale.class))).thenReturn(new PluginDescriptor[] {p1});
     this.servlet.doGet(this.request, response);
     assertFalse(content(response).contains("jslib/jquery-ui"));
   }
@@ -73,19 +71,16 @@ public class MainJSServletTest {
     p2.addRequireJSPath("jquery-ui", "jslib/jquery-ui");
 
     Config config = mock(Config.class);
-    Environment env = mockEnv(true);
-    when(servletContext.getAttribute(AppContextListener.ATTR_CONFIG)).thenReturn(config);
-    when(servletContext.getAttribute(AppContextListener.ATTR_ENV)).thenReturn(env);
+    System.setProperty(Environment.CONFIG_CACHE, "true");
+    when(request.getAttribute(Geoladris.ATTR_CONFIG)).thenReturn(config);
 
     HttpServletResponse response = mockResponse();
-    when(config.getPluginConfig(any(Locale.class), any(HttpServletRequest.class)))
-        .thenReturn(new PluginDescriptor[] {p1, p2});
+    when(config.getPluginConfig(any(Locale.class))).thenReturn(new PluginDescriptor[] {p1, p2});
     this.servlet.doGet(this.request, response);
     assertTrue(content(response).contains("jslib/jquery-ui"));
 
     response = mockResponse();
-    when(config.getPluginConfig(any(Locale.class), any(HttpServletRequest.class)))
-        .thenReturn(new PluginDescriptor[] {p1, p2});
+    when(config.getPluginConfig(any(Locale.class))).thenReturn(new PluginDescriptor[] {p1, p2});
     this.servlet.doGet(this.request, response);
     assertTrue(content(response).contains("jslib/jquery-ui"));
   }
@@ -104,11 +99,5 @@ public class MainJSServletTest {
     when(response.getWriter()).thenReturn(writer);
 
     return response;
-  }
-
-  private Environment mockEnv(boolean useCache) {
-    Environment env = mock(Environment.class);
-    when(env.getConfigCache()).thenReturn(useCache);
-    return env;
   }
 }

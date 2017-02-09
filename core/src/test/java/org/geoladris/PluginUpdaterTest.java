@@ -118,6 +118,6 @@ public class PluginUpdaterTest {
 
   private void checkUpdate(VerificationMode mode) {
     verify(this.analyzer, mode).reload();
-    verify(this.config, mode).updatePlugins(this.analyzer.getPluginDescriptors());
+    verify(this.config, mode).setPlugins(this.analyzer.getPluginDescriptors());
   }
 }

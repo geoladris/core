@@ -3,14 +3,12 @@ package org.geoladris.servlet;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.Locale;
 
 import javax.servlet.ServletConfig;
@@ -19,6 +17,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.geoladris.Environment;
+import org.geoladris.Geoladris;
 import org.geoladris.PluginDescriptor;
 import org.geoladris.config.Config;
 import org.junit.After;
@@ -44,8 +43,6 @@ public class IndexHTMLServletTest {
 
     this.servletContext = mock(ServletContext.class);
 
-    when(servletContext.getAttribute(AppContextListener.ATTR_ENV)).thenReturn(new Environment());
-
     ServletConfig servletConfig = mock(ServletConfig.class);
     when(servletConfig.getServletContext()).thenReturn(this.servletContext);
     this.servlet.init(servletConfig);
@@ -65,8 +62,8 @@ public class IndexHTMLServletTest {
     PluginDescriptor[] plugins = new PluginDescriptor[] {plugin};
 
     Config config = mock(Config.class);
-    when(config.getPluginConfig(any(Locale.class), eq(this.request))).thenReturn(plugins);
-    when(this.servletContext.getAttribute(AppContextListener.ATTR_CONFIG)).thenReturn(config);
+    when(config.getPluginConfig(any(Locale.class))).thenReturn(plugins);
+    when(this.request.getAttribute(Geoladris.ATTR_CONFIG)).thenReturn(config);
 
     this.servlet.doGet(this.request, this.response);
     this.response.getWriter().flush();
@@ -118,10 +115,8 @@ public class IndexHTMLServletTest {
    */
   private void mockDebugParam(String debugParam) {
     Config config = mock(Config.class);
-    when(config.getPluginConfig(any(Locale.class), any(HttpServletRequest.class)))
-        .thenReturn(new PluginDescriptor[0]);
-    when(this.servletContext.getAttribute("config")).thenReturn(config);
-    when(this.servletContext.getAttribute("css-paths")).thenReturn(new ArrayList<String>());
+    when(config.getPluginConfig(any(Locale.class))).thenReturn(new PluginDescriptor[0]);
+    when(this.request.getAttribute(Geoladris.ATTR_CONFIG)).thenReturn(config);
 
     System.setProperty(Environment.MINIFIED, "true");
     when(this.request.getParameter(IndexHTMLServlet.HTTP_PARAM_DEBUG)).thenReturn(debugParam);

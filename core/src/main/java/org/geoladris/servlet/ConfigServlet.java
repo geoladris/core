@@ -15,6 +15,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.geoladris.Geoladris;
 import org.geoladris.PluginDescriptor;
 import org.geoladris.config.Config;
 
@@ -32,8 +33,8 @@ public class ConfigServlet extends HttpServlet {
 
   void doGet(HttpServletRequest req, HttpServletResponse resp, ServletContext context)
       throws IOException {
-    Config config = (Config) context.getAttribute(AppContextListener.ATTR_CONFIG);
-    Locale locale = (Locale) req.getAttribute(LangFilter.ATTR_LOCALE);
+    Config config = (Config) req.getAttribute(Geoladris.ATTR_CONFIG);
+    Locale locale = (Locale) req.getAttribute(Geoladris.ATTR_LOCALE);
 
     ResourceBundle bundle = config.getMessages(locale);
 
@@ -46,7 +47,7 @@ public class ConfigServlet extends HttpServlet {
 
     JSONObject moduleConfig = new JSONObject();
     // Fixed elements
-    PluginDescriptor[] enabledPluginDescriptors = config.getPluginConfig(locale, req);
+    PluginDescriptor[] enabledPluginDescriptors = config.getPluginConfig(locale);
     moduleConfig.element("customization",
         buildCustomizationObject(context, config, locale, title, enabledPluginDescriptors));
     moduleConfig.element("i18n", buildI18NObject(bundle));

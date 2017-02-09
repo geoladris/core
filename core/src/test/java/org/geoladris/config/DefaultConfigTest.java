@@ -11,25 +11,44 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
-import java.util.ResourceBundle;
 import java.util.Set;
 
+import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 
+import org.geoladris.Geoladris;
 import org.geoladris.PluginDescriptor;
 import org.geoladris.PluginDescriptorFileReader;
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 import net.sf.json.JSONObject;
 
 public class DefaultConfigTest {
+  @Mock
+  private HttpServletRequest request;
+  @Mock
+  private ServletContext context;
+  @Rule
+  public TemporaryFolder folder = new TemporaryFolder();
+
+  @Before
+  public void initMocks() {
+    MockitoAnnotations.initMocks(this);
+  }
 
   @Test
   public void testConfigurationProvidersMerge() throws Exception {
@@ -47,13 +66,11 @@ public class DefaultConfigTest {
     when(provider2.getPluginConfig(any(PortalRequestConfiguration.class),
         any(HttpServletRequest.class))).thenReturn(Collections.singletonMap("1", conf2));
 
-    Config config = new DefaultConfig(mock(ConfigFolder.class), plugins, false);
+    when(context.getAttribute(Geoladris.ATTR_CONFIG_PROVIDERS))
+        .thenReturn(Arrays.asList(provider1, provider2));
+    Config config = new DefaultConfig(folder.getRoot(), context, request, plugins, false);
 
-    config.addModuleConfigurationProvider(provider1);
-    config.addModuleConfigurationProvider(provider2);
-
-    PluginDescriptor[] c =
-        config.getPluginConfig(Locale.getDefault(), mock(HttpServletRequest.class));
+    PluginDescriptor[] c = config.getPluginConfig(Locale.getDefault());
 
     JSONObject pluginConf = c[0].getConfiguration().getJSONObject("module");
 
@@ -68,57 +85,49 @@ public class DefaultConfigTest {
   public void testCache() throws Exception {
     String defaultLang = "es";
     Locale locale = new Locale(defaultLang);
-    ResourceBundle resourceBundle = mock(ResourceBundle.class);
     Properties firstProperties = new Properties();
     firstProperties.put("languages", "{\"es\": \"Espa\u00f1ol\"}");
     firstProperties.put("languages.default", defaultLang);
-    Config config = buildConfigReadOnceAndChangeFolderConfig(true, defaultLang, locale,
-        resourceBundle, firstProperties);
+    Config config =
+        buildConfigReadOnceAndChangeFolderConfig(true, defaultLang, locale, firstProperties);
 
     // Check we still have the same values
     assertTrue(config.getDefaultLang().equals(defaultLang));
     assertTrue(config.getLanguages()[0].get("code").equals("es"));
-    assertTrue(config.getMessages(locale) == resourceBundle);
-    assertTrue(config.getProperties() == firstProperties);
+    assertTrue(config.getProperties().equals(firstProperties));
   }
 
   @Test
   public void testNoCache() throws Exception {
     String defaultLang = "es";
     Locale locale = new Locale(defaultLang);
-    ResourceBundle resourceBundle = mock(ResourceBundle.class);
     Properties firstProperties = new Properties();
     firstProperties.put("languages", "{\"es\": \"Espa\u00f1ol\"}");
     firstProperties.put("languages.default", defaultLang);
-    Config config = buildConfigReadOnceAndChangeFolderConfig(false, defaultLang, locale,
-        resourceBundle, firstProperties);
+    Config config =
+        buildConfigReadOnceAndChangeFolderConfig(false, defaultLang, locale, firstProperties);
 
     // Check we still have the same values
     assertFalse(config.getDefaultLang().equals(defaultLang));
     assertFalse(config.getLanguages()[0].get("code").equals("es"));
-    assertFalse(config.getMessages(locale) == resourceBundle);
     assertFalse(config.getProperties() == firstProperties);
   }
 
   private Config buildConfigReadOnceAndChangeFolderConfig(boolean useCache, String defaultLang,
-      Locale locale, ResourceBundle resourceBundle, Properties firstProperties) {
-    ConfigFolder folder = mock(ConfigFolder.class);
-    Config config = new DefaultConfig(folder, null, useCache);
+      Locale locale, Properties firstProperties) throws IOException {
+    File portalProperties = new File(folder.getRoot(), "portal.properties");
+    firstProperties.store(new FileOutputStream(portalProperties), "");
 
-    when(folder.getMessages(locale)).thenReturn(resourceBundle);
-    when(folder.getProperties()).thenReturn(firstProperties);
+    Config config = new DefaultConfig(folder.getRoot(), context, request, null, useCache);
 
     assertTrue(config.getDefaultLang().equals(defaultLang));
     assertTrue(config.getLanguages()[0].get("code").equals("es"));
-    assertTrue(config.getMessages(locale) == resourceBundle);
-    assertTrue(config.getProperties() == firstProperties);
+    assertTrue(config.getProperties().equals(firstProperties));
 
     Properties secondProperties = new Properties();
     secondProperties.put("languages", "{\"fr\": \"Frances\"}");
     secondProperties.put("languages.default", "fr");
-    ResourceBundle secondResourceBundle = mock(ResourceBundle.class);
-    when(folder.getMessages(locale)).thenReturn(secondResourceBundle);
-    when(folder.getProperties()).thenReturn(secondProperties);
+    secondProperties.store(new FileOutputStream(portalProperties), "");
     return config;
   }
 
@@ -140,32 +149,32 @@ public class DefaultConfigTest {
   private void readPluginConfigurationTwice(boolean useCache, boolean canBeCached, int numCalls)
       throws IOException {
     // Install configuration provider
-    ModuleConfigurationProvider configurationProvider = mock(ModuleConfigurationProvider.class);
-    when(configurationProvider.canBeCached()).thenReturn(canBeCached);
+    ModuleConfigurationProvider provider = mock(ModuleConfigurationProvider.class);
+    when(provider.canBeCached()).thenReturn(canBeCached);
 
-    Config config = new DefaultConfig(mock(ConfigFolder.class),
+    Config config = new DefaultConfig(null, context, request,
         Collections.<PluginDescriptor>emptySet(), useCache);
-    config.addModuleConfigurationProvider(configurationProvider);
+    when(context.getAttribute(Geoladris.ATTR_CONFIG_PROVIDERS)).thenReturn(Arrays.asList(provider));
 
     // Call twice
-    config.getPluginConfig(Locale.getDefault(), mock(HttpServletRequest.class));
-    config.getPluginConfig(Locale.getDefault(), mock(HttpServletRequest.class));
+    config.getPluginConfig(Locale.getDefault());
+    config.getPluginConfig(Locale.getDefault());
 
     // Check num calls
-    verify(configurationProvider, times(numCalls))
-        .getPluginConfig(any(PortalRequestConfiguration.class), any(HttpServletRequest.class));
+    verify(provider, times(numCalls)).getPluginConfig(any(PortalRequestConfiguration.class),
+        any(HttpServletRequest.class));
   }
 
   @Test
-  public void testNoConfigurationFolder() {
-    ConfigFolder folder = mock(ConfigFolder.class);
-    when(folder.getFilePath()).thenReturn(new File("nonexisting"));
-    when(folder.getProperties()).thenReturn(new Properties());
-    when(folder.getMessages(any(Locale.class))).thenReturn(mock(ResourceBundle.class));
+  public void testNoConfigurationFolder() throws Exception {
+    File portalProperties = new File(folder.getRoot(), "portal.properties");
+    new Properties().store(new FileOutputStream(portalProperties), "");
 
-    Config config = new DefaultConfig(folder, Collections.<PluginDescriptor>emptySet(), false);
+    Config config = new DefaultConfig(folder.getRoot(), context, request,
+        Collections.<PluginDescriptor>emptySet(), false);
+    when(context.getAttribute(Geoladris.ATTR_CONFIG_PROVIDERS)).thenReturn(Arrays.asList());
     assertNotNull(config.getDir());
-    assertNotNull(config.getPluginConfig(Locale.getDefault(), mock(HttpServletRequest.class)));
+    assertNotNull(config.getPluginConfig(Locale.getDefault()));
     assertNotNull(config.getProperties());
     assertNotNull(config.getMessages(Locale.getDefault()));
     assertNotNull(config.getDefaultLang());
@@ -173,13 +182,13 @@ public class DefaultConfigTest {
 
   @Test
   public void testFailingConfigurationProvider() throws Exception {
-    Config config = new DefaultConfig(mock(ConfigFolder.class),
+    Config config = new DefaultConfig(mock(File.class), context, request,
         Collections.<PluginDescriptor>emptySet(), false);
     ModuleConfigurationProvider provider = mock(ModuleConfigurationProvider.class);
     when(provider.getPluginConfig(any(PortalRequestConfiguration.class),
         any(HttpServletRequest.class))).thenThrow(new IOException("mock"));
-    config.addModuleConfigurationProvider(provider);
-    assertNotNull(config.getPluginConfig(Locale.getDefault(), mock(HttpServletRequest.class)));
+    when(context.getAttribute(Geoladris.ATTR_CONFIG_PROVIDERS)).thenReturn(Arrays.asList(provider));
+    assertNotNull(config.getPluginConfig(Locale.getDefault()));
   }
 
   @Test
@@ -188,7 +197,7 @@ public class DefaultConfigTest {
     PluginDescriptor pluginDescriptor =
         new PluginDescriptorFileReader().read("{default-conf:{m1:true}}", "p1");
     plugins.add(pluginDescriptor);
-    Config config = new DefaultConfig(mock(ConfigFolder.class), plugins, false);
+    Config config = new DefaultConfig(mock(File.class), context, request, plugins, false);
 
     Map<String, JSONObject> mergingConfiguration1 = new HashMap<String, JSONObject>();
     mergingConfiguration1.put("p1", JSONObject.fromObject("{m2:true}"));
@@ -198,14 +207,12 @@ public class DefaultConfigTest {
     when(provider.getPluginConfig(any(PortalRequestConfiguration.class),
         any(HttpServletRequest.class))).thenReturn(mergingConfiguration1)
             .thenReturn(mergingConfiguration2);
-    config.addModuleConfigurationProvider(provider);
+    when(context.getAttribute(Geoladris.ATTR_CONFIG_PROVIDERS)).thenReturn(Arrays.asList(provider));
 
-    JSONObject configuration =
-        config.getPluginConfig(Locale.ROOT, mock(HttpServletRequest.class))[0].getConfiguration();
+    JSONObject configuration = config.getPluginConfig(Locale.ROOT)[0].getConfiguration();
     assertEquals(2, configuration.keySet().size());
 
-    configuration =
-        config.getPluginConfig(Locale.ROOT, mock(HttpServletRequest.class))[0].getConfiguration();
+    configuration = config.getPluginConfig(Locale.ROOT)[0].getConfiguration();
     assertEquals(1, configuration.keySet().size());
   }
 
@@ -216,9 +223,9 @@ public class DefaultConfigTest {
     plugin.addModule("m1");
     plugins.add(plugin);
 
-    Config config = new DefaultConfig(mock(ConfigFolder.class), plugins, false);
-    PluginDescriptor[] pluginConfig =
-        config.getPluginConfig(Locale.getDefault(), mock(HttpServletRequest.class));
+    Config config = new DefaultConfig(mock(File.class), context, request, plugins, false);
+    when(context.getAttribute(Geoladris.ATTR_CONFIG_PROVIDERS)).thenReturn(Collections.EMPTY_LIST);
+    PluginDescriptor[] pluginConfig = config.getPluginConfig(Locale.getDefault());
     assertEquals(1, pluginConfig.length);
     assertEquals("p1", pluginConfig[0].getName());
     assertEquals(1, pluginConfig[0].getModules().size());
@@ -229,8 +236,8 @@ public class DefaultConfigTest {
     plugin.addModule("m2");
     plugins.add(plugin);
 
-    config.updatePlugins(plugins);
-    pluginConfig = config.getPluginConfig(Locale.getDefault(), mock(HttpServletRequest.class));
+    config.setPlugins(plugins);
+    pluginConfig = config.getPluginConfig(Locale.getDefault());
     assertEquals(1, pluginConfig.length);
     assertEquals("p2", pluginConfig[0].getName());
     assertEquals(1, pluginConfig[0].getModules().size());
@@ -240,17 +247,16 @@ public class DefaultConfigTest {
   @Test
   public void ignoresConfigurationForNonExistingPlugins() throws IOException {
     Set<PluginDescriptor> plugins = Collections.singleton(new PluginDescriptor("p1", true));
-    Config config = new DefaultConfig(mock(ConfigFolder.class), plugins, false);
+    Config config = new DefaultConfig(mock(File.class), context, request, plugins, false);
 
     ModuleConfigurationProvider provider = mock(ModuleConfigurationProvider.class);
     Map<String, JSONObject> providerConf =
         Collections.singletonMap("another_plugin", new JSONObject());
     when(provider.getPluginConfig(any(PortalRequestConfiguration.class),
         any(HttpServletRequest.class))).thenReturn(providerConf);
-    config.addModuleConfigurationProvider(provider);
+    when(context.getAttribute(Geoladris.ATTR_CONFIG_PROVIDERS)).thenReturn(Arrays.asList(provider));
 
-    PluginDescriptor[] pluginConfig =
-        config.getPluginConfig(Locale.getDefault(), mock(HttpServletRequest.class));
+    PluginDescriptor[] pluginConfig = config.getPluginConfig(Locale.getDefault());
     assertEquals(1, pluginConfig.length);
   }
 }
