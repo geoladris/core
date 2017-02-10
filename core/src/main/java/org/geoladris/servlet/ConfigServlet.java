@@ -28,11 +28,6 @@ public class ConfigServlet extends HttpServlet {
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {
-    doGet(req, resp, getServletContext());
-  }
-
-  void doGet(HttpServletRequest req, HttpServletResponse resp, ServletContext context)
-      throws IOException {
     Config config = (Config) req.getAttribute(Geoladris.ATTR_CONFIG);
     Locale locale = (Locale) req.getAttribute(Geoladris.ATTR_LOCALE);
 
@@ -48,8 +43,8 @@ public class ConfigServlet extends HttpServlet {
     JSONObject moduleConfig = new JSONObject();
     // Fixed elements
     PluginDescriptor[] enabledPluginDescriptors = config.getPluginConfig(locale);
-    moduleConfig.element("customization",
-        buildCustomizationObject(context, config, locale, title, enabledPluginDescriptors));
+    moduleConfig.element("customization", buildCustomizationObject(getServletContext(), config,
+        locale, title, enabledPluginDescriptors));
     moduleConfig.element("i18n", buildI18NObject(bundle));
     moduleConfig.element("url-parameters", JSONSerializer.toJSON(req.getParameterMap()));
 

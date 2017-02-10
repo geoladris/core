@@ -42,7 +42,6 @@ public class ConfigFilter implements Filter {
   @SuppressWarnings("unchecked")
   public void init(FilterConfig filterConfig) throws ServletException {
     this.servletContext = filterConfig.getServletContext();
-    this.rootConfigDir = getDir(this.servletContext);
 
     List<ModuleConfigurationProvider> providers =
         (List<ModuleConfigurationProvider>) this.servletContext
@@ -54,38 +53,38 @@ public class ConfigFilter implements Filter {
     }
   }
 
-  public File getDir(ServletContext context) {
-    Environment env = Environment.getInstance();
+  private File getRootConfigDir() {
+    if (this.rootConfigDir == null) {
+      Environment env = Environment.getInstance();
 
-    File dir = null;
-    String configDir = env.getConfigDir(context);
-    if (configDir != null) {
-      // Directory provided by getConfigDir uses subdirectories for contexts
-      dir = new File(configDir, context.getContextPath());
-    } else {
-      // Directory provided by getPortalConfigDir does not use subdirectories
-      configDir = env.getPortalConfigDir(context);
+      String configDir = env.getConfigDir(servletContext);
       if (configDir != null) {
-        dir = new File(configDir);
+        // Directory provided by getConfigDir uses subdirectories for contexts
+        this.rootConfigDir = new File(configDir, servletContext.getContextPath());
+      } else {
+        // Directory provided by getPortalConfigDir does not use subdirectories
+        configDir = env.getPortalConfigDir(servletContext);
+        if (configDir != null) {
+          this.rootConfigDir = new File(configDir);
+        }
       }
+
+      File defaultDir = new File(servletContext.getRealPath("WEB-INF/default_config"));
+      if (this.rootConfigDir == null) {
+        this.rootConfigDir = defaultDir;
+        logger.warn("GEOLADRIS_CONFIG_DIR and PORTAL_CONFIG_DIR properties not found. Using "
+            + this.rootConfigDir.getAbsolutePath() + " as configuration directory.");
+      } else if (!this.rootConfigDir.exists()) {
+        logger.warn("Configuration directory is set to " + this.rootConfigDir.getAbsolutePath()
+            + ", but it doesn't exist. Using " + defaultDir.getAbsolutePath() + ".");
+        this.rootConfigDir = defaultDir;
+      }
+
+      logger.info("============================================================================");
+      logger.info("Configuration directory: " + this.rootConfigDir.getAbsolutePath());
+      logger.info("============================================================================");
     }
-
-    File defaultDir = new File(context.getRealPath("WEB-INF/default_config"));
-    if (dir == null) {
-      dir = defaultDir;
-      logger.warn("GEOLADRIS_CONFIG_DIR and PORTAL_CONFIG_DIR properties " + "not found. Using "
-          + dir.getAbsolutePath() + " as configuration directory.");
-    } else if (!dir.exists()) {
-      logger.warn("Configuration directory is set to " + dir.getAbsolutePath()
-          + ", but it doesn't exist. Using " + defaultDir.getAbsolutePath() + ".");
-      dir = defaultDir;
-    }
-
-    logger.info("============================================================================");
-    logger.info("Configuration directory: " + dir.getAbsolutePath());
-    logger.info("============================================================================");
-
-    return dir;
+    return rootConfigDir;
   }
 
   @Override
@@ -98,12 +97,12 @@ public class ConfigFilter implements Filter {
     if (app != null) {
       config = this.appConfigs.get(app);
       if (config == null) {
-        config = initConfig(request, new File(this.rootConfigDir, app));
+        config = initConfig(request, new File(getRootConfigDir(), app));
         this.appConfigs.put(app, config);
       }
     } else {
       if (this.defaultConfig == null) {
-        this.defaultConfig = initConfig(request, this.rootConfigDir);
+        this.defaultConfig = initConfig(request, getRootConfigDir());
       }
       config = this.defaultConfig;
     }
@@ -115,8 +114,10 @@ public class ConfigFilter implements Filter {
   }
 
   private String getApp(HttpServletRequest request) {
-    String root = request.getContextPath();
-    String path = request.getRequestURI().substring(root.length() + 1);
+    String root = request.getContextPath().substring(1);
+    // length + 2 to remove leading and trailing slashes
+    String path = request.getRequestURI();
+    path = path.substring(Math.min(path.length(), root.length() + 2));
     if (path.length() == 0) {
       return null;
     }
@@ -125,7 +126,7 @@ public class ConfigFilter implements Filter {
     if (dbProvider != null && dbProvider.isEnabled()) {
       return dbProvider.hasApp(root + "/" + app) ? app : null;
     } else {
-      File appConfigDir = new File(this.rootConfigDir, app);
+      File appConfigDir = new File(getRootConfigDir(), app);
       File publicConf = new File(appConfigDir, PublicConfProvider.FILE);
       File pluginJson = new File(appConfigDir, "plugin-conf.json");
       return publicConf.isFile() || pluginJson.isFile() ? app : null;

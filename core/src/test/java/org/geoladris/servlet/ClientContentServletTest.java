@@ -4,7 +4,7 @@ import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
 import static org.mockito.Matchers.startsWith;
-import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -17,35 +17,28 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
 
-import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
-import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 import org.geoladris.Environment;
-import org.geoladris.Geoladris;
-import org.geoladris.JEEContext;
-import org.geoladris.JEEContextAnalyzer;
 import org.geoladris.PluginDescriptor;
+import org.geoladris.TestingServletContext;
 import org.geoladris.config.Config;
-import org.geoladris.config.DefaultConfig;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 public class ClientContentServletTest {
-  @Mock
-  private HttpServletRequest request;
-
   private Config config;
   private ClientContentServlet servlet;
+
+  private HttpServletResponse response;
+  private HttpServletRequest request;
 
   private Properties systemProperties;
 
@@ -69,13 +62,16 @@ public class ClientContentServletTest {
    * 
    * @param folder
    * @throws ServletException
+   * @throws IOException
    */
-  public void setupConfigurationFolder(final String folder) throws ServletException {
-    ServletContextEvent servletContextEvent = mock(ServletContextEvent.class);
-    ServletContext servletContext = mock(ServletContext.class);
+  public void setupConfigurationFolder(final String folder) throws ServletException, IOException {
     String confDir = folder.substring(0, folder.lastIndexOf('/'));
-    String contextPath = folder.substring(folder.lastIndexOf('/') + 1);
-    System.setProperty(Environment.CONFIG_DIR, confDir);
+    String contextPath = folder.substring(folder.lastIndexOf('/'));
+
+    TestingServletContext context = new TestingServletContext();
+    context.setContextPath(contextPath);
+
+    ServletContext servletContext = context.servletContext;
     when(servletContext.getResourcePaths("/WEB-INF/lib")).thenReturn(new HashSet<String>());
     Answer<String> answer = new Answer<String>() {
       @Override
@@ -85,28 +81,16 @@ public class ClientContentServletTest {
     };
     when(servletContext.getRealPath(startsWith("/WEB-INF/"))).then(answer);
     when(servletContext.getRealPath(startsWith("WEB-INF/"))).then(answer);
-    when(servletContext.getContextPath()).thenReturn(contextPath);
-    when(request.getContextPath()).thenReturn(contextPath);
-    when(servletContextEvent.getServletContext()).thenReturn(servletContext);
 
-    when(servletContext.getAttribute(Geoladris.ATTR_CONFIG_PROVIDERS))
-        .thenReturn(new ArrayList<>());
-    HttpSession session = mock(HttpSession.class);
-    when(session.getServletContext()).thenReturn(servletContext);
-    when(request.getSession()).thenReturn(session);
-
-    JEEContext context = new JEEContext(servletContext, new File(folder, "plugins"));
-    JEEContextAnalyzer analyzer = new JEEContextAnalyzer(context);
-    config = new DefaultConfig(new File(folder), servletContext, request,
-        analyzer.getPluginDescriptors(), false);
-    when(request.getAttribute(Geoladris.ATTR_CONFIG)).thenReturn(config);
-    when(request.getAttribute(Geoladris.ATTR_APP)).thenReturn("");
+    config = context.mockConfig(new File(folder));
+    System.setProperty(Environment.CONFIG_DIR, confDir);
 
     servlet = new ClientContentServlet();
-    servlet.setTestingClasspathRoot("/" + contextPath + "/WEB-INF/classes");
-    ServletConfig servletConfig = mock(ServletConfig.class);
-    when(servletConfig.getServletContext()).thenReturn(servletContext);
-    servlet.init(servletConfig);
+    servlet.setTestingClasspathRoot(contextPath + "/WEB-INF/classes");
+    servlet.init(context.servletConfig);
+
+    this.request = context.request;
+    this.response = context.response;
   }
 
   @Test
@@ -170,9 +154,9 @@ public class ClientContentServletTest {
       int secondSlashIndex = path.indexOf("/", 1);
       String servletPath = path.substring(0, secondSlashIndex);
       String pathInfo = path.substring(secondSlashIndex);
-      HttpServletResponse response = mock(HttpServletResponse.class);
       String contextPath = this.servlet.getServletContext().getContextPath();
       when(request.getRequestURI()).thenReturn(contextPath + servletPath + pathInfo);
+      reset(response);
       servlet.doGet(request, response);
 
       verify(response).setStatus(HttpServletResponse.SC_OK);
@@ -189,7 +173,6 @@ public class ClientContentServletTest {
 
   private void check404(ClientContentServlet servlet, String servletPath, String pathInfo)
       throws ServletException, IOException {
-    HttpServletResponse response = mock(HttpServletResponse.class);
     String contextPath = this.servlet.getServletContext().getContextPath();
     when(request.getRequestURI()).thenReturn(contextPath + servletPath + pathInfo);
 
@@ -205,10 +188,8 @@ public class ClientContentServletTest {
   public void test304NotModified() throws ServletException, IOException {
     setupConfigurationFolder("src/test/resources/testNoJavaPlugins");
 
-    HttpServletResponse response = mock(HttpServletResponse.class);
     String contextPath = this.servlet.getServletContext().getContextPath();
     when(request.getRequestURI()).thenReturn(contextPath + "/modules/plugin1/a.js");
-
     when(request.getDateHeader("If-Modified-Since")).thenReturn(System.currentTimeMillis());
 
     servlet.doGet(request, response);
@@ -228,11 +209,10 @@ public class ClientContentServletTest {
     setupConfigurationFolder("src/test/resources/testNoJavaPlugins");
     String contextPath = this.servlet.getServletContext().getContextPath();
     when(request.getRequestURI()).thenReturn(contextPath + "/modules/plugin1/images/image.svg");
-    HttpServletResponse resp = mock(HttpServletResponse.class);
 
-    servlet.doGet(request, resp);
+    servlet.doGet(request, response);
 
-    verify(resp).setContentType("image/svg+xml");
+    verify(response).setContentType("image/svg+xml");
   }
 
   @Test

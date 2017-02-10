@@ -25,7 +25,7 @@ public class AppContextListener implements ServletContextListener {
         root = root.substring(1);
       }
 
-      dbProvider = new DBConfigurationProvider(root, new InitialContext());
+      dbProvider = getDBProvider(root);
     } catch (NamingException e) {
       // Cannot obtain config from database. Ignore.
     }
@@ -39,6 +39,13 @@ public class AppContextListener implements ServletContextListener {
     }
 
     context.setAttribute(Geoladris.ATTR_CONFIG_PROVIDERS, providers);
+  }
+
+  /**
+   * For testing purposes
+   */
+  DBConfigurationProvider getDBProvider(String contextPath) throws NamingException {
+    return new DBConfigurationProvider(contextPath, new InitialContext());
   }
 
   @Override

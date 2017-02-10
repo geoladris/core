@@ -8,9 +8,9 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-public class DelegateServlet extends HttpServlet {
-  private static final String SUBAPP_REGEX = "^(/.+)?";
+import org.geoladris.Geoladris;
 
+public class DelegateServlet extends HttpServlet {
   private ClientContentServlet clientContent = new ClientContentServlet();
   private IndexHTMLServlet index = new IndexHTMLServlet();
   private MainJSServlet main = new MainJSServlet();
@@ -29,15 +29,34 @@ public class DelegateServlet extends HttpServlet {
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {
-    String uri = req.getRequestURI();
-    if (uri.matches(SUBAPP_REGEX + "/$")) {
-      index.doGet(req, resp);
-    } else if (uri.matches(SUBAPP_REGEX + "/config.js$")) {
-      config.doGet(req, resp);
-    } else if (uri.matches(SUBAPP_REGEX + "/modules/main.js$")) {
-      main.doGet(req, resp);
-    } else {
-      clientContent.doGet(req, resp);
+    Object app = req.getAttribute(Geoladris.ATTR_APP);
+    String regexPrefix = "^" + getServletContext().getContextPath();
+    if (app != null) {
+      regexPrefix += "/" + app;
     }
+
+    String uri = req.getRequestURI();
+    if (uri.matches(regexPrefix + "/$")) {
+      index.doGet(req, resp);
+    } else if (uri.matches(regexPrefix + "/config.js$")) {
+      config.doGet(req, resp);
+    } else if (uri.matches(regexPrefix + "/modules/main.js$")) {
+      main.doGet(req, resp);
+    } else if (uri.matches(regexPrefix + "/(static|jslib|modules|styles|theme)/.*")) {
+      clientContent.doGet(req, resp);
+    } else {
+      resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+    }
+  }
+
+  /**
+   * For testing purposes
+   */
+  void setDelegates(ClientContentServlet clientContent, IndexHTMLServlet index, MainJSServlet main,
+      ConfigServlet config) {
+    this.clientContent = clientContent;
+    this.index = index;
+    this.main = main;
+    this.config = config;
   }
 }
