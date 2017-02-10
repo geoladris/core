@@ -64,7 +64,6 @@ public interface Config {
    * the array.
    * 
    * @param locale
-   * @param request
    * @return
    */
   PluginDescriptor[] getPluginConfig(Locale locale);

@@ -1,11 +1,14 @@
 package org.geoladris;
 
+import java.util.List;
 import java.util.Locale;
 
+import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 import org.geoladris.config.Config;
+import org.geoladris.config.ModuleConfigurationProvider;
 
 public interface Geoladris {
   // Servlet context attributes
