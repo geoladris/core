@@ -288,10 +288,10 @@ EOF
 cat >> ${pom} << 'EOF'
 						<executions>
 							<execution>
-								<id>generate-buildconfig</id>
+								<id>generate-minified</id>
 								<phase>prepare-package</phase>
 								<goals>
-									<goal>generate-buildconfig</goal>
+									<goal>generate-minified</goal>
 								</goals>
 								<configuration>
 									<mainTemplate>${project.build.directory}/requirejs/main.js</mainTemplate>
