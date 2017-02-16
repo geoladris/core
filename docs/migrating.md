@@ -15,6 +15,31 @@ que deberíamos transformar a:
 
 ![](images/plugin-jar-6.x.png)
 
+
+### <a name="ModuleConfigurationProviders"></a>`ModuleConfigurationProviders`
+En el caso de que se hayan desarrollado `ModuleConfigurationProvider` propios, estos deben añadirse a la aplicación de manera distinta. Anteriormente se añadían a un objeto `Config` en un `ServletContextListener`:
+
+```java
+@Override
+public void contextInitialized(ServletContextEvent sce) {
+  Config config = (Config)
+    sce.getServletContext().getAttribute(AppContextListener.ATTR_CONFIG);
+  config.addModuleConfigurationProvider(new LayersModuleConfigurationProvider());
+}
+```
+
+Ahora se añaden directamente a una lista en el `ServletContext`:
+
+```java
+@SuppressWarnings("unchecked")
+@Override
+public void contextInitialized(ServletContextEvent sce) {
+  List<ModuleConfigurationProvider> providers = (List<ModuleConfigurationProvider>)
+    sce.getServletContext().getAttribute(Geoladris.ATTR_CONFIG_PROVIDERS);
+  providers.add(new LayersModuleConfigurationProvider());
+}
+```
+
 ## Empaquetados en el directorio de configuración
 
 En este caso, los plugins ya estaban dentro de un subdirectorio de `plugins` en la versión 5.x, por lo que funcionarán en la versión 6.x sin ningún cambio.

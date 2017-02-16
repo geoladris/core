@@ -7,6 +7,7 @@ This project follows [semantic versioning](http://semver.org).
 * Los plugins empaquetados como `.jar` pasan a estar contenidos en un subdirectorio dentro de `geoladris` (en lugar de directamente en `geoladris`). Así, todos los plugins están en subdirectorios, independientemente de su empaquetado (ver [guía de migración](migrating.md)).
 * Todos los plugins toman su nombre del subdirectorio en el que están contenidos.
 * `installInRoot` por defecto a `false` para todos los plugins, independientemente del empaquetado; `core` se mantiene con `installInRoot : true` para que sus módulos se puedan referenciar de manera sencilla desde otros plugins.
+* `ModuleConfigurationProvider` añadidos a una lista en `ServletContext` en lugar de a un objeto `Config` (ver [guía de migración](migrating.md#ModuleConfigurationProviders)).
 
 ## Corregido
 
@@ -21,6 +22,7 @@ This project follows [semantic versioning](http://semver.org).
 * [Posibilidad de añadir módulos en subdirectorios](https://github.com/geoladris/core/issues/10).
 * [Detectar cambios en los directorios de plugins](https://github.com/geoladris/core/issues/33).
 * [Fichero descriptor de plugin (`<plugin>-conf.json`) opcional](https://github.com/geoladris/core/issues/36).
+* Posibilidad de configurar varias aplicaciones en un mismo despliegue (ver [doc](#configuring_apps.md#multiple_apps)).
 
 # 5.0.1 [2016-12-06]
 

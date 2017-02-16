@@ -1,4 +1,4 @@
-## Directorio de configuración
+# <a name="config_dir"></a>Directorio de configuración
 
 Las aplicaciones Geoladris se pueden configurar utilizando un directorio de configuración. Este directorio se puede especificar de diferentes maneras:
 
@@ -13,7 +13,7 @@ Las aplicaciones Geoladris se pueden configurar utilizando un directorio de conf
 	</context-param>
 ```
 
-Este directorio deberá contener un subdirectorio por cada aplicación desplegada.
+Este directorio deberá contener un subdirectorio por cada aplicación `.war` desplegada.
 
 Por ejemplo, si se han desplegado los paquetes `visor-demo.war` y `visor-bosques.war`, y `GEOLADRIS_CONF_DIR` se ha establecido a `var/geoladris`, se utilizarán los siguientes directorios de configuración: `/var/geoladris/visor-demo` y `/var/geoladris/visor-bosques`.
 
@@ -33,7 +33,7 @@ Si alguno de esos directorios no existe o si `GEOLADRIS_CONF_DIR` no se ha confi
 
 # Configuración de los plugins
 
-La configuración de los plugins se puede especificar de dos maneras diferentes: mediante ficheros en el directorio de configuración o mediante una conexión a una base de datos.
+La configuración de los plugins se puede especificar de dos maneras diferentes: mediante [ficheros](#ficheros-json) en el directorio de configuración o mediante una conexión a una [base de datos](#db).
 
 En ambos casos, la configuración se especifica con un objeto JSON. Cada propiedad del objeto es el nombre del _plugin_ a configurar y el valor es la configuración del plugin.
 
@@ -81,7 +81,7 @@ En el caso de configurar los plugins mediante ficheros, bastará con crear un fi
 
 Si además se desea adaptar la configuración en función del usuario , habrá que añadir ficheros `role_conf/<rol>.json` dentro del directorio de configuración. Cada uno de los ficheros contiene la configuración específica del rol del usuario. El contenido de los ficheros sigue el mismo formato que `public-conf.json`.
 
-## Base de datos
+## <a name="db"></a>Base de datos
 
 Para configurar los plugins desde una base de datos, dicha base de datos deberá tener una tabla `apps` con las siguientes columnas:
 
@@ -103,3 +103,35 @@ La conexión a la base de datos se obtiene de la siguiente manera:
   - `JDBC_CONNECTION_SCHEMA`
 
 Si se ha obtenido una conexión válida, con una configuración por defecto (`SELECT conf FROM <schema>.apps WHERE app = '<app>' AND role = 'default'`), se utiliza dicha configuración. En caso contrario, se utilizan los [ficheros .json](#ficheros-json).
+
+# <a name="multiple_apps"></a>Múltiples aplicaciones
+
+Es posible tener varios visores o aplicaciones desplegando un único `.war`. Estas aplicaciones se pueden añadir y eliminar sin necesidad de reiniciar Tomcat.
+
+## Ficheros `json.`
+
+Si se están utilizando [ficheros](#ficheros-json) para configurar los plugins bastará con añadir un subdirectorio dentro del [directorio de configuración](#config_dir) de la aplicación con los ficheros de configuración necesarios (`portal.properties`, `public-conf.json`, etc.).
+
+Por ejemplo, si se ha desplegado `geoladris.war`, la siguiente petición::
+
+> http://localhost:8080/geoladris/
+
+obtendrá su configuración de `<GEOLADRIS_CONF_DIR>/public-conf.json`, mientras que:
+
+> http://localhost:8080/geoladris/visor1
+
+la obtendrá de `<GEOLADRIS_CONF_DIR>/visor1/public-conf.json`.
+
+Cabe destacar que el subdirectorio `plugins` es independiente por aplicación, por lo que diferentes aplicaciones pueden tener disponibles conjuntos de plugins diferentes.
+
+## Base de datos
+
+En el caso de obtener la configuración de una [base de datos](#db), bastará con añadir un registro donde `app` sea `<war>/<app>`. Por ejemplo, la siguiente configuración:
+
+```sql
+INSERT INTO geoladris.apps VALUES('geoladris/visor1', 'default', ...)
+```
+
+se utilizará para la siguiente petición, habiendo desplegado `geoladris.war`:
+
+> http://localhost:8080/geoladris/visor1
