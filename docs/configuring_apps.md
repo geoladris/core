@@ -21,7 +21,7 @@ Si alguno de esos directorios no existe o si `GEOLADRIS_CONF_DIR` no se ha confi
 
 > TODO: Plugins can store configuration in two files:
 
-##portal.properties
+## portal.properties
 
 > TODO: Private configuration.
 
@@ -44,7 +44,7 @@ Aparte existen los siguientes psedo-módulos:
 * `_enabled`: Activa (`true`) o desactiva (`false`) el plugin. Por defecto es `true`.
 * `_override`: Sobreescribe (`true`) o mezcla (`false`) la configuración por defecto del plugin. Por defecto es `false`.
 
-### Ejemplo
+Ejemplo:
 
 ```json
     {
@@ -108,7 +108,7 @@ Si se ha obtenido una conexión válida, con una configuración por defecto (`SE
 
 Es posible tener varios visores o aplicaciones desplegando un único `.war`. Estas aplicaciones se pueden añadir y eliminar sin necesidad de reiniciar Tomcat.
 
-## Ficheros `json.`
+## Ficheros `.json`
 
 Si se están utilizando [ficheros](#ficheros-json) para configurar los plugins bastará con añadir un subdirectorio dentro del [directorio de configuración](#config_dir) de la aplicación con los ficheros de configuración necesarios (`portal.properties`, `public-conf.json`, etc.).
 
