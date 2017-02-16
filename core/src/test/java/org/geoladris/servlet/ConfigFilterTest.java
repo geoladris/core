@@ -1,6 +1,7 @@
 package org.geoladris.servlet;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -11,6 +12,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
@@ -18,6 +20,7 @@ import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.io.FileUtils;
 import org.geoladris.Context;
 import org.geoladris.Environment;
 import org.geoladris.Geoladris;
@@ -42,6 +45,7 @@ public class ConfigFilterTest {
   public TemporaryFolder folder = new TemporaryFolder();
 
   private ConfigFilter filter;
+  private TestingServletContext context;
 
   private HttpServletRequest request;
   private HttpServletResponse response;
@@ -53,10 +57,13 @@ public class ConfigFilterTest {
   @SuppressWarnings("unchecked")
   @Before
   public void setup() throws Exception {
-    TestingServletContext context = new TestingServletContext();
     folder.newFolder(CONTEXT_PATH);
     File defaultConfig = folder.newFolder(DEFAULT_CONFIG);
+
+    context = new TestingServletContext();
     context.setContextPath("/" + CONTEXT_PATH);
+    when(context.servletContext.getRealPath("WEB-INF/default_config"))
+        .thenReturn(defaultConfig.getAbsolutePath());
 
     System.clearProperty(Environment.CONFIG_DIR);
     System.clearProperty(Environment.PORTAL_CONFIG_DIR);
@@ -187,6 +194,61 @@ public class ConfigFilterTest {
     Config config = filter("/" + subapp + "/");
 
     assertEquals(subapp, config.getProperties().getProperty(PROP_APP));
+  }
+
+  @Test
+  public void removesNonExistingConfigsPeriodically() throws Exception {
+    File dir1 = setupSubapp("subapp1");
+    File dir2 = setupSubapp("subapp2");
+    new File(dir1, "public-conf.json").createNewFile();
+    new File(dir2, "public-conf.json").createNewFile();
+
+    filter.setSchedulerRate(1);
+    filter.init(context.filterConfig);
+
+    when(request.getRequestURI()).thenReturn("/" + CONTEXT_PATH + "/subapp1");
+    filter.doFilter(request, response, chain);
+    when(request.getRequestURI()).thenReturn("/" + CONTEXT_PATH + "/subapp2");
+    filter.doFilter(request, response, chain);
+
+    Map<String, Config> configs = filter.getAppConfigs();
+    assertEquals(2, configs.size());
+    assertTrue(configs.containsKey("subapp1"));
+    assertTrue(configs.containsKey("subapp2"));
+
+    FileUtils.deleteDirectory(dir1);
+    FileUtils.deleteDirectory(dir2);
+
+    Thread.sleep(1100);
+    assertEquals(0, configs.size());
+  }
+
+  @Test
+  public void removesNonExistingConfigsIfRequested() throws Exception {
+    File dir1 = setupSubapp("subapp1");
+    File dir2 = setupSubapp("subapp2");
+    new File(dir1, "public-conf.json").createNewFile();
+    new File(dir2, "public-conf.json").createNewFile();
+
+    filter.setSchedulerRate(1);
+    filter.init(context.filterConfig);
+
+    when(request.getRequestURI()).thenReturn("/" + CONTEXT_PATH + "/subapp1");
+    filter.doFilter(request, response, chain);
+    when(request.getRequestURI()).thenReturn("/" + CONTEXT_PATH + "/subapp2");
+    filter.doFilter(request, response, chain);
+
+    Map<String, Config> configs = filter.getAppConfigs();
+    assertEquals(2, configs.size());
+    assertTrue(configs.containsKey("subapp1"));
+    assertTrue(configs.containsKey("subapp2"));
+
+    FileUtils.deleteDirectory(dir1);
+
+    when(request.getRequestURI()).thenReturn("/" + CONTEXT_PATH + "/subapp1");
+    filter.doFilter(request, response, chain);
+    assertEquals(1, configs.size());
+    assertTrue(configs.containsKey("subapp2"));
   }
 
   private Config filter(String path) throws Exception {

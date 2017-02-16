@@ -6,6 +6,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -38,6 +41,22 @@ public class ConfigFilter implements Filter {
   private DBConfigurationProvider dbProvider;
   private ServletContext servletContext;
 
+  private int schedulerRate = 600;
+
+  /**
+   * For testing purposes
+   */
+  protected void setSchedulerRate(int schedulerRate) {
+    this.schedulerRate = schedulerRate;
+  }
+
+  /**
+   * For testing purposes
+   */
+  protected Map<String, Config> getAppConfigs() {
+    return appConfigs;
+  }
+
   @Override
   @SuppressWarnings("unchecked")
   public void init(FilterConfig filterConfig) throws ServletException {
@@ -51,6 +70,19 @@ public class ConfigFilter implements Filter {
         this.dbProvider = (DBConfigurationProvider) provider;
       }
     }
+
+    ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    scheduler.scheduleAtFixedRate(new Runnable() {
+      @Override
+      public void run() {
+        String root = servletContext.getContextPath().substring(1);
+        for (String app : appConfigs.keySet().toArray(new String[0])) {
+          if (!isAppEnabled(root, app)) {
+            appConfigs.remove(app);
+          }
+        }
+      }
+    }, this.schedulerRate, this.schedulerRate, TimeUnit.SECONDS);
   }
 
   private File getRootConfigDir() {
@@ -113,6 +145,17 @@ public class ConfigFilter implements Filter {
     chain.doFilter(req, resp);
   }
 
+  private boolean isAppEnabled(String root, String app) {
+    if (dbProvider != null && dbProvider.isEnabled()) {
+      return dbProvider.hasApp(root + "/" + app);
+    } else {
+      File appConfigDir = new File(getRootConfigDir(), app);
+      File publicConf = new File(appConfigDir, PublicConfProvider.FILE);
+      File pluginJson = new File(appConfigDir, "plugin-conf.json");
+      return publicConf.isFile() || pluginJson.isFile();
+    }
+  }
+
   private String getApp(HttpServletRequest request) {
     String root = request.getContextPath().substring(1);
     // length + 2 to remove leading and trailing slashes
@@ -121,15 +164,13 @@ public class ConfigFilter implements Filter {
     if (path.length() == 0) {
       return null;
     }
-    String app = path.split("/")[0];
 
-    if (dbProvider != null && dbProvider.isEnabled()) {
-      return dbProvider.hasApp(root + "/" + app) ? app : null;
+    String app = path.split("/")[0];
+    if (isAppEnabled(root, app)) {
+      return app;
     } else {
-      File appConfigDir = new File(getRootConfigDir(), app);
-      File publicConf = new File(appConfigDir, PublicConfProvider.FILE);
-      File pluginJson = new File(appConfigDir, "plugin-conf.json");
-      return publicConf.isFile() || pluginJson.isFile() ? app : null;
+      this.appConfigs.remove(app);
+      return null;
     }
   }
 
