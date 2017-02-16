@@ -1,8 +1,10 @@
 package org.geoladris.servlet;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -12,7 +14,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
@@ -34,6 +35,8 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 public class ConfigFilterTest {
   private static final String CONTEXT_PATH = "test";
@@ -58,7 +61,7 @@ public class ConfigFilterTest {
   @Before
   public void setup() throws Exception {
     folder.newFolder(CONTEXT_PATH);
-    File defaultConfig = folder.newFolder(DEFAULT_CONFIG);
+    final File defaultConfig = folder.newFolder(DEFAULT_CONFIG);
 
     context = new TestingServletContext();
     context.setContextPath("/" + CONTEXT_PATH);
@@ -78,8 +81,17 @@ public class ConfigFilterTest {
             .getAttribute(Geoladris.ATTR_CONFIG_PROVIDERS);
     providers.add(dbProvider);
 
-    when(context.servletContext.getRealPath("WEB-INF/default_config"))
-        .thenReturn(defaultConfig.getAbsolutePath());
+    when(context.servletContext.getRealPath(anyString())).then(new Answer<String>() {
+      @Override
+      public String answer(InvocationOnMock invocation) throws Throwable {
+        if (invocation.getArguments()[0].toString().startsWith("WEB-INF/default_config")) {
+          return defaultConfig.getAbsolutePath();
+        } else {
+          return folder.getRoot().getAbsolutePath();
+        }
+      }
+    });
+
     filter = spy(new ConfigFilter());
     filter.init(context.filterConfig);
 
@@ -203,24 +215,25 @@ public class ConfigFilterTest {
     new File(dir1, "public-conf.json").createNewFile();
     new File(dir2, "public-conf.json").createNewFile();
 
-    filter.setSchedulerRate(1);
+    filter.schedulerRate = 1;
     filter.init(context.filterConfig);
 
-    when(request.getRequestURI()).thenReturn("/" + CONTEXT_PATH + "/subapp1");
-    filter.doFilter(request, response, chain);
-    when(request.getRequestURI()).thenReturn("/" + CONTEXT_PATH + "/subapp2");
-    filter.doFilter(request, response, chain);
+    filter("/subapp1/");
+    filter("/subapp2/");
 
-    Map<String, Config> configs = filter.getAppConfigs();
-    assertEquals(2, configs.size());
-    assertTrue(configs.containsKey("subapp1"));
-    assertTrue(configs.containsKey("subapp2"));
+    assertEquals(2, filter.appConfigs.size());
+    assertEquals(2, filter.configUpdaters.size());
+    Thread t1 = filter.configUpdaters.get(filter.appConfigs.get("subapp1"));
+    Thread t2 = filter.configUpdaters.get(filter.appConfigs.get("subapp2"));
 
     FileUtils.deleteDirectory(dir1);
     FileUtils.deleteDirectory(dir2);
 
     Thread.sleep(1100);
-    assertEquals(0, configs.size());
+    assertEquals(0, filter.appConfigs.size());
+    assertEquals(0, filter.configUpdaters.size());
+    assertFalse(t1.isAlive());
+    assertFalse(t2.isAlive());
   }
 
   @Test
@@ -230,7 +243,39 @@ public class ConfigFilterTest {
     new File(dir1, "public-conf.json").createNewFile();
     new File(dir2, "public-conf.json").createNewFile();
 
-    filter.setSchedulerRate(1);
+    filter.schedulerRate = 1;
+    filter.init(context.filterConfig);
+
+    filter("/");
+    filter("/subapp1/");
+    filter("/subapp2/");
+
+    assertEquals(2, filter.appConfigs.size());
+    assertEquals(3, filter.configUpdaters.size());
+    Thread t1 = filter.configUpdaters.get(filter.appConfigs.get("subapp1"));
+    Thread t2 = filter.configUpdaters.get(filter.appConfigs.get("subapp2"));
+
+    FileUtils.deleteDirectory(dir1);
+
+    // Wait for the plugin updater to finish
+    Thread.sleep(100);
+
+    filter("/subapp1/");
+    assertEquals(1, filter.appConfigs.size());
+    assertTrue(filter.appConfigs.containsKey("subapp2"));
+    assertEquals(2, filter.configUpdaters.size());
+    assertFalse(t1.isInterrupted());
+    assertTrue(t2.isAlive());
+  }
+
+  @Test
+  public void addsPluginUpdaterForConfigs() throws Exception {
+    File dir1 = setupSubapp("subapp1");
+    File dir2 = setupSubapp("subapp2");
+    new File(dir1, "public-conf.json").createNewFile();
+    new File(dir2, "public-conf.json").createNewFile();
+
+    filter.schedulerRate = 1;
     filter.init(context.filterConfig);
 
     when(request.getRequestURI()).thenReturn("/" + CONTEXT_PATH + "/subapp1");
@@ -238,17 +283,12 @@ public class ConfigFilterTest {
     when(request.getRequestURI()).thenReturn("/" + CONTEXT_PATH + "/subapp2");
     filter.doFilter(request, response, chain);
 
-    Map<String, Config> configs = filter.getAppConfigs();
-    assertEquals(2, configs.size());
-    assertTrue(configs.containsKey("subapp1"));
-    assertTrue(configs.containsKey("subapp2"));
-
-    FileUtils.deleteDirectory(dir1);
-
-    when(request.getRequestURI()).thenReturn("/" + CONTEXT_PATH + "/subapp1");
-    filter.doFilter(request, response, chain);
-    assertEquals(1, configs.size());
-    assertTrue(configs.containsKey("subapp2"));
+    assertEquals(filter.configUpdaters.size(), filter.appConfigs.size());
+    for (String app : filter.appConfigs.keySet()) {
+      Thread thread = filter.configUpdaters.get(filter.appConfigs.get(app));
+      assertFalse(thread.isInterrupted());
+      assertTrue(thread.isAlive());
+    }
   }
 
   private Config filter(String path) throws Exception {

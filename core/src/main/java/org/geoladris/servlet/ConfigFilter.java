@@ -26,6 +26,7 @@ import org.geoladris.Geoladris;
 import org.geoladris.JEEContext;
 import org.geoladris.JEEContextAnalyzer;
 import org.geoladris.PluginDescriptor;
+import org.geoladris.PluginUpdater;
 import org.geoladris.config.Config;
 import org.geoladris.config.DBConfigurationProvider;
 import org.geoladris.config.DefaultConfig;
@@ -35,27 +36,15 @@ import org.geoladris.config.PublicConfProvider;
 public class ConfigFilter implements Filter {
   private static final Logger logger = Logger.getLogger(ConfigFilter.class);
 
-  private Map<String, Config> appConfigs = new HashMap<>();
+  // Protected for testing purposes
+  protected Map<String, Config> appConfigs = new HashMap<>();
+  protected Map<Config, Thread> configUpdaters = new HashMap<>();
+  protected int schedulerRate = 600;
+
   private Config defaultConfig;
   private File rootConfigDir;
   private DBConfigurationProvider dbProvider;
   private ServletContext servletContext;
-
-  private int schedulerRate = 600;
-
-  /**
-   * For testing purposes
-   */
-  protected void setSchedulerRate(int schedulerRate) {
-    this.schedulerRate = schedulerRate;
-  }
-
-  /**
-   * For testing purposes
-   */
-  protected Map<String, Config> getAppConfigs() {
-    return appConfigs;
-  }
 
   @Override
   @SuppressWarnings("unchecked")
@@ -76,13 +65,15 @@ public class ConfigFilter implements Filter {
       @Override
       public void run() {
         String root = servletContext.getContextPath().substring(1);
-        for (String app : appConfigs.keySet().toArray(new String[0])) {
+        String[] apps = appConfigs.keySet().toArray(new String[0]);
+        for (String app : apps) {
           if (!isAppEnabled(root, app)) {
-            appConfigs.remove(app);
+            removeApp(app);
           }
         }
       }
     }, this.schedulerRate, this.schedulerRate, TimeUnit.SECONDS);
+
   }
 
   private File getRootConfigDir() {
@@ -156,6 +147,12 @@ public class ConfigFilter implements Filter {
     }
   }
 
+  private void removeApp(String app) {
+    Config config = this.appConfigs.remove(app);
+    Thread thread = this.configUpdaters.remove(config);
+    thread.interrupt();
+  }
+
   private String getApp(HttpServletRequest request) {
     String root = request.getContextPath().substring(1);
     // length + 2 to remove leading and trailing slashes
@@ -169,7 +166,7 @@ public class ConfigFilter implements Filter {
     if (isAppEnabled(root, app)) {
       return app;
     } else {
-      this.appConfigs.remove(app);
+      removeApp(app);
       return null;
     }
   }
@@ -181,6 +178,16 @@ public class ConfigFilter implements Filter {
     boolean useCache = Environment.getInstance().getConfigCache();
     DefaultConfig config =
         new DefaultConfig(configDir, this.servletContext, request, plugins, useCache);
+
+    try {
+      PluginUpdater updater = new PluginUpdater(analyzer, config, context.getDirs());
+      Thread t = new Thread(updater);
+      t.start();
+      this.configUpdaters.put(config, t);
+    } catch (IOException e) {
+      logger.warn("Cannot start plugin updater. Plugins descriptor won't be updated");
+    }
+
     return config;
   }
 
