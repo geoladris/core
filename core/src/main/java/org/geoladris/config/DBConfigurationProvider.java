@@ -10,6 +10,7 @@ import java.util.Map;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 import javax.sql.DataSource;
 
 import org.apache.commons.dbcp2.BasicDataSource;
@@ -98,8 +99,14 @@ public class DBConfigurationProvider implements ModuleConfigurationProvider {
   @Override
   public Map<String, JSONObject> getPluginConfig(PortalRequestConfiguration configurationContext,
       HttpServletRequest request) throws IOException {
-    Object roleAttr = request.getSession().getAttribute(Geoladris.ATTR_ROLE);
-    String role = roleAttr != null ? roleAttr.toString() : DEFAULT_ROLE;
+    HttpSession session = request.getSession();
+    String role;
+    if (session == null) {
+      role = DEFAULT_ROLE;
+    } else {
+      Object roleAttr = session.getAttribute(Geoladris.ATTR_ROLE);
+      role = roleAttr != null ? roleAttr.toString() : DEFAULT_ROLE;
+    }
 
     Object appAttr = request.getAttribute(Geoladris.ATTR_APP);
     String app = appAttr != null ? appAttr.toString() : null;

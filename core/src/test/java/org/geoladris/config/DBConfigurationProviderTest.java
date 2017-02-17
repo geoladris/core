@@ -238,6 +238,21 @@ public class DBConfigurationProviderTest {
     verify(this.st, atLeastOnce()).setString(1, "test");
   }
 
+  @Test
+  public void nullSession() throws Exception {
+    DataSource ds = mockDataSource(true, "{'a' : { 'm1' : true}}");
+
+    InitialContext context = mock(InitialContext.class);
+    when(context.lookup("java:/comp/env/jdbc/" + DBConfigurationProvider.CONTEXT_RESOURCE_NAME))
+        .thenReturn(ds);
+
+    DBConfigurationProvider provider = new DBConfigurationProvider("test", context);
+
+    Map<String, JSONObject> pluginConfig = provider
+        .getPluginConfig(mock(PortalRequestConfiguration.class), mock(HttpServletRequest.class));
+    assertTrue(pluginConfig.get("a").getBoolean("m1"));
+  }
+
   private DataSource mockDataSource(boolean hasNext, String conf) throws SQLException {
     ResultSet result = mock(ResultSet.class);
     when(result.next()).thenReturn(hasNext);

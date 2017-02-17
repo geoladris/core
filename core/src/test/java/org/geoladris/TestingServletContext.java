@@ -49,11 +49,9 @@ public class TestingServletContext {
     this.filterConfig = mock(FilterConfig.class);
     this.servletContext = mock(ServletContext.class);
     this.session = mock(HttpSession.class);
-    this.request = mock(HttpServletRequest.class);
     this.response = mock(HttpServletResponse.class);
 
     this.servletAttributes = new HashMap<>();
-    this.requestAttributes = new HashMap<>();
 
     when(this.event.getServletContext()).thenReturn(this.servletContext);
 
@@ -68,22 +66,6 @@ public class TestingServletContext {
         return writer;
       }
     });
-
-    when(this.request.getSession()).thenReturn(this.session);
-    when(this.request.getAttribute(anyString())).then(new Answer<Object>() {
-      @Override
-      public Object answer(InvocationOnMock invocation) throws Throwable {
-        return requestAttributes.get(invocation.getArguments()[0].toString());
-      }
-    });
-    doAnswer(new Answer<Void>() {
-      @Override
-      public Void answer(InvocationOnMock invocation) throws Throwable {
-        Object[] args = invocation.getArguments();
-        requestAttributes.put(args[0].toString(), args[1]);
-        return null;
-      }
-    }).when(this.request).setAttribute(anyString(), any());
 
     when(this.session.getServletContext()).thenReturn(this.servletContext);
 
@@ -103,6 +85,8 @@ public class TestingServletContext {
     }).when(this.servletContext).setAttribute(anyString(), any());
     this.servletAttributes.put(Geoladris.ATTR_CONFIG_PROVIDERS,
         new ArrayList<ModuleConfigurationProvider>());
+
+    resetRequest();
   }
 
   public Config mockConfig(File configDir) {
@@ -119,6 +103,30 @@ public class TestingServletContext {
   public void setContextPath(String contextPath) {
     when(this.servletContext.getContextPath()).thenReturn(contextPath);
     when(this.request.getContextPath()).thenReturn(contextPath);
+  }
+
+  public void resetRequest() {
+    this.request = mock(HttpServletRequest.class);
+    this.requestAttributes = new HashMap<>();
+
+    when(this.request.getSession()).thenReturn(this.session);
+    when(this.request.getAttribute(anyString())).then(new Answer<Object>() {
+      @Override
+      public Object answer(InvocationOnMock invocation) throws Throwable {
+        return requestAttributes.get(invocation.getArguments()[0].toString());
+      }
+    });
+    doAnswer(new Answer<Void>() {
+      @Override
+      public Void answer(InvocationOnMock invocation) throws Throwable {
+        Object[] args = invocation.getArguments();
+        requestAttributes.put(args[0].toString(), args[1]);
+        return null;
+      }
+    }).when(this.request).setAttribute(anyString(), any());
+
+    String path = this.servletContext.getContextPath();
+    when(this.request.getContextPath()).thenReturn(path);
   }
 
   public String getResponse() {

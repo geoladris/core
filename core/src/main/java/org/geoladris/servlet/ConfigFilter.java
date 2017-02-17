@@ -130,6 +130,7 @@ public class ConfigFilter implements Filter {
       config = this.defaultConfig;
     }
 
+    config.setRequest(request);
     request.setAttribute(Geoladris.ATTR_CONFIG, config);
     request.setAttribute(Geoladris.ATTR_APP, app);
 

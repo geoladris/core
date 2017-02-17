@@ -5,15 +5,18 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Properties;
 import java.util.Set;
 
@@ -31,6 +34,7 @@ import org.geoladris.TestingServletContext;
 import org.geoladris.config.Config;
 import org.geoladris.config.DBConfigurationProvider;
 import org.geoladris.config.ModuleConfigurationProvider;
+import org.geoladris.config.PortalRequestConfiguration;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -49,9 +53,6 @@ public class ConfigFilterTest {
 
   private ConfigFilter filter;
   private TestingServletContext context;
-
-  private HttpServletRequest request;
-  private HttpServletResponse response;
   private FilterChain chain;
 
   private DBConfigurationProvider dbProvider;
@@ -60,6 +61,7 @@ public class ConfigFilterTest {
   @SuppressWarnings("unchecked")
   @Before
   public void setup() throws Exception {
+    context = new TestingServletContext();
     folder.newFolder(CONTEXT_PATH);
     final File defaultConfig = folder.newFolder(DEFAULT_CONFIG);
 
@@ -71,8 +73,6 @@ public class ConfigFilterTest {
     System.clearProperty(Environment.CONFIG_DIR);
     System.clearProperty(Environment.PORTAL_CONFIG_DIR);
 
-    this.request = context.request;
-    this.response = context.response;
     this.chain = mock(FilterChain.class);
 
     dbProvider = mock(DBConfigurationProvider.class);
@@ -278,6 +278,8 @@ public class ConfigFilterTest {
     filter.schedulerRate = 1;
     filter.init(context.filterConfig);
 
+    HttpServletRequest request = context.request;
+    HttpServletResponse response = context.response;
     when(request.getRequestURI()).thenReturn("/" + CONTEXT_PATH + "/subapp1");
     filter.doFilter(request, response, chain);
     when(request.getRequestURI()).thenReturn("/" + CONTEXT_PATH + "/subapp2");
@@ -289,12 +291,35 @@ public class ConfigFilterTest {
       assertFalse(thread.isInterrupted());
       assertTrue(thread.isAlive());
     }
+  };
+
+  @SuppressWarnings("unchecked")
+  @Test
+  public void setsRequestInConfig() throws Exception {
+    String subapp = "mysubapp";
+    File subappConfigDir = setupSubapp(subapp);
+    new File(subappConfigDir, "plugin-conf.json").createNewFile();
+
+    ModuleConfigurationProvider provider = mock(ModuleConfigurationProvider.class);
+    List<ModuleConfigurationProvider> providers =
+        (List<ModuleConfigurationProvider>) context.servletContext
+            .getAttribute(Geoladris.ATTR_CONFIG_PROVIDERS);
+    providers.add(provider);
+
+    Config config = filter("/" + subapp + "/");
+    config.getPluginConfig(Locale.ROOT);
+    verify(provider).getPluginConfig(any(PortalRequestConfiguration.class), eq(context.request));
+
+    context.resetRequest();
+    config = filter("/" + subapp + "/");
+    config.getPluginConfig(Locale.ROOT);
+    verify(provider).getPluginConfig(any(PortalRequestConfiguration.class), eq(context.request));
   }
 
   private Config filter(String path) throws Exception {
-    when(request.getRequestURI()).thenReturn("/" + CONTEXT_PATH + path);
-    filter.doFilter(request, response, chain);
-    return (Config) request.getAttribute(Geoladris.ATTR_CONFIG);
+    when(context.request.getRequestURI()).thenReturn("/" + CONTEXT_PATH + path);
+    filter.doFilter(context.request, context.response, chain);
+    return (Config) context.request.getAttribute(Geoladris.ATTR_CONFIG);
   }
 
   private File setupSubapp(String subapp) throws Exception {
