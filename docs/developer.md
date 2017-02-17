@@ -1,8 +1,10 @@
 # Formateo del código
 
-Se utiliza el [estilo](https://google.github.io/styleguide/javaguide.html#s4-formatting) de Google para formatear el código.
+Se utiliza el [estilo](https://google.github.io/styleguide/eclipse-java-google-style.xml) de Google para formatear el código Java.
 
-Para aplicarlo en Eclipse basta con descargar el [fichero XML](https://google.github.io/styleguide/eclipse-java-google-style.xml) correspondiente e importarlo en Eclipse (_Preferences_ -> _Java_ -> _Code Style_ -> _Formatter_ -> _Import..._).
+Se utiliza un [estilo propio](geoladris-style-js.xml) (basado en el estilo de Eclipse con un largo de línea mayor) para el código JavaScript.
+
+Para aplicarlo en Eclipse basta con descargar el fichero XML correspondiente e importarlo en Eclipse (_Preferences_ -> _&lt;lang&gt;_ -> _Code Style_ -> _Formatter_ -> _Import..._).
 
 # Testeo
 
