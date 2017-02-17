@@ -10,21 +10,17 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 
+import org.geoladris.Geoladris;
 import org.geoladris.config.Config;
 
 public class LangFilter implements Filter {
-  public static final String ATTR_LOCALE = "locale";
-
-  private Config config;
-
   @Override
-  public void init(FilterConfig filterConfig) throws ServletException {
-    config = (Config) filterConfig.getServletContext().getAttribute(AppContextListener.ATTR_CONFIG);
-  }
+  public void init(FilterConfig filterConfig) throws ServletException {}
 
   @Override
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
       throws IOException, ServletException {
+    Config config = (Config) request.getAttribute(Geoladris.ATTR_CONFIG);
     String lang = request.getParameter("lang");
     if (lang == null) {
       lang = config.getDefaultLang();
@@ -36,7 +32,7 @@ public class LangFilter implements Filter {
     } else {
       locale = request.getLocale();
     }
-    request.setAttribute(ATTR_LOCALE, locale);
+    request.setAttribute(Geoladris.ATTR_LOCALE, locale);
     chain.doFilter(request, response);
   }
 

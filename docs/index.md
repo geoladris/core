@@ -1,7 +1,7 @@
 # Geoladris core documentation
 
 * [Plugins](plugins.md)
-* [Directorio de configuración](conf_dir.md)
+* [Configurando aplicaciones](configuring_apps.md)
 * [Empaquetando aplicaciones](packaging.md)
 * [Migrando plugins](migrating.md)
 * [Change log](changelog.md)

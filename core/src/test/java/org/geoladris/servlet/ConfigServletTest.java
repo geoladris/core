@@ -8,9 +8,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -26,8 +24,10 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.geoladris.Geoladris;
 import org.geoladris.PluginDescriptor;
 import org.geoladris.PluginDescriptorFileReader;
+import org.geoladris.TestingServletContext;
 import org.geoladris.config.Config;
 import org.junit.Before;
 import org.junit.Test;
@@ -36,32 +36,31 @@ import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 
 public class ConfigServletTest {
+  private Config config;
   private ConfigServlet servlet;
   private HttpServletRequest request;
   private HttpServletResponse response;
-  private ServletContext context;
-  private Config config;
-  private ByteArrayOutputStream stream;
+  private TestingServletContext context;
   private PluginDescriptorFileReader reader;
 
   @Before
-  public void setup() throws IOException {
-    this.servlet = new ConfigServlet();
-    this.request = mock(HttpServletRequest.class);
-    this.response = mock(HttpServletResponse.class);
+  public void setup() throws Exception {
     this.config = mock(Config.class);
-    this.context = mock(ServletContext.class);
-    this.stream = new ByteArrayOutputStream();
+    this.servlet = new ConfigServlet();
+
+    this.context = new TestingServletContext();
+    this.response = context.response;
+    this.request = context.request;
+
+    this.servlet.init(context.servletConfig);
+    request.setAttribute(Geoladris.ATTR_CONFIG, this.config);
+
     this.reader = new PluginDescriptorFileReader();
-    PrintWriter writer = new PrintWriter(this.stream);
-    when(this.context.getAttribute(AppContextListener.ATTR_CONFIG)).thenReturn(this.config);
-    when(this.response.getWriter()).thenReturn(writer);
   }
 
   @SuppressWarnings("unchecked")
   @Test
   public void testCustomizationModule() throws ServletException, IOException {
-    Config config = mock(Config.class);
     when(config.getMessages(any(Locale.class)))
         .thenReturn(new PropertyResourceBundle(new ByteArrayInputStream(new byte[0])));
     Properties portalProperties = new Properties();
@@ -80,22 +79,14 @@ public class ConfigServletTest {
     when(config.getPropertyAsArray(Config.PROPERTY_MAP_CENTER)).thenReturn(new String[] {"0", "0"});
     when(config.getPropertyAsArray(Config.PROPERTY_CLIENT_MODULES)).thenReturn(new String[0]);
 
-    when(config.getPluginConfig(any(Locale.class), any(HttpServletRequest.class)))
-        .thenReturn(new PluginDescriptor[0]);
+    when(config.getPluginConfig(any(Locale.class))).thenReturn(new PluginDescriptor[0]);
 
-    HttpServletRequest req = mock(HttpServletRequest.class);
-    when(req.getAttribute("locale")).thenReturn(new Locale("es"));
-    HttpServletResponse resp = mock(HttpServletResponse.class);
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    PrintWriter writer = new PrintWriter(baos);
-    when(resp.getWriter()).thenReturn(writer);
+    request.setAttribute(Geoladris.ATTR_LOCALE, new Locale("es"));
 
     ConfigServlet servlet = getInitializedServlet(config);
-    servlet.doGet(req, resp);
-    writer.close();
+    servlet.doGet(request, this.response);
 
-    String response = new String(baos.toByteArray());
-
+    String response = context.getResponse();
     assertTrue(response.contains("languages"));
     assertTrue(response.contains("languageCode"));
     assertTrue(response.contains("title"));
@@ -126,14 +117,14 @@ public class ConfigServletTest {
 
     PluginDescriptor[] plugin = new PluginDescriptor[] {plugin1};
     mockEmptyConfig();
-    when(request.getAttribute(LangFilter.ATTR_LOCALE)).thenReturn(Locale.ROOT);
-    when(config.getPluginConfig(Locale.ROOT, request)).thenReturn(plugin);
+    this.request.setAttribute(Geoladris.ATTR_LOCALE, Locale.ROOT);
+    when(config.getPluginConfig(Locale.ROOT)).thenReturn(plugin);
 
-    servlet.doGet(request, response, context);
+    servlet.doGet(this.request, response);
 
-    String content = response();
+    String content = context.getResponse();
     // It starts with var require = {...
-    JSONObject json = JSONObject.fromObject(response().substring(content.indexOf('{')));
+    JSONObject json = JSONObject.fromObject(content.substring(content.indexOf('{')));
     JSONArray modules =
         json.getJSONObject("config").getJSONObject("customization").getJSONArray("modules");
     assertEquals(1, modules.size());
@@ -153,14 +144,14 @@ public class ConfigServletTest {
     PluginDescriptor[] plugins = new PluginDescriptor[] {plugin1, plugin2};
 
     mockEmptyConfig();
-    when(request.getAttribute(LangFilter.ATTR_LOCALE)).thenReturn(Locale.ROOT);
-    when(config.getPluginConfig(Locale.ROOT, request)).thenReturn(plugins);
+    request.setAttribute(Geoladris.ATTR_LOCALE, Locale.ROOT);
+    when(config.getPluginConfig(Locale.ROOT)).thenReturn(plugins);
 
-    servlet.doGet(request, response, context);
+    servlet.doGet(request, response);
 
-    String content = response();
+    String content = context.getResponse();
     // It starts with var require = {...
-    JSONObject json = JSONObject.fromObject(response().substring(content.indexOf('{')));
+    JSONObject json = JSONObject.fromObject(content.substring(content.indexOf('{')));
     JSONObject cfg = json.getJSONObject("config");
     JSONObject module1 = cfg.getJSONObject("plugin1/module1");
     JSONObject module2 = cfg.getJSONObject("plugin2/module2");
@@ -178,13 +169,5 @@ public class ConfigServletTest {
     ResourceBundle bundle = ResourceBundle.getBundle("messages");
     when(this.config.getMessages(any(Locale.class))).thenReturn(bundle);
     when(this.config.getProperties()).thenReturn(new Properties());
-  }
-
-  private String response() throws IOException {
-    this.response.getWriter().flush();
-    this.response.getWriter().close();
-    this.stream.flush();
-    this.stream.close();
-    return this.stream.toString();
   }
 }

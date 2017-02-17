@@ -17,6 +17,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
+import org.geoladris.Geoladris;
 import org.geoladris.JEEContextAnalyzer;
 import org.geoladris.PluginDescriptor;
 import org.geoladris.config.Config;
@@ -31,9 +32,15 @@ public class ClientContentServlet extends HttpServlet {
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {
-    Config config = (Config) getServletContext().getAttribute(AppContextListener.ATTR_CONFIG);
+    Config config = (Config) req.getAttribute(Geoladris.ATTR_CONFIG);
 
-    String pathInfo = req.getServletPath() + req.getPathInfo();
+    String pathInfo = req.getRequestURI();
+    // Remove context path and app path
+    pathInfo = pathInfo.substring(req.getContextPath().length() + 1);
+    Object app = req.getAttribute(Geoladris.ATTR_APP);
+    if (app != null && app.toString().length() > 0) {
+      pathInfo = pathInfo.substring(app.toString().length() + 1);
+    }
 
     // Is this just a file in static folder?
     File confStaticFile = new File(config.getDir(), pathInfo);
@@ -42,9 +49,9 @@ public class ClientContentServlet extends HttpServlet {
       return;
     }
 
-    String[] parts = pathInfo.substring(1).split(Pattern.quote("/"));
-    Locale locale = (Locale) req.getAttribute(LangFilter.ATTR_LOCALE);
-    PluginDescriptor[] enabled = config.getPluginConfig(locale, req);
+    String[] parts = pathInfo.split(Pattern.quote("/"));
+    Locale locale = (Locale) req.getAttribute(Geoladris.ATTR_LOCALE);
+    PluginDescriptor[] enabled = config.getPluginConfig(locale);
 
     // is it in the root plugin?
     for (PluginDescriptor plugin : enabled) {

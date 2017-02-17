@@ -22,6 +22,7 @@ import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.runtime.resource.loader.StringResourceLoader;
 import org.apache.velocity.runtime.resource.util.StringResourceRepository;
 import org.geoladris.Environment;
+import org.geoladris.Geoladris;
 import org.geoladris.PluginDescriptor;
 import org.geoladris.config.Config;
 
@@ -57,18 +58,17 @@ public class IndexHTMLServlet extends HttpServlet {
     if (debug != null && Boolean.parseBoolean(debug)) {
       minifiedjs = false;
     } else {
-      Environment env = (Environment) getServletContext().getAttribute(AppContextListener.ATTR_ENV);
-      minifiedjs = env.getMinified();
+      minifiedjs = Environment.getInstance().getMinified();
     }
 
-    Config config = (Config) getServletContext().getAttribute("config");
+    Config config = (Config) req.getAttribute(Geoladris.ATTR_CONFIG);
     ArrayList<String> styleSheets = new ArrayList<String>();
     if (minifiedjs) {
       styleSheets.add(OPTIMIZED_FOLDER + "/portal-style.css");
     } else {
-      Locale locale = (Locale) req.getAttribute(LangFilter.ATTR_LOCALE);
+      Locale locale = (Locale) req.getAttribute(Geoladris.ATTR_LOCALE);
       List<String> classPathStylesheets = new ArrayList<>();
-      for (PluginDescriptor plugin : config.getPluginConfig(locale, req)) {
+      for (PluginDescriptor plugin : config.getPluginConfig(locale)) {
         classPathStylesheets.addAll(plugin.getStylesheets());
       }
 

@@ -78,7 +78,7 @@ public class PluginUpdater implements Runnable {
       logger.debug(
           "Updating plugin descriptors because of a change in " + dir.toFile().getAbsolutePath());
       this.analyzer.reload();
-      this.config.updatePlugins(this.analyzer.getPluginDescriptors());
+      this.config.setPlugins(this.analyzer.getPluginDescriptors());
       lastUpdate = System.currentTimeMillis();
 
       logger.debug("Checking for directory creation");

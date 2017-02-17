@@ -10,6 +10,7 @@ import java.util.Map;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 import javax.sql.DataSource;
 
 import org.apache.commons.dbcp2.BasicDataSource;
@@ -39,10 +40,10 @@ public class DBConfigurationProvider implements ModuleConfigurationProvider {
 
   private DataSource dataSource;
   private InitialContext context;
-  private String app, schema;
+  private String contextPath, schema;
 
-  public DBConfigurationProvider(String app, InitialContext context) {
-    this.app = app;
+  public DBConfigurationProvider(String contextPath, InitialContext context) {
+    this.contextPath = contextPath;
     this.context = context;
   }
 
@@ -54,7 +55,7 @@ public class DBConfigurationProvider implements ModuleConfigurationProvider {
             (DataSource) context.lookup("java:/comp/env/jdbc/" + CONTEXT_RESOURCE_NAME);
       } catch (NamingException | ClassCastException e) {
         // If not, get from environment variables
-        Environment env = new Environment();
+        Environment env = Environment.getInstance();
         String url = env.get(Environment.JDBC_URL);
         String user = env.get(Environment.JDBC_USER);
         String pass = env.get(Environment.JDBC_PASS);
@@ -63,8 +64,8 @@ public class DBConfigurationProvider implements ModuleConfigurationProvider {
         if (url != null && user != null && pass != null) {
           this.dataSource = createDataSource(url, user, pass);
         } else {
-          throw new IOException(
-              "Cannot obtain default configuration for app '" + this.app + "' from database");
+          throw new IOException("Cannot obtain default configuration for context '"
+              + this.contextPath + "' from database");
         }
       }
 
@@ -72,10 +73,10 @@ public class DBConfigurationProvider implements ModuleConfigurationProvider {
         this.schema = "";
       }
 
-      String conf = getConfig(this.app, DEFAULT_ROLE);
+      String conf = getConfig(this.contextPath, DEFAULT_ROLE);
       if (conf == null) {
         throw new IOException(
-            "Cannot obtain default configuration for app '" + this.app + "' from database");
+            "Cannot obtain default configuration for app '" + this.contextPath + "' from database");
       }
 
     }
@@ -98,9 +99,24 @@ public class DBConfigurationProvider implements ModuleConfigurationProvider {
   @Override
   public Map<String, JSONObject> getPluginConfig(PortalRequestConfiguration configurationContext,
       HttpServletRequest request) throws IOException {
-    Object attr = request.getSession().getAttribute(Geoladris.SESSION_ATTR_ROLE);
-    String role = attr != null ? attr.toString() : DEFAULT_ROLE;
-    String config = getConfig(this.app, role);
+    HttpSession session = request.getSession();
+    String role;
+    if (session == null) {
+      role = DEFAULT_ROLE;
+    } else {
+      Object roleAttr = session.getAttribute(Geoladris.ATTR_ROLE);
+      role = roleAttr != null ? roleAttr.toString() : DEFAULT_ROLE;
+    }
+
+    Object appAttr = request.getAttribute(Geoladris.ATTR_APP);
+    String app = appAttr != null ? appAttr.toString() : null;
+
+    String qualifiedApp = this.contextPath;
+    if (app != null && app.length() > 0) {
+      qualifiedApp += "/" + app;
+    }
+
+    String config = getConfig(qualifiedApp, role);
     return config != null ? JSONObject.fromObject(config) : null;
   }
 
@@ -109,7 +125,7 @@ public class DBConfigurationProvider implements ModuleConfigurationProvider {
     try {
       conn = getDataSource().getConnection();
       PreparedStatement st = conn.prepareStatement(String.format(SQL, this.schema));
-      st.setString(1, this.app);
+      st.setString(1, app);
       st.setString(2, role);
 
       ResultSet result = st.executeQuery();
@@ -143,6 +159,15 @@ public class DBConfigurationProvider implements ModuleConfigurationProvider {
       return getDataSource() != null;
     } catch (IOException e) {
       logger.info(e);
+      return false;
+    }
+  }
+
+  public boolean hasApp(String app) {
+    try {
+      return getConfig(app, DEFAULT_ROLE) != null;
+    } catch (IOException e) {
+      logger.error("Cannot obtain configuration from database for app: " + app, e);
       return false;
     }
   }

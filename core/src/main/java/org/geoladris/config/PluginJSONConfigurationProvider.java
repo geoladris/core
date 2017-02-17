@@ -11,6 +11,7 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.log4j.Logger;
 import org.geoladris.PluginDescriptor;
 import org.geoladris.PluginDescriptorFileReader;
 
@@ -21,19 +22,23 @@ import net.sf.json.JSONObject;
  * @author victorzinho
  */
 public class PluginJSONConfigurationProvider implements ModuleConfigurationProvider {
+  private static final Logger logger = Logger.getLogger(PluginJSONConfigurationProvider.class);
+
   private static final String PLUGIN_NAME = "core";
 
   @Override
   public Map<String, JSONObject> getPluginConfig(PortalRequestConfiguration requestConfig,
       HttpServletRequest request) throws IOException {
-    // We create return a pseudo-plugin descriptor containing all the
-    // configuration to override/merge
-    // The modules, stylesheets and RequireJS data is empty since it is
-    // taken from all the other real plugins.
-    File configProperties = new File(requestConfig.getConfigDir(), "plugin-conf.json");
+    File publicConf = new File(requestConfig.getConfigDir(), PublicConfProvider.FILE);
+    if (publicConf.isFile()) {
+      return null;
+    }
+
+    logger.warn("Using deprecated plugin-conf.json; use public-conf instead");
+    File pluginConf = new File(requestConfig.getConfigDir(), "plugin-conf.json");
     BufferedInputStream stream;
     try {
-      stream = new BufferedInputStream(new FileInputStream(configProperties));
+      stream = new BufferedInputStream(new FileInputStream(pluginConf));
     } catch (FileNotFoundException e) {
       return null;
     }

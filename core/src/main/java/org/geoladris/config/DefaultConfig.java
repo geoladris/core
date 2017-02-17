@@ -2,7 +2,12 @@ package org.geoladris.config;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -16,9 +21,11 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.log4j.Logger;
+import org.geoladris.Geoladris;
 import org.geoladris.PluginDescriptor;
 
 import net.sf.json.JSONObject;
@@ -36,37 +43,53 @@ public class DefaultConfig implements Config {
 
   private Properties properties;
 
-  private ConfigFolder folder;
+  private File configDir;
   private boolean useCache;
   private HashMap<Locale, ResourceBundle> localeBundles = new HashMap<Locale, ResourceBundle>();
   private Map<ModuleConfigurationProvider, Map<String, JSONObject>> cachedConfigurations =
       new HashMap<ModuleConfigurationProvider, Map<String, JSONObject>>();
 
-  private ArrayList<ModuleConfigurationProvider> moduleConfigurationProviders =
-      new ArrayList<ModuleConfigurationProvider>();
   private Set<PluginDescriptor> plugins;
+  private HttpServletRequest request;
+  private ServletContext context;
 
-  public DefaultConfig(ConfigFolder folder, Set<PluginDescriptor> plugins, boolean useCache) {
-    this.folder = folder;
+  public DefaultConfig(File configDir, ServletContext context, HttpServletRequest request,
+      Set<PluginDescriptor> plugins, boolean useCache) {
+    this.configDir = configDir;
     this.plugins = plugins;
     this.useCache = useCache;
+    this.request = request;
+    this.context = context;
+  }
+
+  public void setRequest(HttpServletRequest request) {
+    this.request = request;
   }
 
   @Override
   public File getDir() {
-    return folder.getFilePath();
+    return configDir;
   }
 
   @Override
   public synchronized Properties getProperties() {
     if (properties == null || !useCache) {
-      properties = folder.getProperties();
+      File file = new File(this.configDir, "portal.properties");
+      logger.debug("Reading portal properties file " + file);
+      properties = new Properties();
+      try {
+        properties.load(new FileInputStream(file));
+      } catch (FileNotFoundException e) {
+        logger.warn("Missing portal.properties file");
+      } catch (IOException e) {
+        logger.error("Error reading portal.properties file", e);
+      }
     }
     return properties;
   }
 
   @Override
-  public void updatePlugins(Set<PluginDescriptor> plugins) {
+  public void setPlugins(Set<PluginDescriptor> plugins) {
     this.plugins = plugins;
   }
 
@@ -102,8 +125,13 @@ public class DefaultConfig implements Config {
     ResourceBundle bundle = localeBundles.get(locale);
     if (bundle == null || !useCache) {
       try {
-        bundle = folder.getMessages(locale);
+        URL messagesDir = new File(this.configDir, "messages").toURI().toURL();
+        URLClassLoader urlClassLoader = new URLClassLoader(new URL[] {messagesDir});
+        bundle = ResourceBundle.getBundle("messages", locale, urlClassLoader);
         localeBundles.put(locale, bundle);
+      } catch (MalformedURLException e) {
+        logger.error("Something is wrong with the configuration directory", e);
+        throw new ConfigException(e);
       } catch (MissingResourceException e) {
         logger.info("Missing locale bundle: " + locale);
         try {
@@ -165,12 +193,13 @@ public class DefaultConfig implements Config {
     } else {
       throw new ConfigException(
           "No \"" + propertyName + "\" property in configuration. Conf folder: "
-              + folder.getFilePath().getAbsolutePath() + ". Contents: " + props.keySet().size());
+              + configDir.getAbsolutePath() + ". Contents: " + props.keySet().size());
     }
   }
 
+  @SuppressWarnings("unchecked")
   @Override
-  public PluginDescriptor[] getPluginConfig(Locale locale, HttpServletRequest request) {
+  public PluginDescriptor[] getPluginConfig(Locale locale) {
     // Get a map: name -> cloned descriptor
     Map<String, PluginDescriptor> namePluginDescriptor = new HashMap<String, PluginDescriptor>();
     for (PluginDescriptor pluginDescriptor : this.plugins) {
@@ -181,7 +210,9 @@ public class DefaultConfig implements Config {
     PortalRequestConfiguration requestConfig = new PortalRequestConfigurationImpl(locale);
 
     // Get the providers configuration and merge it
-    for (ModuleConfigurationProvider provider : moduleConfigurationProviders) {
+    List<ModuleConfigurationProvider> providers = (List<ModuleConfigurationProvider>) this.context
+        .getAttribute(Geoladris.ATTR_CONFIG_PROVIDERS);
+    for (ModuleConfigurationProvider provider : providers) {
 
       Map<String, JSONObject> providerConfiguration = cachedConfigurations.get(provider);
       if (providerConfiguration == null || !useCache || !provider.canBeCached()) {
@@ -218,22 +249,6 @@ public class DefaultConfig implements Config {
     }
 
     return enabled.toArray(new PluginDescriptor[enabled.size()]);
-  }
-
-  @Override
-  public void addModuleConfigurationProvider(ModuleConfigurationProvider provider) {
-    moduleConfigurationProviders.add(provider);
-  }
-
-  public boolean hasModuleConfigurationProvider(
-      Class<? extends ModuleConfigurationProvider> clazz) {
-    for (ModuleConfigurationProvider provider : this.moduleConfigurationProviders) {
-      if (clazz.isInstance(provider)) {
-        return true;
-      }
-    }
-
-    return false;
   }
 
   @Override

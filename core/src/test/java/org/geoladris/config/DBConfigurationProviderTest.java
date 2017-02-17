@@ -107,7 +107,7 @@ public class DBConfigurationProviderTest {
     DBConfigurationProvider provider = new DBConfigurationProvider(app, context);
 
     HttpSession session = mock(HttpSession.class);
-    when(session.getAttribute(Geoladris.SESSION_ATTR_ROLE)).thenReturn(null);
+    when(session.getAttribute(Geoladris.ATTR_ROLE)).thenReturn(null);
 
     HttpServletRequest request = mock(HttpServletRequest.class);
     when(request.getSession()).thenReturn(session);
@@ -134,7 +134,7 @@ public class DBConfigurationProviderTest {
     DBConfigurationProvider provider = new DBConfigurationProvider(app, context);
 
     HttpSession session = mock(HttpSession.class);
-    when(session.getAttribute(Geoladris.SESSION_ATTR_ROLE)).thenReturn(role);
+    when(session.getAttribute(Geoladris.ATTR_ROLE)).thenReturn(role);
 
     HttpServletRequest request = mock(HttpServletRequest.class);
     when(request.getSession()).thenReturn(session);
@@ -172,7 +172,7 @@ public class DBConfigurationProviderTest {
     DBConfigurationProvider provider = new DBConfigurationProvider(app, context);
 
     HttpSession session = mock(HttpSession.class);
-    when(session.getAttribute(Geoladris.SESSION_ATTR_ROLE)).thenReturn(role);
+    when(session.getAttribute(Geoladris.ATTR_ROLE)).thenReturn(role);
 
     HttpServletRequest request = mock(HttpServletRequest.class);
     when(request.getSession()).thenReturn(session);
@@ -180,6 +180,77 @@ public class DBConfigurationProviderTest {
     Map<String, JSONObject> pluginConfig =
         provider.getPluginConfig(mock(PortalRequestConfiguration.class), request);
     assertNull(pluginConfig);
+  }
+
+  @Test
+  public void hasApp() throws Exception {
+    DataSource ds = mockDataSource(true, "{}");
+    InitialContext context = mock(InitialContext.class);
+    when(context.lookup("java:/comp/env/jdbc/" + DBConfigurationProvider.CONTEXT_RESOURCE_NAME))
+        .thenReturn(ds);
+
+    DBConfigurationProvider provider = new DBConfigurationProvider("test", context);
+    assertTrue(provider.hasApp("test"));
+  }
+
+  @Test
+  public void doesNotHaveApp() throws Exception {
+    DataSource ds = mockDataSource(false, "{}");
+    InitialContext context = mock(InitialContext.class);
+    when(context.lookup("java:/comp/env/jdbc/" + DBConfigurationProvider.CONTEXT_RESOURCE_NAME))
+        .thenReturn(ds);
+
+    DBConfigurationProvider provider = new DBConfigurationProvider("test", context);
+    assertFalse(provider.hasApp("test"));
+  }
+
+  @Test
+  public void providesConfigForApps() throws Exception {
+    DataSource ds = mockDataSource(true, "{}");
+    InitialContext context = mock(InitialContext.class);
+    when(context.lookup("java:/comp/env/jdbc/" + DBConfigurationProvider.CONTEXT_RESOURCE_NAME))
+        .thenReturn(ds);
+
+    DBConfigurationProvider provider = new DBConfigurationProvider("test", context);
+
+    HttpServletRequest request = mock(HttpServletRequest.class);
+    when(request.getSession()).thenReturn(mock(HttpSession.class));
+    when(request.getAttribute(Geoladris.ATTR_APP)).thenReturn("app");
+
+    provider.getPluginConfig(mock(PortalRequestConfiguration.class), request);
+    verify(this.st, atLeastOnce()).setString(1, "test/app");
+  }
+
+  @Test
+  public void providesDefaultConfigForEmptyApp() throws Exception {
+    DataSource ds = mockDataSource(true, "{}");
+    InitialContext context = mock(InitialContext.class);
+    when(context.lookup("java:/comp/env/jdbc/" + DBConfigurationProvider.CONTEXT_RESOURCE_NAME))
+        .thenReturn(ds);
+
+    DBConfigurationProvider provider = new DBConfigurationProvider("test", context);
+
+    HttpServletRequest request = mock(HttpServletRequest.class);
+    when(request.getSession()).thenReturn(mock(HttpSession.class));
+    when(request.getAttribute(Geoladris.ATTR_APP)).thenReturn("");
+
+    provider.getPluginConfig(mock(PortalRequestConfiguration.class), request);
+    verify(this.st, atLeastOnce()).setString(1, "test");
+  }
+
+  @Test
+  public void nullSession() throws Exception {
+    DataSource ds = mockDataSource(true, "{'a' : { 'm1' : true}}");
+
+    InitialContext context = mock(InitialContext.class);
+    when(context.lookup("java:/comp/env/jdbc/" + DBConfigurationProvider.CONTEXT_RESOURCE_NAME))
+        .thenReturn(ds);
+
+    DBConfigurationProvider provider = new DBConfigurationProvider("test", context);
+
+    Map<String, JSONObject> pluginConfig = provider
+        .getPluginConfig(mock(PortalRequestConfiguration.class), mock(HttpServletRequest.class));
+    assertTrue(pluginConfig.get("a").getBoolean("m1"));
   }
 
   private DataSource mockDataSource(boolean hasNext, String conf) throws SQLException {

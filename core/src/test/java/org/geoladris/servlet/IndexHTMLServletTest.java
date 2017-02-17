@@ -3,23 +3,18 @@ package org.geoladris.servlet;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.Locale;
 
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.geoladris.Environment;
+import org.geoladris.Geoladris;
 import org.geoladris.PluginDescriptor;
+import org.geoladris.TestingServletContext;
 import org.geoladris.config.Config;
 import org.junit.After;
 import org.junit.Before;
@@ -29,26 +24,18 @@ public class IndexHTMLServletTest {
   private IndexHTMLServlet servlet;
   private HttpServletRequest request;
   private HttpServletResponse response;
-  private ByteArrayOutputStream bos;
-  private ServletContext servletContext;
+  private TestingServletContext context;
 
   @Before
   public void setup() throws Exception {
     this.servlet = new IndexHTMLServlet();
-    this.request = mock(HttpServletRequest.class);
-    this.response = mock(HttpServletResponse.class);
 
-    this.bos = new ByteArrayOutputStream();
-    PrintWriter writer = new PrintWriter(this.bos);
-    when(this.response.getWriter()).thenReturn(writer);
+    this.context = new TestingServletContext();
 
-    this.servletContext = mock(ServletContext.class);
+    this.request = this.context.request;
+    this.response = this.context.response;
 
-    when(servletContext.getAttribute(AppContextListener.ATTR_ENV)).thenReturn(new Environment());
-
-    ServletConfig servletConfig = mock(ServletConfig.class);
-    when(servletConfig.getServletContext()).thenReturn(this.servletContext);
-    this.servlet.init(servletConfig);
+    this.servlet.init(this.context.servletConfig);
   }
 
   @After
@@ -65,14 +52,12 @@ public class IndexHTMLServletTest {
     PluginDescriptor[] plugins = new PluginDescriptor[] {plugin};
 
     Config config = mock(Config.class);
-    when(config.getPluginConfig(any(Locale.class), eq(this.request))).thenReturn(plugins);
-    when(this.servletContext.getAttribute(AppContextListener.ATTR_CONFIG)).thenReturn(config);
+    when(config.getPluginConfig(any(Locale.class))).thenReturn(plugins);
+    this.request.setAttribute(Geoladris.ATTR_CONFIG, config);
 
     this.servlet.doGet(this.request, this.response);
-    this.response.getWriter().flush();
-    this.bos.flush();
 
-    String content = this.bos.toString();
+    String content = this.context.getResponse();
     int i1 = content.indexOf("<link rel=\"stylesheet\" href=\"styles/a.css\">");
     int i2 = content.indexOf("<link rel=\"stylesheet\" href=\"theme/a.css\">");
     int i3 = content.indexOf("<link rel=\"stylesheet\" href=\"theme/b.css\">");
@@ -87,7 +72,7 @@ public class IndexHTMLServletTest {
     this.servlet.doGet(this.request, this.response);
 
     String css = IndexHTMLServlet.OPTIMIZED_FOLDER + "/portal-style.css";
-    assertFalse(responseContent().contains(css));
+    assertFalse(this.context.getResponse().contains(css));
   }
 
   @Test
@@ -97,7 +82,7 @@ public class IndexHTMLServletTest {
     this.servlet.doGet(this.request, this.response);
 
     String css = IndexHTMLServlet.OPTIMIZED_FOLDER + "/portal-style.css";
-    assertTrue(responseContent().contains(css));
+    assertTrue(this.context.getResponse().contains(css));
   }
 
   @Test
@@ -107,7 +92,7 @@ public class IndexHTMLServletTest {
     this.servlet.doGet(this.request, this.response);
 
     String css = IndexHTMLServlet.OPTIMIZED_FOLDER + "/portal-style.css";
-    assertTrue(responseContent().contains(css));
+    assertTrue(this.context.getResponse().contains(css));
   }
 
   /**
@@ -118,18 +103,10 @@ public class IndexHTMLServletTest {
    */
   private void mockDebugParam(String debugParam) {
     Config config = mock(Config.class);
-    when(config.getPluginConfig(any(Locale.class), any(HttpServletRequest.class)))
-        .thenReturn(new PluginDescriptor[0]);
-    when(this.servletContext.getAttribute("config")).thenReturn(config);
-    when(this.servletContext.getAttribute("css-paths")).thenReturn(new ArrayList<String>());
+    when(config.getPluginConfig(any(Locale.class))).thenReturn(new PluginDescriptor[0]);
+    this.request.setAttribute(Geoladris.ATTR_CONFIG, config);
 
     System.setProperty(Environment.MINIFIED, "true");
     when(this.request.getParameter(IndexHTMLServlet.HTTP_PARAM_DEBUG)).thenReturn(debugParam);
-  }
-
-  private String responseContent() throws IOException {
-    this.response.getWriter().flush();
-    this.bos.flush();
-    return this.bos.toString();
   }
 }

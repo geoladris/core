@@ -19,7 +19,7 @@ import net.sf.json.JSONObject;
  * </p>
  * 
  * <p>
- * The active role is taken from the {@link Geoladris#SESSION_ATTR_ROLE} session attribute.
+ * The active role is taken from the {@link Geoladris#ATTR_ROLE} session attribute.
  * </p>
  * 
  * @author victorzinho
@@ -43,7 +43,7 @@ public class RoleConfigurationProvider implements ModuleConfigurationProvider {
   }
 
   private String getRole(HttpServletRequest request) {
-    Object attr = request.getSession().getAttribute(Geoladris.SESSION_ATTR_ROLE);
+    Object attr = request.getSession().getAttribute(Geoladris.ATTR_ROLE);
     if (attr == null) {
       return null;
     }
