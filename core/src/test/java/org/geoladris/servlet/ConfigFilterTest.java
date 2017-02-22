@@ -334,6 +334,12 @@ public class ConfigFilterTest {
         anySet(), anyBoolean(), eq(-1));
   }
 
+  @Test
+  public void requestsNonExistingApp() throws Exception {
+    filter("/styles");
+    assertEquals(0, filter.appConfigs.size());
+  }
+
   private Config filter(String path) throws Exception {
     when(context.request.getRequestURI()).thenReturn("/" + CONTEXT_PATH + path);
     filter.doFilter(context.request, context.response, chain);
