@@ -7,13 +7,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Map;
 
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
-import javax.sql.DataSource;
 
-import org.apache.commons.dbcp2.BasicDataSource;
 import org.apache.log4j.Logger;
 import org.geoladris.Environment;
 import org.geoladris.Geoladris;
@@ -23,8 +19,6 @@ import net.sf.json.JSONObject;
 
 public class DBConfigurationProvider implements ModuleConfigurationProvider {
   private static final Logger logger = Logger.getLogger(DBConfigurationProvider.class);
-
-  public static final String CONTEXT_RESOURCE_NAME = "geoladris";
 
   static final String SQL = "SELECT conf FROM %sapps WHERE app = ? AND role LIKE ?";
 
@@ -38,61 +32,16 @@ public class DBConfigurationProvider implements ModuleConfigurationProvider {
     }
   }
 
-  private DataSource dataSource;
-  private InitialContext context;
+  private DBDataSource dataSource;
   private String contextPath, schema;
 
-  public DBConfigurationProvider(String contextPath, InitialContext context) {
+  public DBConfigurationProvider(DBDataSource dataSource, String contextPath) {
+    this.dataSource = dataSource;
     this.contextPath = contextPath;
-    this.context = context;
-  }
-
-  private DataSource getDataSource() throws IOException {
-    if (this.dataSource == null) {
-      try {
-        // First check context.xml
-        this.dataSource =
-            (DataSource) context.lookup("java:/comp/env/jdbc/" + CONTEXT_RESOURCE_NAME);
-      } catch (NamingException | ClassCastException e) {
-        // If not, get from environment variables
-        Environment env = Environment.getInstance();
-        String url = env.get(Environment.JDBC_URL);
-        String user = env.get(Environment.JDBC_USER);
-        String pass = env.get(Environment.JDBC_PASS);
-        this.schema = env.get(Environment.JDBC_SCHEMA);
-
-        if (url != null && user != null && pass != null) {
-          this.dataSource = createDataSource(url, user, pass);
-        } else {
-          throw new IOException("Cannot obtain default configuration for context '"
-              + this.contextPath + "' from database");
-        }
-      }
-
-      if (this.schema == null) {
-        this.schema = "";
-      }
-
-      String conf = getConfig(this.contextPath, DEFAULT_ROLE);
-      if (conf == null) {
-        throw new IOException(
-            "Cannot obtain default configuration for app '" + this.contextPath + "' from database");
-      }
-
+    this.schema = Environment.getInstance().get(Environment.JDBC_SCHEMA);
+    if (this.schema == null) {
+      this.schema = "";
     }
-
-    return this.dataSource;
-  }
-
-  /**
-   * Just for testing purposes
-   */
-  BasicDataSource createDataSource(String url, String user, String pass) {
-    BasicDataSource ds = new BasicDataSource();
-    ds.setUrl(url);
-    ds.setUsername(user);
-    ds.setPassword(pass);
-    return ds;
   }
 
   @SuppressWarnings("unchecked")
@@ -123,7 +72,7 @@ public class DBConfigurationProvider implements ModuleConfigurationProvider {
   private String getConfig(String app, String role) throws IOException {
     Connection conn = null;
     try {
-      conn = getDataSource().getConnection();
+      conn = this.dataSource.getConnection();
       PreparedStatement st = conn.prepareStatement(String.format(SQL, this.schema));
       st.setString(1, app);
       st.setString(2, role);
@@ -152,15 +101,6 @@ public class DBConfigurationProvider implements ModuleConfigurationProvider {
   @Override
   public boolean canBeCached() {
     return false;
-  }
-
-  public boolean isEnabled() {
-    try {
-      return getDataSource() != null;
-    } catch (IOException e) {
-      logger.info(e);
-      return false;
-    }
   }
 
   public boolean hasApp(String app) {

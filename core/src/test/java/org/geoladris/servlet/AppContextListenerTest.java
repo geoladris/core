@@ -50,7 +50,7 @@ public class AppContextListenerTest {
   public void disabledDBProvider() throws Exception {
     this.context.setContextPath("test");
     DBConfigurationProvider dbProvider = mock(DBConfigurationProvider.class);
-    when(dbProvider.isEnabled()).thenReturn(false);
+    when(this.listener.isDBEnabled()).thenReturn(false);
     doReturn(dbProvider).when(this.listener).getDBProvider(anyString());
 
     this.listener.contextInitialized(this.context.event);
@@ -64,7 +64,7 @@ public class AppContextListenerTest {
   public void enabledDBProvider() throws Exception {
     this.context.setContextPath("test");
     DBConfigurationProvider dbProvider = mock(DBConfigurationProvider.class);
-    when(dbProvider.isEnabled()).thenReturn(true);
+    when(this.listener.isDBEnabled()).thenReturn(true);
     doReturn(dbProvider).when(this.listener).getDBProvider(anyString());
 
     this.listener.contextInitialized(this.context.event);
@@ -78,7 +78,7 @@ public class AppContextListenerTest {
   public void trailingSlashInContextPath() throws Exception {
     this.context.setContextPath("/test");
     DBConfigurationProvider dbProvider = mock(DBConfigurationProvider.class);
-    when(dbProvider.isEnabled()).thenReturn(true);
+    when(this.listener.isDBEnabled()).thenReturn(true);
     doReturn(dbProvider).when(this.listener).getDBProvider(anyString());
 
     this.listener.contextInitialized(this.context.event);

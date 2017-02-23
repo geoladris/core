@@ -4,6 +4,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.anySet;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
@@ -32,7 +35,6 @@ import org.geoladris.JEEContextAnalyzer;
 import org.geoladris.PluginDescriptor;
 import org.geoladris.TestingServletContext;
 import org.geoladris.config.Config;
-import org.geoladris.config.DBConfigurationProvider;
 import org.geoladris.config.ModuleConfigurationProvider;
 import org.geoladris.config.PortalRequestConfiguration;
 import org.junit.Before;
@@ -55,10 +57,8 @@ public class ConfigFilterTest {
   private TestingServletContext context;
   private FilterChain chain;
 
-  private DBConfigurationProvider dbProvider;
   private Set<PluginDescriptor> plugins;
 
-  @SuppressWarnings("unchecked")
   @Before
   public void setup() throws Exception {
     context = new TestingServletContext();
@@ -74,12 +74,6 @@ public class ConfigFilterTest {
     System.clearProperty(Environment.PORTAL_CONFIG_DIR);
 
     this.chain = mock(FilterChain.class);
-
-    dbProvider = mock(DBConfigurationProvider.class);
-    List<ModuleConfigurationProvider> providers =
-        (List<ModuleConfigurationProvider>) context.servletContext
-            .getAttribute(Geoladris.ATTR_CONFIG_PROVIDERS);
-    providers.add(dbProvider);
 
     when(context.servletContext.getRealPath(anyString())).then(new Answer<String>() {
       @Override
@@ -164,9 +158,6 @@ public class ConfigFilterTest {
     String subapp = "mysubapp";
     File subappConfigDir = setupSubapp(subapp);
 
-    when(dbProvider.isEnabled()).thenReturn(true);
-    when(dbProvider.hasApp(CONTEXT_PATH + "/" + subapp)).thenReturn(true);
-
     Config config = filter("/" + subapp + "/");
     assertEquals(subappConfigDir, config.getDir());
     assertEquals(subapp, config.getProperties().getProperty(PROP_APP));
@@ -176,8 +167,6 @@ public class ConfigFilterTest {
   public void sameSubappConfigMultipleCalls() throws Exception {
     String subapp = "mysubapp";
     setupSubapp(subapp);
-    when(dbProvider.isEnabled()).thenReturn(true);
-    when(dbProvider.hasApp(CONTEXT_PATH + "/" + subapp)).thenReturn(true);
 
     Config cfg1 = filter("/" + subapp + "/");
     Config cfg2 = filter("/" + subapp + "/");
@@ -316,6 +305,35 @@ public class ConfigFilterTest {
     verify(provider).getPluginConfig(any(PortalRequestConfiguration.class), eq(context.request));
   }
 
+  @SuppressWarnings("unchecked")
+  @Test
+  public void createConfigWithCacheTimeout() throws Exception {
+    doReturn(mock(Config.class)).when(this.filter).createConfig(anyString(), any(File.class),
+        any(HttpServletRequest.class), anySet(), anyBoolean(), anyInt());
+
+    int timeout = 60;
+    System.getProperties().setProperty(Environment.CACHE_TIMEOUT, "60");
+
+    filter("/");
+
+    verify(this.filter).createConfig(anyString(), any(File.class), any(HttpServletRequest.class),
+        anySet(), anyBoolean(), eq(timeout));
+  }
+
+  @SuppressWarnings("unchecked")
+  @Test
+  public void invalidCacheTimeoutValue() throws Exception {
+    doReturn(mock(Config.class)).when(this.filter).createConfig(anyString(), any(File.class),
+        any(HttpServletRequest.class), anySet(), anyBoolean(), anyInt());
+
+    System.getProperties().setProperty(Environment.CACHE_TIMEOUT, "invalid_int");
+
+    filter("/");
+
+    verify(this.filter).createConfig(anyString(), any(File.class), any(HttpServletRequest.class),
+        anySet(), anyBoolean(), eq(-1));
+  }
+
   private Config filter(String path) throws Exception {
     when(context.request.getRequestURI()).thenReturn("/" + CONTEXT_PATH + path);
     filter.doFilter(context.request, context.response, chain);
@@ -328,6 +346,7 @@ public class ConfigFilterTest {
     File contextConfigDir = new File(rootConfigDir, CONTEXT_PATH);
     File subappConfigDir = new File(contextConfigDir, subapp);
     subappConfigDir.mkdir();
+    new File(subappConfigDir, "public-conf.json").createNewFile();
 
     writePortalProperties(subapp, subappConfigDir);
     return subappConfigDir;

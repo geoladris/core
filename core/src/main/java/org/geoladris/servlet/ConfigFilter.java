@@ -28,8 +28,10 @@ import org.geoladris.JEEContextAnalyzer;
 import org.geoladris.PluginDescriptor;
 import org.geoladris.PluginUpdater;
 import org.geoladris.config.Config;
+import org.geoladris.config.DBConfig;
 import org.geoladris.config.DBConfigurationProvider;
-import org.geoladris.config.DefaultConfig;
+import org.geoladris.config.DBDataSource;
+import org.geoladris.config.FilesConfig;
 import org.geoladris.config.ModuleConfigurationProvider;
 import org.geoladris.config.PublicConfProvider;
 
@@ -64,10 +66,8 @@ public class ConfigFilter implements Filter {
     scheduler.scheduleAtFixedRate(new Runnable() {
       @Override
       public void run() {
-        String root = servletContext.getContextPath().substring(1);
-        String[] apps = appConfigs.keySet().toArray(new String[0]);
-        for (String app : apps) {
-          if (!isAppEnabled(root, app)) {
+        for (String app : appConfigs.keySet().toArray(new String[0])) {
+          if (!isAppEnabled(app)) {
             removeApp(app);
           }
         }
@@ -120,12 +120,12 @@ public class ConfigFilter implements Filter {
     if (app != null) {
       config = this.appConfigs.get(app);
       if (config == null) {
-        config = initConfig(request, new File(getRootConfigDir(), app));
+        config = initConfig(app, request);
         this.appConfigs.put(app, config);
       }
     } else {
       if (this.defaultConfig == null) {
-        this.defaultConfig = initConfig(request, getRootConfigDir());
+        this.defaultConfig = initConfig(app, request);
       }
       config = this.defaultConfig;
     }
@@ -137,8 +137,15 @@ public class ConfigFilter implements Filter {
     chain.doFilter(req, resp);
   }
 
-  private boolean isAppEnabled(String root, String app) {
-    if (dbProvider != null && dbProvider.isEnabled()) {
+  /**
+   * Determines whether the provided application is enabled or not.
+   * 
+   * @param app Application to check.
+   * @return <code>true</code> if the application is enabled, <code>false</code> otherwise.
+   */
+  private boolean isAppEnabled(String app) {
+    if (dbProvider != null) {
+      String root = this.servletContext.getContextPath().substring(1);
       return dbProvider.hasApp(root + "/" + app);
     } else {
       File appConfigDir = new File(getRootConfigDir(), app);
@@ -148,12 +155,26 @@ public class ConfigFilter implements Filter {
     }
   }
 
+  /**
+   * Removes the application from {@link #appConfigs} (if contained).
+   * 
+   * @param app The application to remove.
+   */
   private void removeApp(String app) {
-    Config config = this.appConfigs.remove(app);
-    Thread thread = this.configUpdaters.remove(config);
-    thread.interrupt();
+    if (this.appConfigs.containsKey(app)) {
+      Config config = this.appConfigs.remove(app);
+      Thread thread = this.configUpdaters.remove(config);
+      thread.interrupt();
+    }
   }
 
+  /**
+   * Returns the name of the requested application. It also removes the application from
+   * {@link #appConfigs} if it no longer exists.
+   * 
+   * @param request The request to obtain the name of the application.
+   * @return the name of the application or <code>null</code> if it's the root application.
+   */
   private String getApp(HttpServletRequest request) {
     String root = request.getContextPath().substring(1);
     // length + 2 to remove leading and trailing slashes
@@ -164,7 +185,7 @@ public class ConfigFilter implements Filter {
     }
 
     String app = path.split("/")[0];
-    if (isAppEnabled(root, app)) {
+    if (isAppEnabled(app)) {
       return app;
     } else {
       removeApp(app);
@@ -172,13 +193,35 @@ public class ConfigFilter implements Filter {
     }
   }
 
-  private Config initConfig(HttpServletRequest request, File configDir) {
+  /**
+   * Creates a new {@link Config}. Analyzes the set of {@link PluginDescriptor} and runs a new
+   * {@link PluginUpdater} for this config.
+   * 
+   * @param app The name of the application within this container or <code>null</code> if it's the
+   *        root application.
+   * @param request Request that origined the creation of this config.
+   * @return the new {@link Config}.
+   */
+  private Config initConfig(String app, HttpServletRequest request) {
+    File root = getRootConfigDir();
+    File configDir = app != null ? new File(root, app) : root;
     JEEContext context = new JEEContext(this.servletContext, new File(configDir, "plugins"));
     JEEContextAnalyzer analyzer = getAnalyzer(context);
     Set<PluginDescriptor> plugins = analyzer.getPluginDescriptors();
     boolean useCache = Environment.getInstance().getConfigCache();
-    DefaultConfig config =
-        new DefaultConfig(configDir, this.servletContext, request, plugins, useCache);
+
+    String timeoutProp = Environment.getInstance().get(Environment.CACHE_TIMEOUT);
+    int cacheTimeout = -1;
+    if (timeoutProp != null) {
+      try {
+        cacheTimeout = Integer.parseInt(timeoutProp);
+      } catch (NumberFormatException e) {
+        logger.info("Invalid integer value for '" + Environment.CACHE_TIMEOUT
+            + "'. Cache timeout disabled");
+      }
+    }
+
+    Config config = createConfig(app, configDir, request, plugins, useCache, cacheTimeout);
 
     try {
       PluginUpdater updater = new PluginUpdater(analyzer, config, context.getDirs());
@@ -192,6 +235,25 @@ public class ConfigFilter implements Filter {
     return config;
   }
 
+  /**
+   * For testing purposes
+   */
+  Config createConfig(String app, File configDir, HttpServletRequest request,
+      Set<PluginDescriptor> plugins, boolean useCache, int cacheTimeout) {
+    if (DBDataSource.getInstance().isEnabled()) {
+      String qualifiedApp = this.servletContext.getContextPath().substring(1);
+      qualifiedApp += app != null ? "/" + app : "";
+      return new DBConfig(qualifiedApp, configDir, this.servletContext, request, plugins, useCache,
+          cacheTimeout);
+    } else {
+      return new FilesConfig(configDir, this.servletContext, request, plugins, useCache,
+          cacheTimeout);
+    }
+  }
+
+  /**
+   * For testing purposes
+   */
   JEEContextAnalyzer getAnalyzer(Context context) {
     return new JEEContextAnalyzer(context);
   }

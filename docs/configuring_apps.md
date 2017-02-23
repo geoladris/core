@@ -90,7 +90,17 @@ Para configurar los plugins desde una base de datos, dicha base de datos deberá
 - `conf`: Configuración de los plugins.
 
 ```sql
-CREATE TABLE geoladris.apps (app text, role text, conf json NOT NULL, PRIMARY KEY(app, role));
+CREATE TABLE geoladris.apps (app text, role text, conf json NOT NULL,
+  PRIMARY KEY(app, role));
+```
+
+También es posible configurar las propiedades y los mensajes de la aplicación desde la base de datos con las siguientes tablas:
+
+```sql
+CREATE TABLE geoladris.props (app text, key text, value text NOT NULL,
+  PRIMARY KEY(app, key));
+CREATE TABLE geoladris.messages (app text, lang varchar(5), key text, value text NOT NULL,
+  PRIMARY KEY(app, lang, key));
 ```
 
 La conexión a la base de datos se obtiene de la siguiente manera:

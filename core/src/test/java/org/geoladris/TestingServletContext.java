@@ -23,7 +23,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import org.geoladris.config.Config;
-import org.geoladris.config.DefaultConfig;
+import org.geoladris.config.FilesConfig;
 import org.geoladris.config.ModuleConfigurationProvider;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -93,8 +93,8 @@ public class TestingServletContext {
     File pluginsDir = new File(configDir, "plugins");
     JEEContext context = new JEEContext(this.servletContext, pluginsDir);
     JEEContextAnalyzer analyzer = new JEEContextAnalyzer(context);
-    Config config = new DefaultConfig(configDir, this.servletContext, this.request,
-        analyzer.getPluginDescriptors(), false);
+    Config config = new FilesConfig(configDir, this.servletContext, this.request,
+        analyzer.getPluginDescriptors(), false, -1);
     when(request.getAttribute(Geoladris.ATTR_CONFIG)).thenReturn(config);
 
     return config;
