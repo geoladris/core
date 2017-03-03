@@ -143,7 +143,7 @@ public class PluginDescriptor {
         root = root.getParentFile();
       }
 
-      stylesheet = stylesheet.replace(root.getName(), root.getName() + "/" + this.name);
+      stylesheet = stylesheet.replaceFirst(root.getName(), root.getName() + "/" + this.name);
     }
     this.stylesheets.add(stylesheet);
   }

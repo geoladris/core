@@ -253,4 +253,13 @@ public class PluginDescriptorTest {
     plugin.setConfiguration(new JSONObject());
     assertFalse(plugin.isEnabled());
   }
+
+  @Test
+  public void addThemeCSSStylesheet() {
+    PluginDescriptor plugin = new PluginDescriptor("p", false);
+    plugin.addStylesheet("theme/theme.css");
+    Set<String> stylesheets = plugin.getStylesheets();
+    assertEquals(1, stylesheets.size());
+    assertEquals("theme/p/theme.css", stylesheets.iterator().next());
+  }
 }

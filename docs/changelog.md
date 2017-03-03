@@ -14,6 +14,7 @@ This project follows [semantic versioning](http://semver.org).
 * [Minificación no funciona para plugins con `installInRoot : false`](https://github.com/geoladris/geoladris/issues/24).
 * [Peticiones a recursos cualificados devuelven recursos sin cualificar (y viceversa)](https://github.com/geoladris/geoladris/issues/26).
 * `NullPointerException` cuando algún `ModuleConfigurationProvider` devuelve configuración para un plugin no existente.
+* Bug con ficheros CSS llamados igual que el directorio que los contiene (`styles/styles.css`, `modules/modules.css`, `theme/theme.css`) en plugins con `installInRoot:false`.
 
 ## Añadido
 
