@@ -69,36 +69,40 @@ public class ClientContentServlet extends HttpServlet {
       }
     }
 
-    if (parts.length < 3) {
-      throw new StatusServletException(404, "The file could not be found: " + pathInfo);
-    }
+    if (parts.length >= 3) {
+      String modulesOrStylesOrJsLib = parts[0];
+      String pluginName = parts[1];
+      String path = StringUtils.join(parts, File.separator, 2, parts.length);
 
-    String modulesOrStylesOrJsLib = parts[0];
-    String pluginName = parts[1];
-    String path = StringUtils.join(parts, File.separator, 2, parts.length);
+      for (PluginDescriptor plugin : enabled) {
+        if (plugin.isInstallInRoot()) {
+          continue;
+        }
 
-    for (PluginDescriptor plugin : enabled) {
-      if (plugin.isInstallInRoot()) {
-        continue;
-      }
-
-      if (plugin.getName().equals(pluginName)) {
-        File noJavaPluginFile = new File(config.getNoJavaPluginRoot(),
-            pluginName + File.separator + modulesOrStylesOrJsLib + File.separator + path);
-        if (noJavaPluginFile.isFile()) {
-          sendFile(noJavaPluginFile, pathInfo, req, resp);
-          return;
-        } else {
-          // It is a Java named plugin
-          String resourcePath = testingClasspathRoot + File.separator
-              + JEEContextAnalyzer.CLIENT_RESOURCES_DIR + File.separator + pluginName
-              + File.separator + modulesOrStylesOrJsLib + File.separator + path;
-          InputStream classPathResource = this.getClass().getResourceAsStream(resourcePath);
-          if (classPathResource != null) {
-            sendStream(classPathResource, pathInfo, resp);
+        if (plugin.getName().equals(pluginName)) {
+          File noJavaPluginFile = new File(config.getNoJavaPluginRoot(),
+              pluginName + File.separator + modulesOrStylesOrJsLib + File.separator + path);
+          if (noJavaPluginFile.isFile()) {
+            sendFile(noJavaPluginFile, pathInfo, req, resp);
             return;
+          } else {
+            // It is a Java named plugin
+            String resourcePath = testingClasspathRoot + File.separator
+                + JEEContextAnalyzer.CLIENT_RESOURCES_DIR + File.separator + pluginName
+                + File.separator + modulesOrStylesOrJsLib + File.separator + path;
+            InputStream classPathResource = this.getClass().getResourceAsStream(resourcePath);
+            if (classPathResource != null) {
+              sendStream(classPathResource, pathInfo, resp);
+              return;
+            }
           }
         }
+      }
+    } else {
+      InputStream stream = getServletContext().getResourceAsStream(pathInfo);
+      if (stream != null) {
+        sendStream(stream, pathInfo, resp);
+        return;
       }
     }
 

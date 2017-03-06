@@ -18,6 +18,7 @@ import javax.servlet.FilterConfig;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -64,6 +65,18 @@ public class TestingServletContext {
         out = new ByteArrayOutputStream();
         writer = new PrintWriter(out);
         return writer;
+      }
+    });
+    when(this.response.getOutputStream()).then(new Answer<ServletOutputStream>(){
+      @Override
+      public ServletOutputStream answer(InvocationOnMock invocation) throws Throwable {
+        out = new ByteArrayOutputStream();
+        return new ServletOutputStream() {
+          @Override
+          public void write(int b) throws IOException {
+            out.write(b);
+          }
+        };
       }
     });
 

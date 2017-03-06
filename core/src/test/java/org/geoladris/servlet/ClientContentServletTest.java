@@ -3,6 +3,7 @@ package org.geoladris.servlet;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.startsWith;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
@@ -10,6 +11,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -225,5 +227,24 @@ public class ClientContentServletTest {
   public void doesNotReturnQualifiedResourcesAsUnqualified() throws Exception {
     setupConfigurationFolder("src/test/resources/testJavaNonRootModules");
     check404(servlet, "/modules/", "module1.js");
+  }
+
+  @Test
+  public <T> void servesFromContextResources() throws Exception {
+    setupConfigurationFolder("src/test/resources/testNoJavaPlugins");
+
+    when(servlet.getServletContext().getResourceAsStream(anyString()))
+        .then(new Answer<InputStream>() {
+          @Override
+          public InputStream answer(InvocationOnMock invocation) throws Throwable {
+            return getClass().getResourceAsStream("/" + invocation.getArguments()[0].toString());
+          }
+        });
+
+    String contextPath = this.servlet.getServletContext().getContextPath();
+    when(request.getRequestURI()).thenReturn(contextPath + "/log4j.properties");
+    servlet.doGet(request, response);
+
+    verify(response).setStatus(HttpServletResponse.SC_OK);
   }
 }

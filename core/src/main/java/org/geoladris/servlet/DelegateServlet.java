@@ -42,7 +42,7 @@ public class DelegateServlet extends HttpServlet {
       config.doGet(req, resp);
     } else if (uri.matches(regexPrefix + "/modules/main.js$")) {
       main.doGet(req, resp);
-    } else if (uri.matches(regexPrefix + "/(static|jslib|modules|styles|theme)/.*")) {
+    } else if (uri.matches(regexPrefix + "/(optimized|static|jslib|modules|styles|theme)/.*")) {
       clientContent.doGet(req, resp);
     } else {
       resp.sendError(HttpServletResponse.SC_NOT_FOUND);
