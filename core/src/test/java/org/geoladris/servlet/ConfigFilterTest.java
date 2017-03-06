@@ -247,7 +247,7 @@ public class ConfigFilterTest {
     FileUtils.deleteDirectory(dir1);
 
     // Wait for the plugin updater to finish
-    Thread.sleep(100);
+    Thread.sleep(500);
 
     filter("/subapp1/");
     assertEquals(1, filter.appConfigs.size());
