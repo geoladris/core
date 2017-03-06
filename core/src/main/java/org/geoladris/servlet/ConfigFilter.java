@@ -179,6 +179,7 @@ public class ConfigFilter implements Filter {
     String root = request.getContextPath().substring(1);
     // length + 2 to remove leading and trailing slashes
     String path = request.getRequestURI();
+    path = path.replaceAll("//+", "/");
     path = path.substring(Math.min(path.length(), root.length() + 2));
     if (path.length() == 0) {
       return null;

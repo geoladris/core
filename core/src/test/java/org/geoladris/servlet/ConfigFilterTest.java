@@ -340,6 +340,20 @@ public class ConfigFilterTest {
     assertEquals(0, filter.appConfigs.size());
   }
 
+  @Test
+  public void multipleSlashes() throws Exception {
+    File rootConfigDir = folder.getRoot();
+    File contextConfigDir = new File(rootConfigDir, CONTEXT_PATH);
+
+    System.setProperty(Environment.CONFIG_DIR, rootConfigDir.getAbsolutePath());
+    writePortalProperties("root", contextConfigDir);
+
+    Config config = filter("//");
+
+    assertEquals(contextConfigDir, config.getDir());
+    assertEquals("root", config.getProperties().getProperty(PROP_APP));
+  }
+
   private Config filter(String path) throws Exception {
     when(context.request.getRequestURI()).thenReturn("/" + CONTEXT_PATH + path);
     filter.doFilter(context.request, context.response, chain);
@@ -363,5 +377,4 @@ public class ConfigFilterTest {
     props.setProperty(PROP_APP, app);
     props.store(new FileOutputStream(new File(configDir, "portal.properties")), "");
   }
-
 }
