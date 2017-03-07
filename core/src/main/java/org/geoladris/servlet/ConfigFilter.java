@@ -176,7 +176,10 @@ public class ConfigFilter implements Filter {
    * @return the name of the application or <code>null</code> if it's the root application.
    */
   private String getApp(HttpServletRequest request) {
-    String root = request.getContextPath().substring(1);
+    String root = request.getContextPath();
+    if (root.startsWith("/")) {
+      root = root.substring(1);
+    }
     // length + 2 to remove leading and trailing slashes
     String path = request.getRequestURI();
     path = path.replaceAll("//+", "/");
