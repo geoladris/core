@@ -13,6 +13,7 @@ import org.geoladris.config.DBDataSource;
 import org.geoladris.config.ModuleConfigurationProvider;
 import org.geoladris.config.PluginJSONConfigurationProvider;
 import org.geoladris.config.PublicConfProvider;
+import org.geoladris.config.RoleConfigurationProvider;
 
 public class AppContextListener implements ServletContextListener {
   @Override
@@ -39,6 +40,7 @@ public class AppContextListener implements ServletContextListener {
     } else {
       providers.add(new PublicConfProvider());
       providers.add(new PluginJSONConfigurationProvider());
+      providers.add(new RoleConfigurationProvider());
     }
     context.setAttribute(Geoladris.ATTR_CONFIG_PROVIDERS, providers);
   }

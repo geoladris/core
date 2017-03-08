@@ -22,11 +22,7 @@ public class PublicConfProvider implements ModuleConfigurationProvider {
   public static final String FILE_BASE = "public-conf";
   public static final String FILE = FILE_BASE + ".json";
 
-  public static final String ROLE_DIR = "role_conf";
-
   private Map<File, JSONContentProvider> contents = new HashMap<>();
-
-  public PublicConfProvider() {}
 
   @SuppressWarnings("unchecked")
   @Override

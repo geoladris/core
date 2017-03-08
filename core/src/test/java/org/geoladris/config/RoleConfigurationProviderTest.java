@@ -27,6 +27,7 @@ import net.sf.json.JSONObject;
 public class RoleConfigurationProviderTest {
   private File configDir, roleDir;
   private RoleConfigurationProvider provider;
+  private PortalRequestConfiguration requestConfig;
 
   @Before
   public void setup() throws IOException {
@@ -37,7 +38,10 @@ public class RoleConfigurationProviderTest {
     roleDir = new File(configDir, RoleConfigurationProvider.ROLE_DIR);
     roleDir.mkdir();
 
-    provider = new RoleConfigurationProvider(configDir);
+    provider = new RoleConfigurationProvider();
+
+    requestConfig = mock(PortalRequestConfiguration.class);
+    when(requestConfig.getConfigDir()).thenReturn(configDir);
   }
 
   @After
@@ -48,16 +52,14 @@ public class RoleConfigurationProviderTest {
   @Test
   public void noRoleOnRequest() throws Exception {
     HttpServletRequest request = mockRequest(null);
-    Map<String, JSONObject> conf =
-        provider.getPluginConfig(mock(PortalRequestConfiguration.class), request);
+    Map<String, JSONObject> conf = provider.getPluginConfig(requestConfig, request);
     assertNull(conf);
   }
 
   @Test
   public void roleWithoutSpecificConf() throws Exception {
     HttpServletRequest request = mockRequest("role1");
-    Map<String, JSONObject> conf =
-        provider.getPluginConfig(mock(PortalRequestConfiguration.class), request);
+    Map<String, JSONObject> conf = provider.getPluginConfig(requestConfig, request);
     assertNull(conf);
   }
 
@@ -72,8 +74,7 @@ public class RoleConfigurationProviderTest {
     writer.close();
 
     HttpServletRequest request = mockRequest(role);
-    Map<String, JSONObject> pluginConfs =
-        provider.getPluginConfig(mock(PortalRequestConfiguration.class), request);
+    Map<String, JSONObject> pluginConfs = provider.getPluginConfig(requestConfig, request);
     assertEquals(1, pluginConfs.size());
     assertTrue(pluginConfs.containsKey(pluginName));
     JSONObject pluginConf = pluginConfs.get(pluginName);

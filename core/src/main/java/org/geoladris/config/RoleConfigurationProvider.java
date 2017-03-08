@@ -2,9 +2,11 @@ package org.geoladris.config;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 
 import org.geoladris.Geoladris;
 
@@ -27,23 +29,29 @@ import net.sf.json.JSONObject;
 public class RoleConfigurationProvider implements ModuleConfigurationProvider {
   public static final String ROLE_DIR = "role_conf";
 
-  private JSONContentProvider contents;
-
-  public RoleConfigurationProvider(File configDir) {
-    String roleDir = new File(configDir, ROLE_DIR).getAbsolutePath();
-    this.contents = new JSONContentProvider(roleDir);
-  }
+  private Map<File, JSONContentProvider> contents = new HashMap<>();
 
   @SuppressWarnings("unchecked")
   @Override
   public Map<String, JSONObject> getPluginConfig(PortalRequestConfiguration requestConfig,
       HttpServletRequest request) throws IOException {
+    File dir = new File(requestConfig.getConfigDir(), ROLE_DIR);
+    JSONContentProvider jsonContent = contents.get(dir);
+    if (jsonContent == null) {
+      jsonContent = new JSONContentProvider(dir.getAbsolutePath());
+      contents.put(dir, jsonContent);
+    }
+
     String role = getRole(request);
-    return role != null ? this.contents.get().get(role) : null;
+    return role != null ? jsonContent.get().get(role) : null;
   }
 
   private String getRole(HttpServletRequest request) {
-    Object attr = request.getSession().getAttribute(Geoladris.ATTR_ROLE);
+    HttpSession session = request.getSession();
+    if (session == null) {
+      return null;
+    }
+    Object attr = session.getAttribute(Geoladris.ATTR_ROLE);
     if (attr == null) {
       return null;
     }
