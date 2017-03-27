@@ -3,6 +3,7 @@ package org.geoladris.servlet;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -52,8 +53,8 @@ public class IndexHTMLServletTest {
     PluginDescriptor[] plugins = new PluginDescriptor[] {plugin};
 
     Config config = mock(Config.class);
-    when(config.getPluginConfig(any(Locale.class))).thenReturn(plugins);
-    this.request.setAttribute(Geoladris.ATTR_CONFIG, config);
+    when(config.getPluginConfig(any(Locale.class), eq(this.request))).thenReturn(plugins);
+    this.context.servletContext.setAttribute(Geoladris.ATTR_CONFIG, config);
 
     this.servlet.doGet(this.request, this.response);
 
@@ -103,8 +104,9 @@ public class IndexHTMLServletTest {
    */
   private void mockDebugParam(String debugParam) {
     Config config = mock(Config.class);
-    when(config.getPluginConfig(any(Locale.class))).thenReturn(new PluginDescriptor[0]);
-    this.request.setAttribute(Geoladris.ATTR_CONFIG, config);
+    when(config.getPluginConfig(any(Locale.class), eq(this.request)))
+        .thenReturn(new PluginDescriptor[0]);
+    this.context.servletContext.setAttribute(Geoladris.ATTR_CONFIG, config);
 
     System.setProperty(Environment.MINIFIED, "true");
     when(this.request.getParameter(IndexHTMLServlet.HTTP_PARAM_DEBUG)).thenReturn(debugParam);

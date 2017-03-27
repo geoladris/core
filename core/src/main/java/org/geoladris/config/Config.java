@@ -14,6 +14,7 @@
 package org.geoladris.config;
 
 import java.io.File;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
@@ -64,9 +65,10 @@ public interface Config {
    * the array.
    * 
    * @param locale
+   * @param request
    * @return
    */
-  PluginDescriptor[] getPluginConfig(Locale locale);
+  PluginDescriptor[] getPluginConfig(Locale locale, HttpServletRequest request);
 
   /**
    * Gets the folder in the configuration directory where no-java plugins are to be found
@@ -77,5 +79,7 @@ public interface Config {
 
   void setPlugins(Set<PluginDescriptor> plugins);
 
-  void setRequest(HttpServletRequest request);
+  void addModuleConfigurationProvider(ModuleConfigurationProvider provider);
+
+  List<ModuleConfigurationProvider> getModuleConfigurationProviders();
 }

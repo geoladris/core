@@ -16,11 +16,9 @@ import java.util.TimerTask;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.log4j.Logger;
-import org.geoladris.Geoladris;
 import org.geoladris.PluginDescriptor;
 
 import net.sf.json.JSONObject;
@@ -30,24 +28,23 @@ public abstract class AbstractConfig implements Config {
 
   private static final String PROPERTY_DEFAULT_LANG = "languages.default";
 
-  private HttpServletRequest request;
   private File configDir;
   private Set<PluginDescriptor> plugins;
   private boolean useCache;
-  private ServletContext context;
+  private List<ModuleConfigurationProvider> configProviders;
 
   private Map<ModuleConfigurationProvider, Map<String, JSONObject>> cachedConfigurations =
       new HashMap<ModuleConfigurationProvider, Map<String, JSONObject>>();
   private Map<Locale, ResourceBundle> localeBundles = new HashMap<Locale, ResourceBundle>();
   private Properties properties;
 
-  public AbstractConfig(File configDir, ServletContext context, HttpServletRequest request,
+
+  public AbstractConfig(File configDir, List<ModuleConfigurationProvider> configProviders,
       Set<PluginDescriptor> plugins, boolean useCache, int cacheTimeout) {
     this.configDir = configDir;
     this.plugins = plugins;
     this.useCache = useCache;
-    this.request = request;
-    this.context = context;
+    this.configProviders = configProviders;
 
     if (cacheTimeout > 0) {
       int timeoutMillis = cacheTimeout * 1000;
@@ -142,9 +139,8 @@ public abstract class AbstractConfig implements Config {
     }
   }
 
-  @SuppressWarnings("unchecked")
   @Override
-  public PluginDescriptor[] getPluginConfig(Locale locale) {
+  public PluginDescriptor[] getPluginConfig(Locale locale, HttpServletRequest request) {
     // Get a map: name -> cloned descriptor
     Map<String, PluginDescriptor> namePluginDescriptor = new HashMap<String, PluginDescriptor>();
     for (PluginDescriptor pluginDescriptor : this.plugins) {
@@ -155,8 +151,8 @@ public abstract class AbstractConfig implements Config {
     PortalRequestConfiguration requestConfig = new PortalRequestConfigurationImpl(locale);
 
     // Get the providers configuration and merge it
-    List<ModuleConfigurationProvider> providers = (List<ModuleConfigurationProvider>) this.context
-        .getAttribute(Geoladris.ATTR_CONFIG_PROVIDERS);
+    List<ModuleConfigurationProvider> providers =
+        (List<ModuleConfigurationProvider>) this.configProviders;
     for (ModuleConfigurationProvider provider : providers) {
 
       Map<String, JSONObject> providerConfiguration = cachedConfigurations.get(provider);
@@ -207,8 +203,13 @@ public abstract class AbstractConfig implements Config {
   }
 
   @Override
-  public void setRequest(HttpServletRequest request) {
-    this.request = request;
+  public void addModuleConfigurationProvider(ModuleConfigurationProvider provider) {
+    this.configProviders.add(provider);
+  }
+
+  @Override
+  public List<ModuleConfigurationProvider> getModuleConfigurationProviders() {
+    return this.configProviders;
   }
 
   private class PortalRequestConfigurationImpl implements PortalRequestConfiguration {

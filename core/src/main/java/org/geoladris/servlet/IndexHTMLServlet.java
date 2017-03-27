@@ -61,14 +61,14 @@ public class IndexHTMLServlet extends HttpServlet {
       minifiedjs = Environment.getInstance().getMinified();
     }
 
-    Config config = (Config) req.getAttribute(Geoladris.ATTR_CONFIG);
+    Config config = (Config) getServletContext().getAttribute(Geoladris.ATTR_CONFIG);
     ArrayList<String> styleSheets = new ArrayList<String>();
     if (minifiedjs) {
       styleSheets.add(OPTIMIZED_FOLDER + "/portal-style.css");
     } else {
       Locale locale = (Locale) req.getAttribute(Geoladris.ATTR_LOCALE);
       List<String> classPathStylesheets = new ArrayList<>();
-      for (PluginDescriptor plugin : config.getPluginConfig(locale)) {
+      for (PluginDescriptor plugin : config.getPluginConfig(locale, req)) {
         classPathStylesheets.addAll(plugin.getStylesheets());
       }
 

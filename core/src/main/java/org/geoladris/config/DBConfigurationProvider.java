@@ -13,7 +13,6 @@ import javax.servlet.http.HttpSession;
 import org.apache.log4j.Logger;
 import org.geoladris.Environment;
 import org.geoladris.Geoladris;
-import org.postgresql.Driver;
 
 import net.sf.json.JSONObject;
 
@@ -24,14 +23,6 @@ public class DBConfigurationProvider implements ModuleConfigurationProvider {
 
   static final String DEFAULT_ROLE = "default";
 
-  static {
-    try {
-      Class.forName(Driver.class.getCanonicalName());
-    } catch (ClassNotFoundException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
   private DBDataSource dataSource;
   private String contextPath, schema;
 
@@ -41,6 +32,8 @@ public class DBConfigurationProvider implements ModuleConfigurationProvider {
     this.schema = Environment.getInstance().get(Environment.JDBC_SCHEMA);
     if (this.schema == null) {
       this.schema = "";
+    } else {
+      this.schema += ".";
     }
   }
 
@@ -57,15 +50,7 @@ public class DBConfigurationProvider implements ModuleConfigurationProvider {
       role = roleAttr != null ? roleAttr.toString() : DEFAULT_ROLE;
     }
 
-    Object appAttr = request.getAttribute(Geoladris.ATTR_APP);
-    String app = appAttr != null ? appAttr.toString() : null;
-
-    String qualifiedApp = this.contextPath;
-    if (app != null && app.length() > 0) {
-      qualifiedApp += "/" + app;
-    }
-
-    String config = getConfig(qualifiedApp, role);
+    String config = getConfig(this.contextPath, role);
     return config != null ? JSONObject.fromObject(config) : null;
   }
 

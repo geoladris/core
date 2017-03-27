@@ -23,7 +23,6 @@ This project follows [semantic versioning](http://semver.org).
 * [Posibilidad de añadir módulos en subdirectorios](https://github.com/geoladris/core/issues/10).
 * [Detectar cambios en los directorios de plugins](https://github.com/geoladris/core/issues/33).
 * [Fichero descriptor de plugin (`<plugin>-conf.json`) opcional](https://github.com/geoladris/core/issues/36).
-* Posibilidad de configurar varias aplicaciones en un mismo despliegue (ver [doc](configuring_apps.md#multiple_apps)).
 * Variable `GEOLADRIS_CACHE_TIMEOUT` (en segundos) para limpiar la caché de configuración. Únicamente se tiene en cuenta si la variable `GEOLADRIS_CONFIG_CACHE` es `true`.
 
 # 5.0.1 [2016-12-06]

@@ -14,13 +14,16 @@ import org.geoladris.Geoladris;
 import org.geoladris.config.Config;
 
 public class LangFilter implements Filter {
+  private Config config;
+
   @Override
-  public void init(FilterConfig filterConfig) throws ServletException {}
+  public void init(FilterConfig filterConfig) throws ServletException {
+    this.config = (Config) filterConfig.getServletContext().getAttribute(Geoladris.ATTR_CONFIG);
+  }
 
   @Override
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
       throws IOException, ServletException {
-    Config config = (Config) request.getAttribute(Geoladris.ATTR_CONFIG);
     String lang = request.getParameter("lang");
     if (lang == null) {
       lang = config.getDefaultLang();

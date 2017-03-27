@@ -14,13 +14,11 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.ResourceBundle;
-
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
 
 import org.geoladris.PluginDescriptor;
 import org.junit.Before;
@@ -42,8 +40,8 @@ public class DBConfigTest {
 
   @Before
   public void setup() throws Exception {
-    config = spy(new DBConfig(APP, folder.getRoot(), mock(ServletContext.class),
-        mock(HttpServletRequest.class), new HashSet<PluginDescriptor>(), false, -1));
+    config = spy(new DBConfig(APP, folder.getRoot(), new ArrayList<ModuleConfigurationProvider>(),
+        new HashSet<PluginDescriptor>(), false, -1));
 
     this.result = mock(ResultSet.class);
 

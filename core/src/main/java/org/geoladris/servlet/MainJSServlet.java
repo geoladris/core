@@ -26,11 +26,11 @@ public class MainJSServlet extends HttpServlet {
       throws ServletException, IOException {
     Environment env = Environment.getInstance();
     if (!env.getConfigCache() || output == null) {
-      Config config = (Config) req.getAttribute(Geoladris.ATTR_CONFIG);
+      Config config = (Config) getServletContext().getAttribute(Geoladris.ATTR_CONFIG);
       Locale locale = (Locale) req.getAttribute(Geoladris.ATTR_LOCALE);
       Map<String, String> paths = new HashMap<>();
       Map<String, String> shims = new HashMap<>();
-      for (PluginDescriptor plugin : config.getPluginConfig(locale)) {
+      for (PluginDescriptor plugin : config.getPluginConfig(locale, req)) {
         paths.putAll(plugin.getRequireJSPathsMap());
         shims.putAll(plugin.getRequireJSShims());
       }

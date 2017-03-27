@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -18,8 +19,6 @@ import java.util.Properties;
 import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
 
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -53,7 +52,7 @@ public class ConfigServletTest {
     this.request = context.request;
 
     this.servlet.init(context.servletConfig);
-    request.setAttribute(Geoladris.ATTR_CONFIG, this.config);
+    context.servletContext.setAttribute(Geoladris.ATTR_CONFIG, this.config);
 
     this.reader = new PluginDescriptorFileReader();
   }
@@ -79,11 +78,11 @@ public class ConfigServletTest {
     when(config.getPropertyAsArray(Config.PROPERTY_MAP_CENTER)).thenReturn(new String[] {"0", "0"});
     when(config.getPropertyAsArray(Config.PROPERTY_CLIENT_MODULES)).thenReturn(new String[0]);
 
-    when(config.getPluginConfig(any(Locale.class))).thenReturn(new PluginDescriptor[0]);
+    when(config.getPluginConfig(any(Locale.class), eq(request)))
+        .thenReturn(new PluginDescriptor[0]);
 
     request.setAttribute(Geoladris.ATTR_LOCALE, new Locale("es"));
 
-    ConfigServlet servlet = getInitializedServlet(config);
     servlet.doGet(request, this.response);
 
     String response = context.getResponse();
@@ -96,19 +95,6 @@ public class ConfigServletTest {
     assertFalse(response.contains("moreproperties"));
   }
 
-  private ConfigServlet getInitializedServlet(Config config) throws ServletException {
-    ConfigServlet servlet = new ConfigServlet();
-    ServletConfig servletConfig = mock(ServletConfig.class);
-    ServletContext servletContext = mock(ServletContext.class);
-    when(servletContext.getAttribute("config")).thenReturn(config);
-    when(servletContext.getAttribute("js-paths")).thenReturn(new ArrayList<String>());
-    when(servletContext.getAttribute("plugin-configuration"))
-        .thenReturn(new HashMap<String, JSONObject>());
-    when(servletConfig.getServletContext()).thenReturn(servletContext);
-    servlet.init(servletConfig);
-    return servlet;
-  }
-
   @Test
   public void usesModulesFromPluginsInConfiguration() throws Exception {
     String defaultConf = "{default-conf:{module1 : {prop1 : 42, prop2 : true}}}";
@@ -118,7 +104,7 @@ public class ConfigServletTest {
     PluginDescriptor[] plugin = new PluginDescriptor[] {plugin1};
     mockEmptyConfig();
     this.request.setAttribute(Geoladris.ATTR_LOCALE, Locale.ROOT);
-    when(config.getPluginConfig(Locale.ROOT)).thenReturn(plugin);
+    when(config.getPluginConfig(Locale.ROOT, request)).thenReturn(plugin);
 
     servlet.doGet(this.request, response);
 
@@ -145,7 +131,7 @@ public class ConfigServletTest {
 
     mockEmptyConfig();
     request.setAttribute(Geoladris.ATTR_LOCALE, Locale.ROOT);
-    when(config.getPluginConfig(Locale.ROOT)).thenReturn(plugins);
+    when(config.getPluginConfig(Locale.ROOT, request)).thenReturn(plugins);
 
     servlet.doGet(request, response);
 

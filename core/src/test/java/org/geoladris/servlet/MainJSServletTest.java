@@ -3,6 +3,7 @@ package org.geoladris.servlet;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -46,13 +47,15 @@ public class MainJSServletTest {
 
     Config config = mock(Config.class);
     System.setProperty(Environment.CONFIG_CACHE, "false");
-    request.setAttribute(Geoladris.ATTR_CONFIG, config);
+    context.servletContext.setAttribute(Geoladris.ATTR_CONFIG, config);
 
-    when(config.getPluginConfig(any(Locale.class))).thenReturn(new PluginDescriptor[] {p1, p2});
+    when(config.getPluginConfig(any(Locale.class), eq(request)))
+        .thenReturn(new PluginDescriptor[] {p1, p2});
     this.servlet.doGet(this.request, response);
     assertTrue(context.getResponse().contains("jslib/jquery-ui"));
 
-    when(config.getPluginConfig(any(Locale.class))).thenReturn(new PluginDescriptor[] {p1});
+    when(config.getPluginConfig(any(Locale.class), eq(request)))
+        .thenReturn(new PluginDescriptor[] {p1});
     this.servlet.doGet(this.request, response);
     assertFalse(context.getResponse().contains("jslib/jquery-ui"));
   }
@@ -66,13 +69,15 @@ public class MainJSServletTest {
 
     Config config = mock(Config.class);
     System.setProperty(Environment.CONFIG_CACHE, "true");
-    request.setAttribute(Geoladris.ATTR_CONFIG, config);
+    context.servletContext.setAttribute(Geoladris.ATTR_CONFIG, config);
 
-    when(config.getPluginConfig(any(Locale.class))).thenReturn(new PluginDescriptor[] {p1, p2});
+    when(config.getPluginConfig(any(Locale.class), eq(request)))
+        .thenReturn(new PluginDescriptor[] {p1, p2});
     this.servlet.doGet(this.request, response);
     assertTrue(context.getResponse().contains("jslib/jquery-ui"));
 
-    when(config.getPluginConfig(any(Locale.class))).thenReturn(new PluginDescriptor[] {p1, p2});
+    when(config.getPluginConfig(any(Locale.class), eq(request)))
+        .thenReturn(new PluginDescriptor[] {p1, p2});
     this.servlet.doGet(this.request, response);
     assertTrue(context.getResponse().contains("jslib/jquery-ui"));
   }

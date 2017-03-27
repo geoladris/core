@@ -10,6 +10,7 @@ import javax.sql.DataSource;
 import org.apache.commons.dbcp2.BasicDataSource;
 import org.apache.log4j.Logger;
 import org.geoladris.Environment;
+import org.postgresql.Driver;
 
 public class DBDataSource {
   private static final Logger logger = Logger.getLogger(DBConfig.class);
@@ -17,6 +18,14 @@ public class DBDataSource {
   public static final String CONTEXT_RESOURCE_NAME = "geoladris";
 
   private static final DBDataSource instance = new DBDataSource();
+
+  static {
+    try {
+      Class.forName(Driver.class.getCanonicalName());
+    } catch (ClassNotFoundException e) {
+      throw new RuntimeException(e);
+    }
+  }
 
   public static DBDataSource getInstance() {
     return instance;

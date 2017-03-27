@@ -1,17 +1,14 @@
 package org.geoladris.config;
 
 import static junit.framework.Assert.assertEquals;
-import static org.mockito.Mockito.mock;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.ResourceBundle;
-
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.io.IOUtils;
 import org.geoladris.PluginDescriptor;
@@ -28,8 +25,8 @@ public class FilesConfigTest {
 
   @Before
   public void setup() {
-    config = new FilesConfig(folder.getRoot(), mock(ServletContext.class),
-        mock(HttpServletRequest.class), new HashSet<PluginDescriptor>(), false, -1);
+    config = new FilesConfig(folder.getRoot(), new ArrayList<ModuleConfigurationProvider>(),
+        new HashSet<PluginDescriptor>(), false, -1);
   }
 
   @Test

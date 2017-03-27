@@ -114,26 +114,12 @@ public class DBConfigurationProviderTest {
   }
 
   @Test
-  public void providesConfigForApps() throws Exception {
+  public void providesConfig() throws Exception {
     DBDataSource ds = mockDataSource(true, "{}");
     DBConfigurationProvider provider = new DBConfigurationProvider(ds, "test");
 
     HttpServletRequest request = mock(HttpServletRequest.class);
     when(request.getSession()).thenReturn(mock(HttpSession.class));
-    when(request.getAttribute(Geoladris.ATTR_APP)).thenReturn("app");
-
-    provider.getPluginConfig(mock(PortalRequestConfiguration.class), request);
-    verify(this.st, atLeastOnce()).setString(1, "test/app");
-  }
-
-  @Test
-  public void providesDefaultConfigForEmptyApp() throws Exception {
-    DBDataSource ds = mockDataSource(true, "{}");
-    DBConfigurationProvider provider = new DBConfigurationProvider(ds, "test");
-
-    HttpServletRequest request = mock(HttpServletRequest.class);
-    when(request.getSession()).thenReturn(mock(HttpSession.class));
-    when(request.getAttribute(Geoladris.ATTR_APP)).thenReturn("");
 
     provider.getPluginConfig(mock(PortalRequestConfiguration.class), request);
     verify(this.st, atLeastOnce()).setString(1, "test");

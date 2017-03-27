@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.List;
 import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.Properties;
@@ -15,18 +16,15 @@ import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
 import java.util.Set;
 
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
-
 import org.apache.log4j.Logger;
 import org.geoladris.PluginDescriptor;
 
 public class FilesConfig extends AbstractConfig {
   private static Logger logger = Logger.getLogger(FilesConfig.class);
 
-  public FilesConfig(File configDir, ServletContext context, HttpServletRequest request,
-      Set<PluginDescriptor> plugins, boolean useCache, int cacheTimeout) {
-    super(configDir, context, request, plugins, useCache, cacheTimeout);
+  public FilesConfig(File configDir, List<ModuleConfigurationProvider> configProviders,
+      Set<PluginDescriptor> plugins, boolean useCache, int cacheTimeout) throws ConfigException {
+    super(configDir, configProviders, plugins, useCache, cacheTimeout);
   }
 
   @Override

@@ -32,15 +32,11 @@ public class ClientContentServlet extends HttpServlet {
   @Override
   protected void doGet(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {
-    Config config = (Config) req.getAttribute(Geoladris.ATTR_CONFIG);
+    Config config = (Config) getServletContext().getAttribute(Geoladris.ATTR_CONFIG);
 
     String pathInfo = req.getRequestURI();
     // Remove context path and app path
     pathInfo = pathInfo.substring(req.getContextPath().length() + 1);
-    Object app = req.getAttribute(Geoladris.ATTR_APP);
-    if (app != null && app.toString().length() > 0) {
-      pathInfo = pathInfo.substring(app.toString().length() + 1);
-    }
 
     // Is this just a file in static folder?
     File confStaticFile = new File(config.getDir(), pathInfo);
@@ -51,7 +47,7 @@ public class ClientContentServlet extends HttpServlet {
 
     String[] parts = pathInfo.split(Pattern.quote("/"));
     Locale locale = (Locale) req.getAttribute(Geoladris.ATTR_LOCALE);
-    PluginDescriptor[] enabled = config.getPluginConfig(locale);
+    PluginDescriptor[] enabled = config.getPluginConfig(locale, req);
 
     // is it in the root plugin?
     for (PluginDescriptor plugin : enabled) {

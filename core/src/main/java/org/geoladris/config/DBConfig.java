@@ -8,14 +8,12 @@ import java.sql.SQLException;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.Set;
-
-import javax.servlet.ServletContext;
-import javax.servlet.http.HttpServletRequest;
 
 import org.apache.log4j.Logger;
 import org.geoladris.Environment;
@@ -30,14 +28,16 @@ public class DBConfig extends AbstractConfig {
   private String app;
   private String schema;
 
-  public DBConfig(String app, File configDir, ServletContext context, HttpServletRequest request,
+  public DBConfig(String app, File configDir, List<ModuleConfigurationProvider> configProviders,
       Set<PluginDescriptor> plugins, boolean useCache, int cacheTimeout) throws ConfigException {
-    super(configDir, context, request, plugins, useCache, cacheTimeout);
+    super(configDir, configProviders, plugins, useCache, cacheTimeout);
 
     this.app = app;
     this.schema = Environment.getInstance().get(Environment.JDBC_SCHEMA);
     if (this.schema == null) {
       this.schema = "";
+    } else {
+      this.schema += ".";
     }
   }
 

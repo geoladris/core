@@ -4,7 +4,6 @@ import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -14,6 +13,7 @@ import static org.mockito.Mockito.when;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -26,7 +26,6 @@ import java.util.Set;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 
-import org.geoladris.Geoladris;
 import org.geoladris.PluginDescriptor;
 import org.geoladris.PluginDescriptorFileReader;
 import org.junit.Before;
@@ -67,11 +66,10 @@ public class AbstractConfigTest {
     when(provider2.getPluginConfig(any(PortalRequestConfiguration.class),
         any(HttpServletRequest.class))).thenReturn(Collections.singletonMap("1", conf2));
 
-    when(context.getAttribute(Geoladris.ATTR_CONFIG_PROVIDERS))
-        .thenReturn(Arrays.asList(provider1, provider2));
-    Config config = new FilesConfig(folder.getRoot(), context, request, plugins, false, -1);
+    Config config =
+        new FilesConfig(folder.getRoot(), Arrays.asList(provider1, provider2), plugins, false, -1);
 
-    PluginDescriptor[] c = config.getPluginConfig(Locale.getDefault());
+    PluginDescriptor[] c = config.getPluginConfig(Locale.getDefault(), request);
 
     JSONObject pluginConf = c[0].getConfiguration().getJSONObject("module");
 
@@ -143,8 +141,8 @@ public class AbstractConfigTest {
     File portalProperties = new File(folder.getRoot(), "portal.properties");
     firstProperties.store(new FileOutputStream(portalProperties), "");
 
-    Config config =
-        new FilesConfig(folder.getRoot(), context, request, null, useCache, cacheTimeout);
+    Config config = new FilesConfig(folder.getRoot(), new ArrayList<ModuleConfigurationProvider>(),
+        null, useCache, cacheTimeout);
 
     assertTrue(config.getDefaultLang().equals(defaultLang));
     assertTrue(config.getLanguages()[0].get("code").equals("es"));
@@ -178,13 +176,12 @@ public class AbstractConfigTest {
     ModuleConfigurationProvider provider = mock(ModuleConfigurationProvider.class);
     when(provider.canBeCached()).thenReturn(canBeCached);
 
-    Config config = new FilesConfig(null, context, request,
+    Config config = new FilesConfig(null, Arrays.asList(provider),
         Collections.<PluginDescriptor>emptySet(), useCache, -1);
-    when(context.getAttribute(Geoladris.ATTR_CONFIG_PROVIDERS)).thenReturn(Arrays.asList(provider));
 
     // Call twice
-    config.getPluginConfig(Locale.getDefault());
-    config.getPluginConfig(Locale.getDefault());
+    config.getPluginConfig(Locale.getDefault(), request);
+    config.getPluginConfig(Locale.getDefault(), request);
 
     // Check num calls
     verify(provider, times(numCalls)).getPluginConfig(any(PortalRequestConfiguration.class),
@@ -196,11 +193,10 @@ public class AbstractConfigTest {
     File portalProperties = new File(folder.getRoot(), "portal.properties");
     new Properties().store(new FileOutputStream(portalProperties), "");
 
-    Config config = new FilesConfig(folder.getRoot(), context, request,
+    Config config = new FilesConfig(folder.getRoot(), new ArrayList<ModuleConfigurationProvider>(),
         Collections.<PluginDescriptor>emptySet(), false, -1);
-    when(context.getAttribute(Geoladris.ATTR_CONFIG_PROVIDERS)).thenReturn(Arrays.asList());
     assertNotNull(config.getDir());
-    assertNotNull(config.getPluginConfig(Locale.getDefault()));
+    assertNotNull(config.getPluginConfig(Locale.getDefault(), request));
     assertNotNull(config.getProperties());
     assertNotNull(config.getMessages(Locale.getDefault()));
     assertNotNull(config.getDefaultLang());
@@ -208,13 +204,12 @@ public class AbstractConfigTest {
 
   @Test
   public void testFailingConfigurationProvider() throws Exception {
-    Config config = new FilesConfig(mock(File.class), context, request,
-        Collections.<PluginDescriptor>emptySet(), false, -1);
     ModuleConfigurationProvider provider = mock(ModuleConfigurationProvider.class);
     when(provider.getPluginConfig(any(PortalRequestConfiguration.class),
         any(HttpServletRequest.class))).thenThrow(new IOException("mock"));
-    when(context.getAttribute(Geoladris.ATTR_CONFIG_PROVIDERS)).thenReturn(Arrays.asList(provider));
-    assertNotNull(config.getPluginConfig(Locale.getDefault()));
+    Config config = new FilesConfig(mock(File.class), Arrays.asList(provider),
+        Collections.<PluginDescriptor>emptySet(), false, -1);
+    assertNotNull(config.getPluginConfig(Locale.getDefault(), request));
   }
 
   @Test
@@ -223,7 +218,6 @@ public class AbstractConfigTest {
     PluginDescriptor pluginDescriptor =
         new PluginDescriptorFileReader().read("{default-conf:{m1:true}}", "p1");
     plugins.add(pluginDescriptor);
-    Config config = new FilesConfig(mock(File.class), context, request, plugins, false, -1);
 
     Map<String, JSONObject> mergingConfiguration1 = new HashMap<String, JSONObject>();
     mergingConfiguration1.put("p1", JSONObject.fromObject("{m2:true}"));
@@ -233,12 +227,12 @@ public class AbstractConfigTest {
     when(provider.getPluginConfig(any(PortalRequestConfiguration.class),
         any(HttpServletRequest.class))).thenReturn(mergingConfiguration1)
             .thenReturn(mergingConfiguration2);
-    when(context.getAttribute(Geoladris.ATTR_CONFIG_PROVIDERS)).thenReturn(Arrays.asList(provider));
+    Config config = new FilesConfig(mock(File.class), Arrays.asList(provider), plugins, false, -1);
 
-    JSONObject configuration = config.getPluginConfig(Locale.ROOT)[0].getConfiguration();
+    JSONObject configuration = config.getPluginConfig(Locale.ROOT, request)[0].getConfiguration();
     assertEquals(2, configuration.keySet().size());
 
-    configuration = config.getPluginConfig(Locale.ROOT)[0].getConfiguration();
+    configuration = config.getPluginConfig(Locale.ROOT, request)[0].getConfiguration();
     assertEquals(1, configuration.keySet().size());
   }
 
@@ -249,9 +243,9 @@ public class AbstractConfigTest {
     plugin.addModule("m1");
     plugins.add(plugin);
 
-    Config config = new FilesConfig(mock(File.class), context, request, plugins, false, -1);
-    when(context.getAttribute(Geoladris.ATTR_CONFIG_PROVIDERS)).thenReturn(Collections.EMPTY_LIST);
-    PluginDescriptor[] pluginConfig = config.getPluginConfig(Locale.getDefault());
+    Config config = new FilesConfig(mock(File.class), new ArrayList<ModuleConfigurationProvider>(),
+        plugins, false, -1);
+    PluginDescriptor[] pluginConfig = config.getPluginConfig(Locale.getDefault(), request);
     assertEquals(1, pluginConfig.length);
     assertEquals("p1", pluginConfig[0].getName());
     assertEquals(1, pluginConfig[0].getModules().size());
@@ -263,7 +257,7 @@ public class AbstractConfigTest {
     plugins.add(plugin);
 
     config.setPlugins(plugins);
-    pluginConfig = config.getPluginConfig(Locale.getDefault());
+    pluginConfig = config.getPluginConfig(Locale.getDefault(), request);
     assertEquals(1, pluginConfig.length);
     assertEquals("p2", pluginConfig[0].getName());
     assertEquals(1, pluginConfig[0].getModules().size());
@@ -273,16 +267,16 @@ public class AbstractConfigTest {
   @Test
   public void ignoresConfigurationForNonExistingPlugins() throws IOException {
     Set<PluginDescriptor> plugins = Collections.singleton(new PluginDescriptor("p1", true));
-    Config config = new FilesConfig(mock(File.class), context, request, plugins, false, -1);
+
 
     ModuleConfigurationProvider provider = mock(ModuleConfigurationProvider.class);
     Map<String, JSONObject> providerConf =
         Collections.singletonMap("another_plugin", new JSONObject());
     when(provider.getPluginConfig(any(PortalRequestConfiguration.class),
         any(HttpServletRequest.class))).thenReturn(providerConf);
-    when(context.getAttribute(Geoladris.ATTR_CONFIG_PROVIDERS)).thenReturn(Arrays.asList(provider));
+    Config config = new FilesConfig(mock(File.class), Arrays.asList(provider), plugins, false, -1);
 
-    PluginDescriptor[] pluginConfig = config.getPluginConfig(Locale.getDefault());
+    PluginDescriptor[] pluginConfig = config.getPluginConfig(Locale.getDefault(), request);
     assertEquals(1, pluginConfig.length);
   }
 }

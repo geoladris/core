@@ -67,7 +67,7 @@ public class TestingServletContext {
         return writer;
       }
     });
-    when(this.response.getOutputStream()).then(new Answer<ServletOutputStream>(){
+    when(this.response.getOutputStream()).then(new Answer<ServletOutputStream>() {
       @Override
       public ServletOutputStream answer(InvocationOnMock invocation) throws Throwable {
         out = new ByteArrayOutputStream();
@@ -96,8 +96,6 @@ public class TestingServletContext {
         return null;
       }
     }).when(this.servletContext).setAttribute(anyString(), any());
-    this.servletAttributes.put(Geoladris.ATTR_CONFIG_PROVIDERS,
-        new ArrayList<ModuleConfigurationProvider>());
 
     resetRequest();
   }
@@ -106,9 +104,9 @@ public class TestingServletContext {
     File pluginsDir = new File(configDir, "plugins");
     JEEContext context = new JEEContext(this.servletContext, pluginsDir);
     JEEContextAnalyzer analyzer = new JEEContextAnalyzer(context);
-    Config config = new FilesConfig(configDir, this.servletContext, this.request,
+    Config config = new FilesConfig(configDir, new ArrayList<ModuleConfigurationProvider>(),
         analyzer.getPluginDescriptors(), false, -1);
-    when(request.getAttribute(Geoladris.ATTR_CONFIG)).thenReturn(config);
+    when(this.servletContext.getAttribute(Geoladris.ATTR_CONFIG)).thenReturn(config);
 
     return config;
   }

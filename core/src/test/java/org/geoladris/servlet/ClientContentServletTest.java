@@ -125,7 +125,7 @@ public class ClientContentServletTest {
     List<String> modules = new ArrayList<>();
     List<String> styles = new ArrayList<>();
     List<String> nonRequirePaths = new ArrayList<>();
-    PluginDescriptor[] enabled = config.getPluginConfig(Locale.ROOT);
+    PluginDescriptor[] enabled = config.getPluginConfig(Locale.ROOT, request);
 
     for (PluginDescriptor plugin : enabled) {
       modules.addAll(plugin.getModules());
