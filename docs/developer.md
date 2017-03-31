@@ -2,9 +2,40 @@
 
 Se utiliza el [estilo](https://google.github.io/styleguide/eclipse-java-google-style.xml) de Google para formatear el código Java.
 
-Se utiliza un [estilo propio](geoladris-style-js.xml) (basado en el estilo de Eclipse con un largo de línea mayor) para el código JavaScript.
+Para el código JavaScript se utilizan unas reglas basadas en Airbnb ([ES5](https://www.npmjs.com/package/eslint-config-airbnb-es5)) con ligeras modificaciones. Es posible encontrar los ficheros `.eslintrc` en el repositorio con las definiciones para ejecutar con `eslint`.
 
-Para aplicarlo en Eclipse basta con descargar el fichero XML correspondiente e importarlo en Eclipse (_Preferences_ -> _&lt;lang&gt;_ -> _Code Style_ -> _Formatter_ -> _Import..._).
+Existe un [fichero de estilo](geoladris-style-js.xml) para Eclipse con algunas de estas reglas (no todas).
+
+Para aplicar los ficheros de estilos en Eclipse basta con descargar el fichero XML correspondiente e importarlo en Eclipse (_Preferences_ -> _&lt;lang&gt;_ -> _Code Style_ -> _Formatter_ -> _Import..._).
+
+También es posible configurar JSHint en Eclipse de forma que muestre avisos para algunos (no todos) los errores de `eslint`:
+
+```json
+{
+  "browser": true,
+  "jquery": true,
+  "node": true,
+  "camelcase": true,
+  "indent": 2,
+  "latedef": true,
+  "maxlen": 100,
+  "newcap": true,
+  "quotmark": "single",
+  "eqeqeq": true,
+  "eqnull": true,
+  "undef": true,
+  "unused": true,
+  "eqnull": true,
+  "globals" : {
+    "define" : true,
+    "describe" : true,
+    "beforeEach" : true,
+    "expect" : true,
+    "spyOn" : true,
+    "it" : true
+  }
+}
+```
 
 # Testeo
 

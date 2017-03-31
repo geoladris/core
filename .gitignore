@@ -3,4 +3,8 @@ target/
 .classpath
 .settings
 phantomjsdriver.log
+npm-debug.log
+node_modules
+node
+etc
 

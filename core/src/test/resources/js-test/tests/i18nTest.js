@@ -1,12 +1,12 @@
-describe("i18n", function() {
+describe('i18n', function () {
 	var injector;
 	var bus;
 	var module;
 
-	beforeEach(function() {
+	beforeEach(function () {
 		bus = null;
 		module = null;
-		if (injector != null) {
+		if (injector) {
 			injector.clean();
 			injector.remove();
 			injector = null;
@@ -15,26 +15,26 @@ describe("i18n", function() {
 
 	function test(config, testFunc) {
 		require.config({
-			"baseUrl" : "src/",
-			"paths" : {
-				"message-bus" : "/modules/message-bus",
-				"jquery" : "/jslib/jquery-2.1.0"
+			'baseUrl': 'src/',
+			'paths': {
+				'message-bus': '/modules/message-bus',
+				'jquery': '/jslib/jquery-2.1.0'
 			},
-			"config" : {
-				"i18n" : config
+			'config': {
+				'i18n': config
 			}
 		});
 
-		require([ "/test-jslib/Squire.js" ], function(Squire) {
+		require([ '/test-jslib/Squire.js' ], function (Squire) {
 			injector = new Squire();
-			injector.require([ "message-bus" ], function(message_bus) {
-				bus = message_bus;
-				spyOn(bus, "listen");
+			injector.require([ 'message-bus' ], function (messageBus) {
+				bus = messageBus;
+				spyOn(bus, 'listen');
 				if (module) {
 					testFunc();
 				}
 			});
-			injector.require([ "i18n" ], function(i18n) {
+			injector.require([ 'i18n' ], function (i18n) {
 				module = i18n;
 				if (bus) {
 					testFunc();
@@ -43,34 +43,34 @@ describe("i18n", function() {
 		});
 	}
 
-	it("returns the module configuration", function(done) {
-		document.title = "initial_title";
+	it('returns the module configuration', function (done) {
+		document.title = 'initial_title';
 		var config = {
-			"title" : "mytitle"
+			'title': 'mytitle'
 		};
 
-		test(config, function() {
+		test(config, function () {
 			expect(module).toEqual(config);
 			done();
 		});
 	});
 
-	it("sets the document title if it does not exist", function(done) {
-		document.title = "";
+	it('sets the document title if it does not exist', function (done) {
+		document.title = '';
 		test({
-			"title" : "mytitle"
-		}, function() {
-			expect(document.title).toBe("mytitle");
+			'title': 'mytitle'
+		}, function () {
+			expect(document.title).toBe('mytitle');
 			done();
 		});
 	});
 
-	it("does not override document title if already exists", function(done) {
-		document.title = "initial_title";
+	it('does not override document title if already exists', function (done) {
+		document.title = 'initial_title';
 		test({
-			"title" : "mytitle"
-		}, function() {
-			expect(document.title).toBe("initial_title");
+			'title': 'mytitle'
+		}, function () {
+			expect(document.title).toBe('initial_title');
 			done();
 		});
 	});
