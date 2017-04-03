@@ -92,6 +92,15 @@
 
 	</dependencies>
 	<build>
+		<resources>
+			<resource>
+				<directory>js</directory>
+				<targetPath>geoladris/${project.artifactId}</targetPath>
+			</resource>
+			<resource>
+				<directory>src/main/resources</directory>
+			</resource>
+		</resources>
 		<plugins>
 			<plugin>
 				<groupId>com.github.klieber</groupId>
@@ -122,8 +131,8 @@
 				<!-- keep the configuration out of the execution so that the bdd goal 
 					has access to it -->
 				<configuration>
-					<jsSrcDir>src/main/resources/geoladris/core/modules</jsSrcDir>
-					<jsTestSrcDir>src/test/resources/js-test/tests/</jsTestSrcDir>
+					<jsSrcDir>js/modules</jsSrcDir>
+					<jsTestSrcDir>js-test/tests/</jsTestSrcDir>
 					<webDriverClassName>org.openqa.selenium.phantomjs.PhantomJSDriver</webDriverClassName>
 					<webDriverCapabilities>
 						<capability>
@@ -135,22 +144,22 @@
 					<additionalContexts>
 						<context>
 							<contextRoot>/modules</contextRoot>
-							<directory>${project.basedir}/src/main/resources/geoladris/core/modules</directory>
+							<directory>${project.basedir}/js/modules</directory>
 						</context>
 						<context>
 							<contextRoot>/jslib</contextRoot>
-							<directory>${project.basedir}/src/main/resources/geoladris/core/jslib</directory>
+							<directory>${project.basedir}/js/jslib</directory>
 						</context>
 						<context>
 							<contextRoot>/test-jslib</contextRoot>
-							<directory>${project.basedir}/src/test/resources/js-test/jslib</directory>
+							<directory>${project.basedir}/js-test/jslib</directory>
 						</context>
 					</additionalContexts>
 					<preloadSources>
 						<source>/jslib/jquery.min.js</source>
 						<source>/jslib/require.js</source>
 					</preloadSources>
-					<customRunnerTemplate>src/test/resources/SpecRunner.html</customRunnerTemplate>
+					<customRunnerTemplate>js-test/SpecRunner.html</customRunnerTemplate>
 					<specIncludes>
 						<include>*.js</include>
 					</specIncludes>

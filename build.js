@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
-const JSLIB = "core/src/main/resources/geoladris/core/jslib/";
-const TEST_LIB = "core/src/test/resources/js-test/jslib/";
+const JSLIB = "core/js/jslib/";
+const TEST_LIB = "core/js-test/jslib/";
 
 function copy(lib, dest) {
   var input = fs.createReadStream(path.join("node_modules", lib));
