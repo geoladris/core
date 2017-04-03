@@ -18,7 +18,7 @@ describe('i18n', function () {
 			'baseUrl': 'src/',
 			'paths': {
 				'message-bus': '/modules/message-bus',
-				'jquery': '/jslib/jquery-2.1.0'
+				'jquery': '/jslib/jquery.min'
 			},
 			'config': {
 				'i18n': config

@@ -7,4 +7,6 @@ npm-debug.log
 node_modules
 node
 etc
+*/src/main/resources/geoladris/*/jslib
+*/src/test/resources/js-test/jslib
 

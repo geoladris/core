@@ -147,7 +147,7 @@
 						</context>
 					</additionalContexts>
 					<preloadSources>
-						<source>/jslib/jquery-2.1.0.js</source>
+						<source>/jslib/jquery.min.js</source>
 						<source>/jslib/require.js</source>
 					</preloadSources>
 					<customRunnerTemplate>src/test/resources/SpecRunner.html</customRunnerTemplate>
@@ -184,6 +184,14 @@
 						<pattern>.*/modules/.*</pattern>
 						<pattern>.*/jslib/.*</pattern>
 					</noInstrumentPatterns>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>com.github.eirslett</groupId>
+				<artifactId>frontend-maven-plugin</artifactId>
+				<version>1.0</version>
+				<configuration>
+					<skip>true</skip>
 				</configuration>
 			</plugin>
 		</plugins>
