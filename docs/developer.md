@@ -1,3 +1,17 @@
+# Preparación del proyecto
+
+Lo primero que hay que hacer al clonar el repositorio es preparar las dependencias JavaScript. Podemos hacerlo usando Maven:
+
+```bash
+$ mvn generate-resources
+```
+o con `npm`:
+
+```bash
+$ npm install
+$ npm run build
+```
+
 # Formateo del código
 
 Se utiliza el [estilo](https://google.github.io/styleguide/eclipse-java-google-style.xml) de Google para formatear el código Java.
