@@ -6,15 +6,15 @@
     "requirejs": "^2.1.8"
   },
   "devDependencies": {
-    "squirejs" : "^0.2.1",
+    "squirejs": "^0.2.1",
     "babel-eslint": "^7.2.1",
     "eslint": "^3.18.0",
     "eslint-config-airbnb-es5": "^1.1.0",
     "eslint-plugin-react": "^6.10.3"
   },
-  "files": [ "core/src/main/resources/geoladris" ],
+  "files": ["core/js"],
   "scripts": {
-    "build" : "node build.js",
-    "lint": "eslint core/src/main/resources/geoladris/core/modules core/src/test/resources/js-test/tests"
+    "build": "node build.js",
+    "lint": "eslint core/js/modules core/test"
   }
 }

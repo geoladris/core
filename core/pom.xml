@@ -128,11 +128,11 @@
 						</goals>
 					</execution>
 				</executions>
-				<!-- keep the configuration out of the execution so that the bdd goal 
+				<!-- keep the configuration out of the execution so that the bdd goal
 					has access to it -->
 				<configuration>
 					<jsSrcDir>js/modules</jsSrcDir>
-					<jsTestSrcDir>js-test/tests/</jsTestSrcDir>
+					<jsTestSrcDir>test/tests/</jsTestSrcDir>
 					<webDriverClassName>org.openqa.selenium.phantomjs.PhantomJSDriver</webDriverClassName>
 					<webDriverCapabilities>
 						<capability>
@@ -152,14 +152,14 @@
 						</context>
 						<context>
 							<contextRoot>/test-jslib</contextRoot>
-							<directory>${project.basedir}/js-test/jslib</directory>
+							<directory>${project.basedir}/test/jslib</directory>
 						</context>
 					</additionalContexts>
 					<preloadSources>
 						<source>/jslib/jquery.min.js</source>
 						<source>/jslib/require.js</source>
 					</preloadSources>
-					<customRunnerTemplate>js-test/SpecRunner.html</customRunnerTemplate>
+					<customRunnerTemplate>test/SpecRunner.html</customRunnerTemplate>
 					<specIncludes>
 						<include>*.js</include>
 					</specIncludes>
@@ -206,7 +206,7 @@
 		</plugins>
 		<pluginManagement>
 			<plugins>
-				<!--This plugin's configuration is used to store Eclipse m2e settings 
+				<!--This plugin's configuration is used to store Eclipse m2e settings
 					only. It has no influence on the Maven build itself. -->
 				<plugin>
 					<groupId>org.eclipse.m2e</groupId>
