@@ -136,7 +136,7 @@
 <setting id="org.eclipse.wst.jsdt.core.formatter.insert_space_after_assignment_operator" value="insert"/>
 <setting id="org.eclipse.wst.jsdt.core.formatter.insert_space_after_opening_paren_in_if" value="do not insert"/>
 <setting id="org.eclipse.wst.jsdt.core.formatter.insert_space_after_opening_paren_in_catch" value="do not insert"/>
-<setting id="org.eclipse.wst.jsdt.core.formatter.insert_space_after_function_keyword" value="insert"/>
+<setting id="org.eclipse.wst.jsdt.core.formatter.insert_space_after_function_keyword" value="do not insert"/>
 <setting id="org.eclipse.wst.jsdt.core.formatter.insert_space_after_comma_in_type_arguments" value="insert"/>
 <setting id="org.eclipse.wst.jsdt.core.formatter.insert_space_before_opening_paren_in_for" value="insert"/>
 <setting id="org.eclipse.wst.jsdt.core.formatter.alignment_for_arguments_in_allocation_expression" value="0"/>
