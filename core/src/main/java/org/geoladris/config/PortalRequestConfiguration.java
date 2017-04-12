@@ -1,6 +1,9 @@
 package org.geoladris.config;
 
 import java.io.File;
+import java.util.Map;
+
+import net.sf.json.JSONObject;
 
 /**
  * Instance that provides services using the current request and portal configuration
@@ -13,11 +16,5 @@ public interface PortalRequestConfiguration {
 
   File getConfigDir();
 
-  /**
-   * Whether the portal is configured to cache the configuration or not
-   * 
-   * @return
-   */
-  boolean usingCache();
-
+  Map<String, JSONObject> getCurrentConfiguration();
 }

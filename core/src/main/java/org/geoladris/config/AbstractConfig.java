@@ -148,12 +148,17 @@ public abstract class AbstractConfig implements Config {
       namePluginDescriptor.put(clonedDescriptor.getName(), clonedDescriptor);
     }
 
-    PortalRequestConfiguration requestConfig = new PortalRequestConfigurationImpl(locale);
+    PortalRequestConfigurationImpl requestConfig = new PortalRequestConfigurationImpl(locale);
 
     // Get the providers configuration and merge it
     List<ModuleConfigurationProvider> providers =
         (List<ModuleConfigurationProvider>) this.configProviders;
     for (ModuleConfigurationProvider provider : providers) {
+      requestConfig.currentConfig.clear();
+      for (PluginDescriptor p : namePluginDescriptor.values()) {
+        requestConfig.currentConfig.put(p.getName(),
+            JSONObject.fromObject(p.getConfiguration().toString()));
+      }
 
       Map<String, JSONObject> providerConfiguration = cachedConfigurations.get(provider);
       if (providerConfiguration == null || !useCache || !provider.canBeCached()) {
@@ -214,9 +219,11 @@ public abstract class AbstractConfig implements Config {
 
   private class PortalRequestConfigurationImpl implements PortalRequestConfiguration {
     private Locale locale;
+    private Map<String, JSONObject> currentConfig;
 
     public PortalRequestConfigurationImpl(Locale locale) {
       this.locale = locale;
+      this.currentConfig = new HashMap<>();
     }
 
     @Override
@@ -244,8 +251,8 @@ public abstract class AbstractConfig implements Config {
     }
 
     @Override
-    public boolean usingCache() {
-      return AbstractConfig.this.useCache;
+    public Map<String, JSONObject> getCurrentConfiguration() {
+      return this.currentConfig;
     }
   }
 }
