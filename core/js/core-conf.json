@@ -1,8 +1,0 @@
-{
-	"requirejs" : {
-		"paths" : {
-			"jquery" : "../jslib/jquery.min"
-		}
-	},
-	"installInRoot" : true
-}

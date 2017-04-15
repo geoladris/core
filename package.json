@@ -1,20 +1,26 @@
 {
-  "name": "geoladris-core",
-  "version": "6.0.0-SNAPSHOT",
-  "dependencies": {
-    "jquery": "^2.1.0",
-    "requirejs": "^2.1.8"
-  },
-  "devDependencies": {
-    "squirejs": "^0.2.1",
-    "babel-eslint": "^7.2.1",
-    "eslint": "^3.18.0",
-    "eslint-config-airbnb-es5": "^1.1.0",
-    "eslint-plugin-react": "^6.10.3"
-  },
-  "files": ["core/js"],
-  "scripts": {
-    "build": "node build.js",
-    "lint": "eslint core/js/modules core/test"
-  }
+	"name": "geoladris-core",
+	"version": "6.0.0-SNAPSHOT",
+	"main": "main.js",
+	"bin": {
+		"gl-npm-resources.js": "build-tools/npmResources.js",
+		"gl-build-app.js": "build-tools/buildApp.js"
+	},
+	"dependencies": {
+		"jquery": "^2.1.0",
+		"requirejs": "^2.1.8",
+		"fs-extra": "^2.1.2",
+		"klaw-sync": "^1.1.2"
+	},
+	"devDependencies": {
+		"squirejs": "^0.2.1",
+		"babel-eslint": "^7.2.1",
+		"eslint": "^3.18.0",
+		"eslint-config-airbnb-es5": "^1.1.0",
+		"eslint-plugin-react": "^6.10.3"
+	},
+	"scripts": {
+		"install": "node build-tools/npmResources.js",
+		"lint": "eslint modules test"
+	}
 }
