@@ -1,6 +1,6 @@
 {
 	"npmResources": {
-		"jquery/dist/jquery.min.js": true,
+		"jquery/dist/jquery.min.js": "jquery.js",
 		"requirejs/require.js": true
 	},
 	"installInRoot": true

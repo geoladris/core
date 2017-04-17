@@ -7,7 +7,6 @@
 const fs = require('fs-extra');
 const path = require('path');
 const klaw = require('klaw-sync');
-const requirejs = require('requirejs');
 
 const CONFIG_FILE = 'geoladris.json';
 
@@ -53,11 +52,10 @@ function buildApp() {
 		paths: {},
 		shim: {},
 		deps: [],
-		baseUrl: BUILD_DIR + '/' + MODULES,
-		// mainConfigFile: BUILD_DIR + '/' + MODULES + '/main.js',
-		name: '../main',
+		baseUrl: path.join(BUILD_DIR, MODULES),
+		name: 'main',
 		out: path.join(BUILD_DIR, 'app.min.js'),
-		inlineText: false
+		optimize: 'uglify2'
 	};
 
 	fs.removeSync(path.join(BUILD_DIR, LIB));
@@ -137,14 +135,9 @@ function buildApp() {
 	contents = contents.replace(/\$stylesheets/, '\t' + stylesheets);
 	fs.writeFile(path.join(BUILD_DIR, 'index.html'), contents);
 
+	console.log('Generating build.js...');
 	delete requirejsConfig.paths.require;
-	console.log('Optimizing...');
-	console.log(requirejsConfig);
-	requirejs.optimize(requirejsConfig, function(buildResponse) {
-		console.log(buildResponse);
-	}, function(err) {
-		console.error(err);
-	});
+	fs.writeFile('build.js', JSON.stringify(requirejsConfig));
 }
 
 module.exports = buildApp;
