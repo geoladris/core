@@ -16,5 +16,13 @@ public interface PortalRequestConfiguration {
 
   File getConfigDir();
 
+  /**
+   * Gets the configuration that has been created so far by the previous
+   * {@link ModuleConfigurationProvider} for the request.
+   * 
+   * 
+   * @return The configuration following the same rules as the return value of
+   *         {@link ModuleConfigurationProvider#getPluginConfig(PortalRequestConfiguration, javax.servlet.http.HttpServletRequest)}.
+   */
   Map<String, JSONObject> getCurrentConfiguration();
 }

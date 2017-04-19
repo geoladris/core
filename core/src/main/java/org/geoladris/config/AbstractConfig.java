@@ -156,8 +156,12 @@ public abstract class AbstractConfig implements Config {
     for (ModuleConfigurationProvider provider : providers) {
       requestConfig.currentConfig.clear();
       for (PluginDescriptor p : namePluginDescriptor.values()) {
-        requestConfig.currentConfig.put(p.getName(),
-            JSONObject.fromObject(p.getConfiguration().toString()));
+        JSONObject config = new JSONObject();
+        for (Object key : p.getConfiguration().keySet()) {
+          String unqualified = key.toString().substring(p.getName().length() + 1);
+          config.element(unqualified, p.getConfiguration().get(key));
+        }
+        requestConfig.currentConfig.put(p.getName(), config);
       }
 
       Map<String, JSONObject> providerConfiguration = cachedConfigurations.get(provider);
