@@ -96,19 +96,18 @@ if [ ! -f "${buildJson}" ]; then
   echo "$dir must be a directory containing a build.json file"
   exit 1
 fi
-if [ ! -d "${defaultConfig}" ]; then
-  echo "$dir must be a directory containing a default_config directory"
-  exit 1
-fi
 
 mvn -version
 
+rm -rf ${workDir}
 mkdir ${workDir}
 mkdir -p "${workDir}/src/main/config"
 mkdir -p "${workDir}/src/main/webapp/optimized"
 mkdir -p "${workDir}/src/main/webapp/WEB-INF"
 
-cp -r ${defaultConfig} "${workDir}/src/main/webapp/WEB-INF"
+if [ -d "${defaultConfig}" ]; then
+  cp -r ${defaultConfig} "${workDir}/src/main/webapp/WEB-INF"
+fi
 
 function getOpt {
   ret=`jq -r "$1" "${buildJson}" | sed '/null/d'`
@@ -156,7 +155,7 @@ cat >> ${pom} << EOF
 	  </repository>
 EOF
 
-repoNames=`jq -r '.maven_repositories | keys[]' ${buildJson} 2> /dev/null`
+repoNames=`jq -r '.maven_repositories | keys[]' ${buildJson} 2> /dev/null | sed '/null/d'`
 
 for repoName in ${repoNames}; do
 	repoUrl=`jq -r ".maven_repositories | .[\"${repoName}\"]" ${buildJson}`
@@ -400,4 +399,3 @@ fi
 
 cp ${workDir}/target/*.war ${workDir}/../
 rm -rf ${workDir}
-
