@@ -2,6 +2,8 @@ This project follows [semantic versioning](http://semver.org).
 
 # Sin publicar
 
+# 6.0.0 [2017-04-21]
+
 ## Modificado
 
 * Los plugins empaquetados como `.jar` pasan a estar contenidos en un subdirectorio dentro de `geoladris` (en lugar de directamente en `geoladris`). Así, todos los plugins están en subdirectorios, independientemente de su empaquetado (ver [guía de migración](migrating.md)).
@@ -24,6 +26,7 @@ This project follows [semantic versioning](http://semver.org).
 * [Detectar cambios en los directorios de plugins](https://github.com/geoladris/core/issues/33).
 * [Fichero descriptor de plugin (`<plugin>-conf.json`) opcional](https://github.com/geoladris/core/issues/36).
 * Variable `GEOLADRIS_CACHE_TIMEOUT` (en segundos) para limpiar la caché de configuración. Únicamente se tiene en cuenta si la variable `GEOLADRIS_CONFIG_CACHE` es `true`.
+* Método `PortalRequestConfiguration.getCurrentConfiguration()` para poder modificar desde un `ModuleConfigurationProvider` la configuración en construcción, obtenida de los `ModuleConfigurationProvider` previos.
 
 # 5.0.1 [2016-12-06]
 

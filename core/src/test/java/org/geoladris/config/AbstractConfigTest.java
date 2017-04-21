@@ -32,6 +32,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
@@ -278,5 +279,32 @@ public class AbstractConfigTest {
 
     PluginDescriptor[] pluginConfig = config.getPluginConfig(Locale.getDefault(), request);
     assertEquals(1, pluginConfig.length);
+  }
+
+  @Test
+  public void sendsCurrentConfigurationForGetPluginConfig() throws IOException {
+
+    Set<PluginDescriptor> plugins = new HashSet<PluginDescriptor>();
+    PluginDescriptor plugin =
+        new PluginDescriptorFileReader().read("{default-conf:{m1:true}}", "p1");
+    plugins.add(plugin);
+
+    ModuleConfigurationProvider p1 = mock(ModuleConfigurationProvider.class);
+    ModuleConfigurationProvider p2 = mock(ModuleConfigurationProvider.class);
+
+    JSONObject pluginConfig = JSONObject.fromObject("{m1 : { a : true, b : 2}}");
+    when(p1.getPluginConfig(any(PortalRequestConfiguration.class), any(HttpServletRequest.class)))
+        .thenReturn(Collections.singletonMap(plugin.getName(), pluginConfig));
+    Config config = new FilesConfig(mock(File.class), Arrays.asList(p1, p2), plugins, false, -1);
+
+    config.getPluginConfig(Locale.ROOT, request);
+
+    ArgumentCaptor<PortalRequestConfiguration> captor =
+        ArgumentCaptor.forClass(PortalRequestConfiguration.class);
+    verify(p2).getPluginConfig(captor.capture(), any(HttpServletRequest.class));
+
+    Map<String, JSONObject> currentConfiguration = captor.getValue().getCurrentConfiguration();
+    assertEquals(1, currentConfiguration.size());
+    assertEquals(pluginConfig, currentConfiguration.get(plugin.getName()));
   }
 }
