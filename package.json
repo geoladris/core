@@ -30,7 +30,6 @@
 	},
 	"scripts": {
 		"test": "karma start",
-		"install": "node build-tools/npmResources.js",
 		"lint": "eslint src test"
 	}
 }
