@@ -16,7 +16,7 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<!-- See https://nodejs.org/en/download/ for latest node and npm (lts) 
+		<!-- See https://nodejs.org/en/download/ for latest node and npm (lts)
 			versions -->
 		<node.version>v6.10.1</node.version>
 		<npm.version>3.10.10</npm.version>
@@ -75,8 +75,12 @@
 	<build>
 		<resources>
 			<resource>
-				<directory>modules</directory>
-				<targetPath>modules</targetPath>
+				<directory>src</directory>
+				<targetPath>src</targetPath>
+				<excludes>
+					<exclude>main/**</exclude>
+					<exclude>test/**</exclude>
+				</excludes>
 			</resource>
 			<resource>
 				<directory>styles</directory>
