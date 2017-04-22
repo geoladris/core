@@ -184,6 +184,15 @@
 							<arguments>install</arguments>
 						</configuration>
 					</execution>
+					<execution>
+						<id>test</id>
+						<goals>
+							<goal>karma</goal>
+						</goals>
+						<configuration>
+							<karmaConfPath>${project.basedir}/karma.conf.js</karmaConfPath>
+						</configuration>
+					</execution>
 				</executions>
 			</plugin>
 		</plugins>
