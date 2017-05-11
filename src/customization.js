@@ -1,7 +1,7 @@
-define([ 'module', 'message-bus' ], function (module, bus) {
+define([ 'module', 'message-bus' ], function(module, bus) {
 	var customizationInfo = module.config();
 
-	require(customizationInfo.modules, function () {
+	require(customizationInfo.modules, function() {
 		bus.send('modules-initialized');
 		bus.send('modules-loaded');
 	});

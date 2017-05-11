@@ -1,4 +1,4 @@
-define([ 'jquery' ], function ($) {
+define([ 'jquery' ], function($) {
 	var messageBus = $({});
 
 	/**
@@ -28,7 +28,7 @@ define([ 'jquery' ], function ($) {
 	 *            the sequence of parameters specified in the call to send.
 	 */
 	function listen(name, callBack) {
-		messageBus.bind(name, function () {
+		messageBus.bind(name, function() {
 			try {
 				callBack.apply(this, arguments);
 			} catch (e) {

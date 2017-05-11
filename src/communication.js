@@ -2,9 +2,9 @@
  * Performs the queries to the server providing a common error management
  * and including some parameters that should always be there, like 'lang'
  */
-define([ 'jquery', 'message-bus' ], function ($, bus) {
-	bus.listen('ajax', function (event, ajaxParams) {
-		ajaxParams.error = function (jqXHR) {
+define([ 'jquery', 'message-bus' ], function($, bus) {
+	bus.listen('ajax', function(event, ajaxParams) {
+		ajaxParams.error = function(jqXHR) {
 			var message = ajaxParams.errorMsg + '. ';
 			try {
 				var messageObject = $.parseJSON(jqXHR.responseText);
