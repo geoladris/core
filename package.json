@@ -28,7 +28,7 @@
 		"phantomjs-prebuilt": "^2.1.14",
 		"squirejs": "^0.2.1"
 	},
-	"files": [ "/src/**js", "/build-tools", "/geoladris.json" ],
+	"files": [ "/src/**js", "/build-tools", "/templates", "/geoladris.json" ],
 	"scripts": {
 		"test": "karma start",
 		"lint": "eslint src test"

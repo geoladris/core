@@ -17,7 +17,10 @@ const LIB = 'jslib';
 
 const BUILD_DIR = 'src/main/webapp';
 const NODE_MODULES = 'node_modules';
+const REQUIRE_JS = path.join(NODE_MODULES, 'requirejs', 'require.js');
 const CORE = path.join(NODE_MODULES, '@geoladris', 'core');
+const MAIN_JS = path.join(CORE, 'templates', 'main.js');
+const INDEX_HTML = path.join(CORE, 'templates', 'index.html');
 
 function copyResourceDir(pluginDir, dir, installInRoot) {
 	var srcDir = path.join(NODE_MODULES, pluginDir, dir);
@@ -54,13 +57,17 @@ function buildApp() {
 		baseUrl: path.join(BUILD_DIR, MODULES),
 		name: 'main',
 		out: path.join(BUILD_DIR, 'app.min.js'),
-		optimize: 'uglify2'
+		optimize: 'none'
 	};
 
 	fs.removeSync(path.join(BUILD_DIR, LIB));
 	fs.removeSync(path.join(BUILD_DIR, STYLES));
 	fs.removeSync(path.join(BUILD_DIR, MODULES));
 	fs.removeSync(path.join(BUILD_DIR, THEME));
+
+	// Copy require.js
+	fs.mkdirSync(path.join(BUILD_DIR, LIB));
+	fs.copy(REQUIRE_JS, path.join(BUILD_DIR, LIB, path.basename(REQUIRE_JS)));
 
 	plugins.forEach(function(pluginDir) {
 		var confFile = path.join(NODE_MODULES, pluginDir, CONFIG_FILE);
@@ -117,8 +124,7 @@ function buildApp() {
 
 	// Generate main.js
 	console.log('Generating main.js...');
-	var main = path.join(CORE, 'src', 'main', 'resources', 'main.js');
-	var contents = fs.readFileSync(main).toString();
+	var contents = fs.readFileSync(MAIN_JS).toString();
 	contents = contents.replace(/\$paths/, 'paths : ' + JSON.stringify(requirejsConfig.paths));
 	contents = contents.replace(/\$shim/, 'shim : ' + JSON.stringify(requirejsConfig.shim));
 	contents = contents.replace(/\$modules/, JSON.stringify(requirejsConfig.deps));
@@ -126,8 +132,7 @@ function buildApp() {
 
 	// Generate index.html
 	console.log('Generating index.html...');
-	var index = path.join(CORE, 'src', 'main', 'resources', 'index.html');
-	contents = fs.readFileSync(index).toString();
+	contents = fs.readFileSync(INDEX_HTML).toString();
 	contents = contents.replace(/\$title/, '');
 
 	var stylesheets = klaw(path.join(BUILD_DIR), {
@@ -135,10 +140,10 @@ function buildApp() {
 	}).filter(function(file) {
 		return isCSS(file.path);
 	}).map(function(file) {
-		return '\t<link rel="stylesheet" href="' + path.relative(BUILD_DIR, file.path) + '">';
-	}).join('\n');
+		return '\'' + path.relative(BUILD_DIR, file.path) + '\'';
+	}).join(',');
 
-	contents = contents.replace(/\$stylesheets/, '\t' + stylesheets);
+	contents = contents.replace(/\$stylesheets/, '[' + stylesheets + ']');
 	fs.writeFile(path.join(BUILD_DIR, 'index.html'), contents);
 
 	console.log('Generating build.js...');
