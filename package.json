@@ -3,7 +3,6 @@
 	"version": "6.0.0-SNAPSHOT",
 	"main": "main.js",
 	"bin": {
-		"gl-npm-resources.js": "build-tools/npmResources.js",
 		"gl-build-app.js": "build-tools/buildApp.js"
 	},
 	"dependencies": {
