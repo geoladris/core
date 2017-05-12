@@ -43,6 +43,7 @@ import net.sf.json.JSONObject;
 public class JEEContextAnalyzerTest {
   private static File test1LibFolder = new File("src/test/resources/test1/WEB-INF/lib");
   private static File testOnlyLibFolder = new File("src/test/resources/testOnlyLib/WEB-INF/lib");
+  private static File testNamesLibFolder = new File("src/test/resources/testNames/WEB-INF/lib");
 
   @Rule
   public TemporaryFolder tmp = new TemporaryFolder();
@@ -54,6 +55,10 @@ public class JEEContextAnalyzerTest {
     packageAsJar("test2", ".", testOnlyLibFolder);
     packageAsJar("testJavaNonRootModules", "WEB-INF/classes/testJavaNonRootModules",
         testOnlyLibFolder);
+
+    packageAsJar("testPackageJson", ".", testNamesLibFolder);
+    packageAsJar("testPomProperties", ".", testNamesLibFolder);
+
   }
 
   private static void packageAsJar(String testCaseToPack, String pluginContentsRoot, File jslib)
@@ -84,6 +89,7 @@ public class JEEContextAnalyzerTest {
   public static void removeTest2Jar() throws IOException {
     FileUtils.deleteDirectory(test1LibFolder);
     FileUtils.deleteDirectory(testOnlyLibFolder.getParentFile());
+    FileUtils.deleteDirectory(testNamesLibFolder.getParentFile());
   }
 
   @Test
@@ -107,8 +113,9 @@ public class JEEContextAnalyzerTest {
     }
 
     checkList(modules, "module1", "module2", "module3");
-    checkList(styles, "styles/general.css", "modules/module2.css", "modules/module3.css",
-        "styles/general2.css");
+    checkList(styles, JEEContextAnalyzer.STYLES + "/general.css",
+        JEEContextAnalyzer.MODULES + "/module2.css", JEEContextAnalyzer.MODULES + "/module3.css",
+        JEEContextAnalyzer.STYLES + "/general2.css");
     checkMapKeys(paths, "jquery-ui", "fancy-box", "openlayers", "mustache");
     checkMapKeys(shims, "fancy-box", "mustache");
     JSONObject layout = defaultConf.getJSONObject("layout");
@@ -131,8 +138,8 @@ public class JEEContextAnalyzerTest {
             "plugin1/a", //
             "plugin1/b");
         checkList(plugin.getStylesheets(), //
-            "styles/plugin1/a.css", //
-            "modules/plugin1/d.css");
+            JEEContextAnalyzer.STYLES + "/plugin1/a.css", //
+            JEEContextAnalyzer.MODULES + "/plugin1/d.css");
         Map<String, String> path = plugin.getRequireJSPathsMap();
         assertEquals("../jslib/plugin1/lib-a", path.get("lib-a"));
         assertEquals("../jslib/plugin1/lib-b", path.get("lib-b"));
@@ -154,8 +161,8 @@ public class JEEContextAnalyzerTest {
       } else if (plugin.getName().equals("javaplugin")) {
         checkList(plugin.getModules(), "javaplugin/module-java");
         checkList(plugin.getStylesheets(), //
-            "styles/javaplugin/style-java.css", //
-            "modules/javaplugin/module-style-java.css");
+            JEEContextAnalyzer.STYLES + "/javaplugin/style-java.css", //
+            JEEContextAnalyzer.MODULES + "/javaplugin/module-style-java.css");
         Map<String, String> paths = plugin.getRequireJSPathsMap();
         assertEquals("../jslib/javaplugin/lib-java1", paths.get("lib-java1"));
         assertEquals("../jslib/javaplugin/lib-java2", paths.get("lib-java2"));
@@ -174,8 +181,8 @@ public class JEEContextAnalyzerTest {
     PluginDescriptor plugin = context.getPluginDescriptors().iterator().next();
 
     checkList(plugin.getModules(), name + "/module1");
-    checkList(plugin.getStylesheets(), "styles/" + name + "/style1.css",
-        "modules/" + name + "/module1.css");
+    checkList(plugin.getStylesheets(), JEEContextAnalyzer.STYLES + "/" + name + "/style1.css",
+        JEEContextAnalyzer.MODULES + "/" + name + "/module1.css");
     Map<String, String> nonRequirePaths = plugin.getRequireJSPathsMap();
     assertEquals("../jslib/" + name + "/lib", nonRequirePaths.get("lib"));
     assertEquals(1, nonRequirePaths.size());
@@ -202,10 +209,10 @@ public class JEEContextAnalyzerTest {
         "module3"//
     );
     checkList(styles, //
-        "styles/testJavaNonRootModules/style1.css", //
-        "modules/testJavaNonRootModules/module1.css", //
-        "styles/general2.css", //
-        "modules/module3.css"//
+        JEEContextAnalyzer.STYLES + "/testJavaNonRootModules/style1.css", //
+        JEEContextAnalyzer.MODULES + "/testJavaNonRootModules/module1.css", //
+        JEEContextAnalyzer.STYLES + "/general2.css", //
+        JEEContextAnalyzer.MODULES + "/module3.css"//
     );
     assertEquals("../jslib/testJavaNonRootModules/lib", paths.get("lib"));
     assertEquals("../jslib/jquery.mustache", paths.get("mustache"));
@@ -216,7 +223,8 @@ public class JEEContextAnalyzerTest {
     JEEContextAnalyzer context = new JEEContextAnalyzer(mockContext("test_theme"));
 
     PluginDescriptor plugin = context.getPluginDescriptors().iterator().next();
-    checkList(plugin.getStylesheets(), "styles/general.css", "theme/theme.css");
+    checkList(plugin.getStylesheets(), JEEContextAnalyzer.STYLES + "/general.css",
+        JEEContextAnalyzer.THEME + "/theme.css");
   }
 
   @Test
@@ -237,8 +245,8 @@ public class JEEContextAnalyzerTest {
         assertTrue(modules.contains("module1"));
         assertTrue(modules.contains("module2"));
         assertEquals(2, styles.size());
-        assertTrue(styles.contains("modules/module2.css"));
-        assertTrue(styles.contains("styles/general.css"));
+        assertTrue(styles.contains(JEEContextAnalyzer.MODULES + "/module2.css"));
+        assertTrue(styles.contains(JEEContextAnalyzer.STYLES + "/general.css"));
         assertTrue(defaultConf.containsKey("layout"));
         assertTrue(defaultConf.containsKey("legend"));
         assertFalse(defaultConf.containsKey("layer-list"));
@@ -253,8 +261,8 @@ public class JEEContextAnalyzerTest {
 
         assertTrue(modules.contains("module3"));
         assertEquals(2, styles.size());
-        assertTrue(styles.contains("modules/module3.css"));
-        assertTrue(styles.contains("styles/general2.css"));
+        assertTrue(styles.contains(JEEContextAnalyzer.MODULES + "/module3.css"));
+        assertTrue(styles.contains(JEEContextAnalyzer.STYLES + "/general2.css"));
         assertFalse(defaultConf.containsKey("layout"));
         assertFalse(defaultConf.containsKey("legend"));
         assertTrue(defaultConf.containsKey("layer-list"));
@@ -277,7 +285,7 @@ public class JEEContextAnalyzerTest {
     assertEquals(1, plugins.size());
     PluginDescriptor plugin = plugins.iterator().next();
     checkList(plugin.getModules(), "subdirs/lib/module");
-    checkList(plugin.getStylesheets(), "modules/subdirs/lib/style.css");
+    checkList(plugin.getStylesheets(), JEEContextAnalyzer.MODULES + "/subdirs/lib/style.css");
   }
 
   @Test
@@ -311,6 +319,32 @@ public class JEEContextAnalyzerTest {
     Set<PluginDescriptor> plugins = context.getPluginDescriptors();
     assertEquals(1, plugins.size());
     checkList(plugins.iterator().next().getModules(), "plugin/module");
+  }
+
+  @Test
+  public void nameFromPomProperties() {
+    JEEContextAnalyzer context = new JEEContextAnalyzer(mockContext("testNames"));
+    Set<PluginDescriptor> plugins = context.getPluginDescriptors();
+    for (PluginDescriptor plugin : plugins) {
+      if (plugin.getName().equals("myplugin-pom.properties")) {
+        checkList(plugin.getModules(), "myplugin-pom.properties/module");
+        return;
+      }
+    }
+    fail();
+  }
+
+  @Test
+  public void nameFromPackageJson() {
+    JEEContextAnalyzer context = new JEEContextAnalyzer(mockContext("testNames"));
+    Set<PluginDescriptor> plugins = context.getPluginDescriptors();
+    for (PluginDescriptor plugin : plugins) {
+      if (plugin.getName().equals("myplugin-package.json")) {
+        checkList(plugin.getModules(), "myplugin-package.json/module");
+        return;
+      }
+    }
+    fail();
   }
 
   private void checkList(Collection<String> result, String... testEntries) {

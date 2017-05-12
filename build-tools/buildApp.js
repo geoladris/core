@@ -10,24 +10,24 @@ const klaw = require('klaw-sync');
 
 const CONFIG_FILE = 'geoladris.json';
 
-const MODULES = 'modules';
+const MODULES = 'src';
 const STYLES = 'styles';
 const THEME = 'theme';
 const LIB = 'jslib';
 
 const BUILD_DIR = 'src/main/webapp';
-const SRC_ROOT = 'target/geoladris';
-const CORE = path.join(SRC_ROOT, 'core-jar');
+const NODE_MODULES = 'node_modules';
+const CORE = path.join(NODE_MODULES, '@geoladris', 'core');
 
 function copyResourceDir(pluginDir, dir, installInRoot) {
-	var srcDir = path.join(SRC_ROOT, pluginDir, dir);
+	var srcDir = path.join(NODE_MODULES, pluginDir, dir);
 	if (!fs.existsSync(srcDir)) {
 		return;
 	}
 
 	var destDir = path.join(BUILD_DIR, dir);
-	if (!installInRoot) {
-		destDir = path.join(destDir, pluginDir.replace(/-jar$/, ''));
+	if (!installInRoot && dir !== LIB) {
+		destDir = path.join(destDir, path.basename(pluginDir).replace(/-jar$/, ''));
 	}
 	fs.ensureDirSync(destDir);
 	fs.copySync(srcDir, destDir);
@@ -44,9 +44,8 @@ function isCSS(file) {
 function buildApp() {
 	fs.ensureDirSync(BUILD_DIR);
 
-	var plugins = fs.readdirSync(SRC_ROOT).filter(function(file) {
-		return fs.statSync(path.join(SRC_ROOT, file)).isDirectory();
-	});
+	var packageJson = JSON.parse(fs.readFileSync('package.json'));
+	var plugins = Object.keys(packageJson.dependencies);
 
 	var requirejsConfig = {
 		paths: {},
@@ -64,10 +63,16 @@ function buildApp() {
 	fs.removeSync(path.join(BUILD_DIR, THEME));
 
 	plugins.forEach(function(pluginDir) {
-		var confFile = path.join(SRC_ROOT, pluginDir, CONFIG_FILE);
-		var pluginName = pluginDir.replace(/-jar$/, '');
+		var confFile = path.join(NODE_MODULES, pluginDir, CONFIG_FILE);
+		var pluginName = path.basename(pluginDir).replace(/-jar$/, '');
 		console.log('Processing plugin: ' + pluginName + '...');
 		var config = fs.existsSync(confFile) ? JSON.parse(fs.readFileSync(confFile)) : {};
+
+		var libPrefix = config.installInRoot ? '' : pluginName + '/';
+		var libDir = path.join(BUILD_DIR, LIB);
+		if (!config.installInRoot) {
+			libDir = path.join(libDir, pluginName);
+		}
 
 		// Copy modules
 		copyResourceDir(pluginDir, LIB, config.installInRoot);
@@ -76,12 +81,6 @@ function buildApp() {
 		copyResourceDir(pluginDir, THEME, config.installInRoot);
 
 		// RequireJS paths
-		var libDir = path.join(BUILD_DIR, LIB);
-		if (!config.installInRoot) {
-			libDir = path.join(libDir, pluginName);
-		}
-
-		var libPrefix = config.installInRoot ? '' : pluginName + '/';
 		if (fs.existsSync(libDir)) {
 			fs.readdirSync(libDir).filter(isJS).map(function(lib) {
 				return lib.replace(/.js$/, '');
@@ -89,11 +88,18 @@ function buildApp() {
 				requirejsConfig.paths[lib] = '../' + LIB + '/' + libPrefix + lib;
 			});
 		}
+		if (config.requirejs && config.requirejs.paths) {
+			for (var p in config.requirejs.paths) { // eslint-disable-line guard-for-in
+				var f = config.requirejs.paths[p] + '.js';
+				fs.copy(f, path.join(path.join(BUILD_DIR, LIB), path.basename(f)));
+				requirejsConfig.paths[p] = '../' + LIB + '/' + path.basename(config.requirejs.paths[p]);
+			}
+		}
 
 		// RequireJS shim
-		if (config.requirejsShim) {
-			for (var key in config.requirejsShim) { // eslint-disable-line guard-for-in
-				requirejsConfig.shim[key] = config.requirejsShim[key];
+		if (config.requirejs && config.requirejs.shim) {
+			for (var shim in config.requirejs.shim) { // eslint-disable-line guard-for-in
+				requirejsConfig.shim[shim] = config.requirejs.shim[shim];
 			}
 		}
 
@@ -111,7 +117,7 @@ function buildApp() {
 
 	// Generate main.js
 	console.log('Generating main.js...');
-	var main = path.join(CORE, 'main.js');
+	var main = path.join(CORE, 'src', 'main', 'resources', 'main.js');
 	var contents = fs.readFileSync(main).toString();
 	contents = contents.replace(/\$paths/, 'paths : ' + JSON.stringify(requirejsConfig.paths));
 	contents = contents.replace(/\$shim/, 'shim : ' + JSON.stringify(requirejsConfig.shim));
@@ -120,7 +126,7 @@ function buildApp() {
 
 	// Generate index.html
 	console.log('Generating index.html...');
-	var index = path.join(CORE, 'index.html');
+	var index = path.join(CORE, 'src', 'main', 'resources', 'index.html');
 	contents = fs.readFileSync(index).toString();
 	contents = contents.replace(/\$title/, '');
 
@@ -137,6 +143,7 @@ function buildApp() {
 
 	console.log('Generating build.js...');
 	delete requirejsConfig.paths.require;
+	requirejsConfig.paths.jquery = '../jslib/jquery.min';
 	fs.writeFile('build.js', JSON.stringify(requirejsConfig));
 }
 

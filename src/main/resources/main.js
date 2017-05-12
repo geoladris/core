@@ -1,5 +1,5 @@
 require.config({
-	baseUrl: 'modules',
+	baseUrl: 'src',
 	// comment this line for debugging purposes in order to bust cache
 	// urlArgs : "bust=" + (new Date()).getTime(),
 	$paths,

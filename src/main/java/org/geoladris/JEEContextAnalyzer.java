@@ -1,10 +1,12 @@
 package org.geoladris;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Properties;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -15,8 +17,14 @@ import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.log4j.Logger;
 
+import net.sf.json.JSONObject;
+
 public class JEEContextAnalyzer {
   private static Logger logger = Logger.getLogger(JEEContextAnalyzer.class);
+
+  public static final String MODULES = "src";
+  public static final String STYLES = "styles";
+  public static final String THEME = "theme";
 
   public static final String CONF_FILE = "geoladris.json";
 
@@ -89,14 +97,14 @@ public class JEEContextAnalyzer {
       String path = file.getAbsolutePath();
       path = path.substring(pluginDir.getAbsolutePath().length() + 1);
 
-      if (path.startsWith("modules")) {
+      if (path.startsWith(MODULES)) {
         if (path.endsWith(".css")) {
           plugin.addStylesheet(path);
         } else if (path.endsWith(".js")) {
-          String module = path.substring("modules/".length(), path.length() - 3);
+          String module = path.substring(MODULES.length() + 1, path.length() - 3);
           plugin.addModule(module);
         }
-      } else if ((path.startsWith("styles") || path.startsWith("theme")) && path.endsWith(".css")) {
+      } else if ((path.startsWith(STYLES) || path.startsWith(THEME)) && path.endsWith(".css")) {
         plugin.addStylesheet(path);
       }
     }
@@ -130,14 +138,16 @@ public class JEEContextAnalyzer {
     }
 
     Set<String> jars = context.getLibPaths();
+    Properties properties = new Properties();
     for (String jar : jars) {
       String pluginName = new File(jar).getName().replace(".jar", "");
-      File jarDir = new File(dir, pluginName);
+      File jarDir = new File(dir, "tmp");
       ZipInputStream zis = new ZipInputStream(context.getLibAsStream(jar));
       try {
         ZipEntry entry;
         while ((entry = zis.getNextEntry()) != null) {
           String name = entry.getName();
+
           File file = new File(jarDir, name);
           if (name.endsWith("/")) {
             file.mkdirs();
@@ -152,7 +162,22 @@ public class JEEContextAnalyzer {
           FileOutputStream fos = new FileOutputStream(file);
           IOUtils.copy(zis, fos);
           fos.close();
+
+          // Obtain plugin name from pom.properties or package.json
+          if (name.matches("META-INF/.*/pom.properties")) {
+            properties.clear();
+            properties.load(new FileInputStream(file));
+            pluginName = properties.getProperty("artifactId");
+          } else if (name.matches("package.json")) {
+            JSONObject obj = JSONObject.fromObject(IOUtils.toString(file.toURI()));
+            if (obj.containsKey("name")) {
+              pluginName = obj.getString("name");
+              pluginName = pluginName.substring(pluginName.indexOf('/') + 1);
+            }
+          }
         }
+
+        jarDir.renameTo(new File(dir, pluginName));
       } catch (IOException e) {
         logger.warn("Error reading plugin from jar file: " + jar + ". Ignoring", e);
       } finally {

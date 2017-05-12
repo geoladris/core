@@ -31,7 +31,7 @@
         }
         require.config({
             paths: {
-                main: getURLParameter('debug') === 'true' ? 'modules/main' : 'app.min'
+                main: getURLParameter('debug') === 'true' ? 'src/main' : 'app.min'
             }
         });
         require(["main"]);
