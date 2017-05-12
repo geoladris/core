@@ -57,7 +57,7 @@ function buildApp() {
 		baseUrl: path.join(BUILD_DIR, MODULES),
 		name: 'main',
 		out: path.join(BUILD_DIR, 'app.min.js'),
-		optimize: 'none'
+		optimize: 'uglify2'
 	};
 
 	fs.removeSync(path.join(BUILD_DIR, LIB));
@@ -98,8 +98,10 @@ function buildApp() {
 		if (config.requirejs && config.requirejs.paths) {
 			for (var p in config.requirejs.paths) { // eslint-disable-line guard-for-in
 				var f = config.requirejs.paths[p] + '.js';
-				fs.copy(f, path.join(path.join(BUILD_DIR, LIB), path.basename(f)));
 				requirejsConfig.paths[p] = '../' + LIB + '/' + path.basename(config.requirejs.paths[p]);
+				if (f.indexOf(NODE_MODULES) >= 0) {
+					fs.copySync(f, path.join(path.join(BUILD_DIR, LIB), path.basename(f)));
+				}
 			}
 		}
 
