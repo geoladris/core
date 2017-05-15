@@ -1,6 +1,6 @@
 {
 	"name": "@geoladris/core",
-	"version": "6.0.0-SNAPSHOT",
+	"version": "6.0.0-SNAPSHOT-2017-05-15T14.53.12",
 	"main": "main.js",
 	"bin": {
 		"gl-build-app.js": "build-tools/buildApp.js"
@@ -9,6 +9,7 @@
 		"fs-extra": "^2.1.2",
 		"jquery": "^2.1.0",
 		"klaw-sync": "^1.1.2",
+		"clean-css": "^4.1.2",
 		"requirejs": "^2.1.8"
 	},
 	"devDependencies": {

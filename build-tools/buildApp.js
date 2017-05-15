@@ -7,6 +7,7 @@
 const fs = require('fs-extra');
 const path = require('path');
 const klaw = require('klaw-sync');
+const CleanCSS = require('clean-css');
 
 const CONFIG_FILE = 'geoladris.json';
 
@@ -112,6 +113,18 @@ function buildApp() {
 			}
 		}
 
+		// CSS from dependencies
+		if (config.css) {
+			var stylesDir = path.join(BUILD_DIR, STYLES, pluginName);
+			fs.ensureDirSync(stylesDir);
+			// config.css.forEach(c => fs.copySync(c, path.join(stylesDir, path.basename(c))));
+			config.css.forEach(function(c) {
+				var dest = path.join(stylesDir, path.basename(c));
+				console.log(dest);
+				fs.copySync(c, dest);
+			});
+		}
+
 		// Get dependencies
 		var modulesDir = path.join(BUILD_DIR, MODULES);
 		if (!config.installInRoot) {
@@ -140,18 +153,26 @@ function buildApp() {
 	var stylesheets = klaw(path.join(BUILD_DIR), {
 		nodir: true
 	}).filter(function(file) {
-		return isCSS(file.path);
+		return isCSS(file.path) && file.path.indexOf('app.min.css') < 0;
 	}).map(function(file) {
-		return '\'' + path.relative(BUILD_DIR, file.path) + '\'';
-	}).join(',');
+		return path.relative(BUILD_DIR, file.path);
+	});
 
-	contents = contents.replace(/\$stylesheets/, '[' + stylesheets + ']');
+	contents = contents.replace(/\$stylesheets/, JSON.stringify(stylesheets));
 	fs.writeFile(path.join(BUILD_DIR, 'index.html'), contents);
 
 	console.log('Generating build.js...');
 	delete requirejsConfig.paths.require;
 	requirejsConfig.paths.jquery = '../jslib/jquery.min';
 	fs.writeFile('build.js', JSON.stringify(requirejsConfig));
+
+	console.log('Minifying CSS...');
+	var minifiedCSS = new CleanCSS().minify(stylesheets.map(function(s) {
+		return path.join(BUILD_DIR, s);
+	}));
+	console.log('  ' + minifiedCSS.inlinedStylesheets.join('\n  '));
+	console.log('\n  Warnings: \n    ' + minifiedCSS.warnings.join('\n    '));
+	fs.writeFileSync(path.join(BUILD_DIR, 'app.min.css'), minifiedCSS.styles);
 }
 
 module.exports = buildApp;
