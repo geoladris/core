@@ -1,19 +1,14 @@
 package org.geoladris.config;
 
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.geoladris.PluginDescriptor;
-import org.geoladris.PluginDescriptorFileReader;
 
 import net.sf.json.JSONObject;
 
@@ -36,22 +31,18 @@ public class PluginJSONConfigurationProvider implements ModuleConfigurationProvi
 
     logger.warn("Using deprecated plugin-conf.json; use public-conf instead");
     File pluginConf = new File(requestConfig.getConfigDir(), "plugin-conf.json");
-    BufferedInputStream stream;
+
     try {
-      stream = new BufferedInputStream(new FileInputStream(pluginConf));
-    } catch (FileNotFoundException e) {
+      PluginDescriptor plugin = new PluginDescriptor(PLUGIN_NAME, pluginConf);
+      Map<String, JSONObject> ret = new HashMap<>();
+      if (plugin != null) {
+        ret.put(PLUGIN_NAME, plugin.getConfiguration());
+      }
+      return ret;
+    } catch (IOException e) {
       return null;
     }
-    String content = IOUtils.toString(stream);
-    stream.close();
 
-    PluginDescriptor plugin = new PluginDescriptorFileReader().read(content, PLUGIN_NAME);
-
-    Map<String, JSONObject> ret = new HashMap<>();
-    if (plugin != null) {
-      ret.put(PLUGIN_NAME, plugin.getConfiguration());
-    }
-    return ret;
   }
 
   @Override

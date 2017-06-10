@@ -33,6 +33,15 @@
 		<url-pattern>/*</url-pattern>
 	</filter-mapping>
 
+	<filter>
+		<filter-name>redirect-filter</filter-name>
+		<filter-class>org.geoladris.servlet.RedirectFilter</filter-class>
+	</filter>
+	<filter-mapping>
+		<filter-name>redirect-filter</filter-name>
+		<url-pattern>*.js</url-pattern>
+	</filter-mapping>
+
 	<!-- config call -->
 	<servlet>
 		<servlet-name>config-servlet</servlet-name>

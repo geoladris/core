@@ -20,10 +20,11 @@
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 
 	<link rel="icon" type="image/png" href="static/img/favicon.png">
+	<link rel="stylesheet" type="text/css" href="static/overrides.css">
 	<title>$title</title>
 
 	<script src="config.js"></script>
-	<script src="jslib/require.js"></script>
+	<script src="require.js"></script>
 	<script>
 		function addCSS(css) {
 			var link = document.createElement('link');
@@ -46,7 +47,7 @@
 
 		require.config({
 			paths: {
-				main: getURLParameter('debug') === 'true' ? 'src/main' : 'app.min'
+				main: getURLParameter('debug') === 'true' ? 'geoladris/core/src/main' : 'app.min'
 			}
 		});
 		require(["main"]);

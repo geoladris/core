@@ -19,11 +19,10 @@ import java.util.Set;
 
 import javax.naming.NamingException;
 
-import org.geoladris.JEEContext;
 import org.geoladris.Environment;
 import org.geoladris.Geoladris;
-import org.geoladris.JEEContextAnalyzer;
 import org.geoladris.PluginDescriptor;
+import org.geoladris.PluginDirsAnalyzer;
 import org.geoladris.TestingServletContext;
 import org.geoladris.config.Config;
 import org.geoladris.config.DBConfigurationProvider;
@@ -76,9 +75,9 @@ public class AppContextListenerTest {
     });
 
     plugins = new HashSet<>();
-    JEEContextAnalyzer analyzer = mock(JEEContextAnalyzer.class);
+    PluginDirsAnalyzer analyzer = mock(PluginDirsAnalyzer.class);
     when(analyzer.getPluginDescriptors()).thenReturn(plugins);
-    doReturn(analyzer).when(listener).getAnalyzer(any(JEEContext.class));
+    doReturn(analyzer).when(listener).getAnalyzer(any(File[].class));
   }
 
   @Test

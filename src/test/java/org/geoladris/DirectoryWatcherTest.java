@@ -1,123 +1,104 @@
 package org.geoladris;
 
+import static junit.framework.Assert.assertEquals;
 import static org.junit.Assert.fail;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
-import org.geoladris.config.Config;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.mockito.verification.VerificationMode;
 
-public class PluginUpdaterTest {
-  private JEEContextAnalyzer analyzer;
-  private Config config;
-
+public class DirectoryWatcherTest {
   @Rule
   public TemporaryFolder tmp = new TemporaryFolder();
 
+  private int nActions;
+
   @Before
   public void setup() throws IOException {
-    this.analyzer = mock(JEEContextAnalyzer.class);
-    this.config = mock(Config.class);
+    this.nActions = 0;
   }
 
   @Test
   public void invalidDir() {
     try {
       // Check that it doesn't throw an exception, just ignores the dir
-      new PluginUpdater(this.analyzer, this.config, new File("invalid_directory"));
+      new DirectoryWatcher(new TestAction(), new File("invalid_directory"));
     } catch (IOException e) {
       fail();
     }
   }
 
   @Test
-  public void updatesPluginsOnAddition() throws Exception {
-    mockPlugins();
+  public void callsActionOnAddition() throws Exception {
     runUpdater();
-    checkUpdate(never());
+    assertEquals(0, nActions);
 
     tmp.newFolder("plugin");
     // Wait a bit until the updater does its job
     Thread.sleep(100);
 
-    checkUpdate(times(1));
+    assertEquals(1, nActions);
   }
 
   @Test
   public void updatesPluginsOnDeletion() throws Exception {
     File plugin = tmp.newFolder("plugin");
 
-    mockPlugins();
     runUpdater();
-    checkUpdate(never());
+    assertEquals(0, nActions);
 
     plugin.delete();
     // Wait a bit until the updater does its job
     Thread.sleep(100);
 
-    checkUpdate(times(1));
+    assertEquals(1, nActions);
   }
 
   @Test
   public void doesNotUpdateTwiceForAMovedFile() throws Exception {
     File plugin = tmp.newFolder("plugin");
 
-    mockPlugins();
     runUpdater();
-    checkUpdate(never());
+    assertEquals(0, nActions);
 
     FileUtils.moveDirectory(plugin, new File(tmp.getRoot(), "another_plugin"));
     // Wait a bit until the updater does its job
     Thread.sleep(100);
 
-    checkUpdate(times(1));
+    assertEquals(1, nActions);
   }
 
   @Test
   public void updatesWhenSubdirectoryChanges() throws Exception {
-    mockPlugins();
     runUpdater();
-    checkUpdate(never());
+    assertEquals(0, nActions);
 
     File plugin = tmp.newFolder("plugin");
     // Wait more than the updater threshold
     Thread.sleep(300);
-    checkUpdate(times(1));
+    assertEquals(1, nActions);
 
     new File(plugin, "modules").mkdir();
 
     // Wait a bit until the updater does its job
     Thread.sleep(100);
-    checkUpdate(times(2));
-  }
-
-  private void mockPlugins() {
-    Set<PluginDescriptor> plugins = new HashSet<>();
-    plugins.add(new PluginDescriptor("p1", true));
-    plugins.add(new PluginDescriptor("p2", true));
-    when(this.analyzer.getPluginDescriptors()).thenReturn(plugins);
+    assertEquals(2, nActions);
   }
 
   private void runUpdater() throws IOException {
-    PluginUpdater updater = new PluginUpdater(this.analyzer, this.config, tmp.getRoot());
-    new Thread(updater).start();
+    DirectoryWatcher watcher = new DirectoryWatcher(new TestAction(), tmp.getRoot());
+    new Thread(watcher).start();
   }
 
-  private void checkUpdate(VerificationMode mode) {
-    verify(this.analyzer, mode).reload();
-    verify(this.config, mode).setPlugins(this.analyzer.getPluginDescriptors());
+  private class TestAction implements Runnable {
+    @Override
+    public void run() {
+      nActions++;
+    }
   }
 }

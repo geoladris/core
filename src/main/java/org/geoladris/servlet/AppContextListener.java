@@ -10,12 +10,16 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
+import org.apache.catalina.Globals;
+import org.apache.catalina.WebResourceRoot;
+import org.apache.catalina.webresources.DirResourceSet;
 import org.apache.log4j.Logger;
-import org.geoladris.JEEContext;
+import org.geoladris.CSSOverridesUpdater;
+import org.geoladris.DirectoryWatcher;
 import org.geoladris.Environment;
 import org.geoladris.Geoladris;
-import org.geoladris.JEEContextAnalyzer;
 import org.geoladris.PluginDescriptor;
+import org.geoladris.PluginDirsAnalyzer;
 import org.geoladris.PluginUpdater;
 import org.geoladris.config.Config;
 import org.geoladris.config.DBConfig;
@@ -40,8 +44,10 @@ public class AppContextListener implements ServletContextListener {
     }
 
     File configDir = getConfigDir(servletContext);
-    JEEContext context = new JEEContext(servletContext, new File(configDir, "plugins"));
-    JEEContextAnalyzer analyzer = getAnalyzer(context);
+    File pluginsFromConfig = new File(configDir, Config.DIR_PLUGINS);
+    String pluginsFromWar = servletContext.getRealPath("/" + Geoladris.PATH_PLUGINS_FROM_WAR);
+    File[] pluginsDirs = new File[] {new File(pluginsFromWar), pluginsFromConfig};
+    PluginDirsAnalyzer analyzer = getAnalyzer(pluginsDirs);
     Set<PluginDescriptor> plugins = analyzer.getPluginDescriptors();
     boolean useCache = Environment.getInstance().getConfigCache();
 
@@ -77,11 +83,29 @@ public class AppContextListener implements ServletContextListener {
     servletContext.setAttribute(Geoladris.ATTR_CONFIG, config);
 
     try {
-      PluginUpdater updater = new PluginUpdater(analyzer, config, context.getDirs());
-      Thread t = new Thread(updater);
-      t.start();
+      DirectoryWatcher.watch(new PluginUpdater(analyzer, config), pluginsDirs);
     } catch (IOException e) {
       logger.warn("Cannot start plugin updater. Plugins descriptor won't be updated");
+    }
+
+    File staticDir = new File(configDir, Config.DIR_STATIC);
+    try {
+      DirectoryWatcher.watch(new CSSOverridesUpdater(config), staticDir, pluginsFromConfig);
+    } catch (IOException e) {
+      logger.warn("Cannot start overrides.css updater. It won't be updated");
+    }
+
+    try {
+      WebResourceRoot resourcesRoot =
+          (WebResourceRoot) servletContext.getAttribute(Globals.RESOURCES_ATTR);
+      DirResourceSet staticResources = new DirResourceSet(resourcesRoot,
+          "/" + Geoladris.PATH_STATIC, staticDir.getAbsolutePath(), "/");
+      DirResourceSet pluginsResources = new DirResourceSet(resourcesRoot,
+          "/" + Geoladris.PATH_PLUGINS_FROM_CONFIG, pluginsFromConfig.getAbsolutePath(), "/");
+      resourcesRoot.addPreResources(staticResources);
+      resourcesRoot.addPreResources(pluginsResources);
+    } catch (Throwable e) {
+      logger.error("Cannot add static resources", e);
     }
   }
 
@@ -136,8 +160,8 @@ public class AppContextListener implements ServletContextListener {
   /**
    * For testing purposes
    */
-  JEEContextAnalyzer getAnalyzer(JEEContext context) {
-    return new JEEContextAnalyzer(context);
+  PluginDirsAnalyzer getAnalyzer(File[] pluginsDirs) {
+    return new PluginDirsAnalyzer(pluginsDirs);
   }
 
   @Override

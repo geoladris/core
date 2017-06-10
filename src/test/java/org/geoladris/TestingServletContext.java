@@ -102,8 +102,8 @@ public class TestingServletContext {
 
   public Config mockConfig(File configDir) {
     File pluginsDir = new File(configDir, "plugins");
-    JEEContext context = new JEEContext(this.servletContext, pluginsDir);
-    JEEContextAnalyzer analyzer = new JEEContextAnalyzer(context);
+    PluginDirsAnalyzer analyzer =
+        new PluginDirsAnalyzer(new File(servletContext.getRealPath("/plugins")), pluginsDir);
     Config config = new FilesConfig(configDir, new ArrayList<ModuleConfigurationProvider>(),
         analyzer.getPluginDescriptors(), false, -1);
     when(this.servletContext.getAttribute(Geoladris.ATTR_CONFIG)).thenReturn(config);

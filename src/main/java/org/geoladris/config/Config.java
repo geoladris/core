@@ -30,6 +30,9 @@ public interface Config {
   String PROPERTY_MAP_CENTER = "map.centerLonLat";
   String PROPERTY_LANGUAGES = "languages";
 
+  String DIR_STATIC = "static";
+  String DIR_PLUGINS = "plugins";
+
   File getDir();
 
   Properties getProperties();

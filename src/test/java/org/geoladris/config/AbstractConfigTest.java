@@ -27,7 +27,6 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 
 import org.geoladris.PluginDescriptor;
-import org.geoladris.PluginDescriptorFileReader;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -216,7 +215,7 @@ public class AbstractConfigTest {
   public void testMergeDoesNotAffectDefaultPluginConfiguration() throws IOException {
     Set<PluginDescriptor> plugins = new HashSet<PluginDescriptor>();
     PluginDescriptor pluginDescriptor =
-        new PluginDescriptorFileReader().read("{default-conf:{m1:true}}", "p1");
+        new PluginDescriptor("p1", JSONObject.fromObject("{default-conf:{m1:true}}"));
     plugins.add(pluginDescriptor);
 
     Map<String, JSONObject> mergingConfiguration1 = new HashMap<String, JSONObject>();

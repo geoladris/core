@@ -4,6 +4,9 @@ This project follows [semantic versioning](http://semver.org).
 
 ## Modificado
 
+* El proceso de empaquetado de aplicaciones ahora se gestiona con Maven y `yarn` conjuntamente (ver [empaquetado](packaging.md)).
+* Las dependencias de los plugins cliente se gestionan ahora con `yarn`.
+* Estructura de los plugins cliente (ver [plugins](plugins.md)).
 * Los plugins empaquetados como `.jar` pasan a estar contenidos en un subdirectorio dentro de `geoladris` (en lugar de directamente en `geoladris`). Así, todos los plugins están en subdirectorios, independientemente de su empaquetado (ver [guía de migración](migrating.md)).
 * Todos los plugins toman su nombre del subdirectorio en el que están contenidos.
 * `installInRoot` por defecto a `false` para todos los plugins, independientemente del empaquetado; `core` se mantiene con `installInRoot : true` para que sus módulos se puedan referenciar de manera sencilla desde otros plugins.
@@ -24,6 +27,10 @@ This project follows [semantic versioning](http://semver.org).
 * [Detectar cambios en los directorios de plugins](https://github.com/geoladris/core/issues/33).
 * [Fichero descriptor de plugin (`<plugin>-conf.json`) opcional](https://github.com/geoladris/core/issues/36).
 * Variable `GEOLADRIS_CACHE_TIMEOUT` (en segundos) para limpiar la caché de configuración. Únicamente se tiene en cuenta si la variable `GEOLADRIS_CONFIG_CACHE` es `true`.
+
+## Eliminado
+
+* Variable de entorno `GEOLADRIS_MINIFIED`. Los recursos en cliente se sirven minificados por defecto, con la posibilidad de servirlos sin minificar con el parámetro `debug=true`.
 
 # 5.0.1 [2016-12-06]
 

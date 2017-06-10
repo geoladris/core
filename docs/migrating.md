@@ -55,3 +55,24 @@ Por ejemplo, este plugin `.jar`:
 habría que moverlo a:
 
 ![](images/plugin-conf-dir-6.x.png)
+
+# Migrando a la versión 7.x
+
+## Plugins
+La estructura de los plugins cliente ha cambiado completamente (ver [plugins](plugins.md)). Para la migración habría que:
+
+* Mover módulos de `src/main/resources/geoladris/<plugin>/modules` a `src`.
+* Gestionar las dependencias con `package.json`/`yarn`.
+
+Todavía es posible gestionar las dependencias de manera manual (en `jslib` en lugar de `src/main/resources/geoladris/<plugin>/jslib`), aunque en un futuro esta opción desaparecerá.
+
+## Aplicaciones
+
+Las dependencias de las aplicaciones se gestionan ahora conjuntamente con Maven y `yarn` (ver [empaquetado](packaging.md)), por lo que su definición y empaquetado cambian.
+
+* Incluir dependencias cliente en `package.json`.
+* Incluir dependencias servidor en `pom.xml`.
+* Incluir dependencias híbridas (cliente y servidor juntos) en ambos ficheros.
+* Configurar el plugin `com.github.eirslett:frontend-maven-plugin` en `pom.xml` (ver [ejemplo](https://github.com/geoladris/apps/blob/js_deps/demo/pom.xml#L119).
+
+Una vez hecho esto, basta con ejecutar `mvn package` para minificar y empaquetar todos los recursos (cliente y servidor) en un único paquete `.war`.

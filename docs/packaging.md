@@ -1,39 +1,39 @@
-# Minificando Javascript y CSS
+`core` tiene dos funciones principales:
 
-Es posible utilizar recursos minificados en el cliente especificando la propiedad Java `GEOLADRIS_MINIFIED=true` al arrancar el servidor.
+1. **Empaquetar** todos los recursos tanto Java (servlets, filtros, listeners,...) como JavaScript (módulos, estilos, dependencias, etc. a `src/main/webapp` para empaquetarlos dentro del war y servirlos con Tomcat) y minificar los recursos estáticos.
+2. **Servir** todos los recursos estáticos (plugins empaquetados en el war, plugins en el directorio de configuración, ficheros estáticos en el directorio de configuración,...) y dinámicos (`config.js`, ...).
 
-Los recursos minificados se han de crear de antemano. [Aquí](https://github.com/geoladris/apps/blob/master/demo/pom.xml) hay un ejemplo de un perfil Maven con configuración para la minificación.
+# Empaquetar
 
-También es posible utilizar recursos *no* minificados (incluso si se ha especificado la propiedad `GEOLADRIS_MINIFIED=true`) añadiendo el parámetro `debug=true` a la petición HTML. Por ejemplo: http://localhost:8080/demo/?debug=true.
+Los **plugins JavaScript** se gestionan con herramientas de JavaScript. El flujo de trabajo es:
 
-# Empaquetando aplicaciones `.war`
+* Incluir plugins en `dependencies` dentro del `package.json`.
+* `yarn install` para gestionar todas las dependencias.
+* `gl-build-app.js`. Es un script propio de `core` que:
+  * Copia los plugins definidos en la opción `dependencies` del `package.json` dentro de `src/main/webapp`; también copia las dependencias (`*.js` y `*.css`).
+  * Genera el fichero `app.min.css` con  todos los estilos (de menos a más prioridad: dependencias, `src` y `css`).
+  * Genera el fichero `main.js` de RequireJS que se sirve en la aplicación final (solo con `debug=true`).
+  * Genera el fichero `index.html`.
+  * Genera un fichero `build.js` para minificar módulos RequireJS, teniendo en cuenta la configuración de `requirejs` en los `geoladris.json` de los plugins.
+* `r.js -o build.js`. Genera `src/main/webapp/app.min.js` con la minificación de los recursos JavaScript a partir del `build.js` generado por `gl-build-app.js`.
 
-Geoladris proporciona un script `geoladris_build.sh` con el que es posible generar una aplicación `.war` minificada a partir de un directorio de configuración y un descriptor `build.json`, sin necesidad de escribir ficheros de Maven/Java (`pom.xml`, `web.xml`, `wro.properties`,...).
+Los **plugins Java** se gestionan simplemente incluyéndolos como dependencias en el `pom.xml`.
 
-El script tiene una ayuda que se puede obtener ejecutando con `-h`:
+El build de plugins JavaScript se incluye como parte del [build](https://github.com/geoladris/apps/blob/js_deps/demo/pom.xml#L119) de Maven con un plugin. Por tanto, basta con hacer `mvn package` para empaquetarlo todo.
 
-```bash
-$ geoladris_build.sh -h
-```
+# Servir
 
-En dicha ayuda aparece el formato del fichero `build.json`, así como algunos ejemplos de configuración.
+Recursos estáticos gestionados directamente por Tomcat (por estar en `src/main/webapp`):
 
-Por ejemplo, sería posible generar la aplicación de [demo](https://github.com/geoladris/apps/tree/master/demo) de Geoladris utilizando el siguiente descriptor:
+* `src/main/webapp/app.min.js`
+* `src/main/webapp/app.min.css`
+* `src/main/webapp/index.html`
+* `src/main/webapp/*.js
+* `src/main/webapp/geoladris/*`
 
-```json
-{
-  "group" : "org.fao.unredd.apps",
-  "name" : "demo",
-  "version" : "6.0-SNAPSHOT",
-  "plugins" : [ "base", "layers-editor", "footnote", "feedback", "layer-time-sliders", "language-buttons", "time-slider", "tour", "layer-order" ]
-}
-```
+Recursos estáticos fuera del `war`. Configurado automáticamente para Tomcat 8.x y 9.x:
 
-Y copiando su [directorio de configuración](https://github.com/geoladris/apps/tree/master/demo/src/main/webapp/WEB-INF/default_config) al directorio donde está el fichero `build.json` que acabamos de crear.
+* `<config_dir>/plugins/`. Bajo el path `/plugins/*`.
+* `<config_dir>/static/`. Bajo el path `/static/*`. Inhabilita `src/main/webapp/static`.
 
-Una vez todo en su sitio, bastaría ejecutar:
-
-```bash
-$ geoladris_build.sh -d <directorio>
-```
-
+`config.js` (con un servlet), que es dinámico porque puede depender, por ejemplo, del usuario.

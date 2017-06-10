@@ -25,7 +25,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.geoladris.Geoladris;
 import org.geoladris.PluginDescriptor;
-import org.geoladris.PluginDescriptorFileReader;
 import org.geoladris.TestingServletContext;
 import org.geoladris.config.Config;
 import org.junit.Before;
@@ -40,7 +39,6 @@ public class ConfigServletTest {
   private HttpServletRequest request;
   private HttpServletResponse response;
   private TestingServletContext context;
-  private PluginDescriptorFileReader reader;
 
   @Before
   public void setup() throws Exception {
@@ -53,8 +51,6 @@ public class ConfigServletTest {
 
     this.servlet.init(context.servletConfig);
     context.servletContext.setAttribute(Geoladris.ATTR_CONFIG, this.config);
-
-    this.reader = new PluginDescriptorFileReader();
   }
 
   @SuppressWarnings("unchecked")
@@ -98,7 +94,7 @@ public class ConfigServletTest {
   @Test
   public void usesModulesFromPluginsInConfiguration() throws Exception {
     String defaultConf = "{default-conf:{module1 : {prop1 : 42, prop2 : true}}}";
-    PluginDescriptor plugin1 = reader.read(defaultConf, "plugin1");
+    PluginDescriptor plugin1 = new PluginDescriptor("plugin1", JSONObject.fromObject(defaultConf));
     plugin1.addModule("module1");
 
     PluginDescriptor[] plugin = new PluginDescriptor[] {plugin1};
@@ -119,11 +115,11 @@ public class ConfigServletTest {
 
   @Test
   public void writesRequireJSConfigurationAsReturnedByConfig() throws Exception {
-    PluginDescriptor plugin1 =
-        reader.read("{default-conf:{module1 : {prop1 : 42, prop2 : true}}}", "plugin1");
+    PluginDescriptor plugin1 = new PluginDescriptor("plugin1",
+        JSONObject.fromObject("{default-conf:{module1 : {prop1 : 42, prop2 : true}}}"));
     plugin1.getModules().add("module1");
-    PluginDescriptor plugin2 = reader
-        .read("{default-conf:{module2 : {prop3 : 'test'}," + "module3 : [4, 2, 9]}}", "plugin2");
+    PluginDescriptor plugin2 = new PluginDescriptor("plugin2", JSONObject
+        .fromObject("{default-conf:{module2 : {prop3 : 'test'}," + "module3 : [4, 2, 9]}}"));
     plugin2.getModules().add("module2");
     plugin2.getModules().add("module3");
 

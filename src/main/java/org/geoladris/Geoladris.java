@@ -25,4 +25,8 @@ public interface Geoladris {
    * String. Obtain with {@link HttpSession#getAttribute(String)}.
    */
   String ATTR_ROLE = "org.geoladris.session.role";
+
+  String PATH_PLUGINS_FROM_CONFIG = "plugins";
+  String PATH_PLUGINS_FROM_WAR = "geoladris";
+  String PATH_STATIC = "static";
 }
