@@ -1,0 +1,8 @@
+{
+	"requirejs": {
+		"paths": {
+			"jquery": "node_modules/jquery/dist/jquery.min"
+		}
+	},
+	"installInRoot": true
+}

@@ -1,8 +1,0 @@
-{
-	"requirejs" : {
-		"paths" : {
-			"lib" : "../jslib/sub/lib"
-		}
-	},
-	"installInRoot" : true
-}

@@ -2,6 +2,16 @@ This project follows [semantic versioning](http://semver.org).
 
 # Sin publicar
 
+## Modificado
+
+* El proceso de empaquetado de aplicaciones ahora se gestiona con Maven y `yarn` conjuntamente (ver [empaquetado](packaging.md)).
+* Las dependencias de los plugins cliente se gestionan ahora con `yarn`.
+* Estructura de los plugins cliente (ver [plugins](plugins.md)).
+
+## Eliminado
+
+* Variable de entorno `GEOLADRIS_MINIFIED`. Los recursos en cliente se sirven minificados por defecto, con la posibilidad de servirlos sin minificar con el parámetro `debug=true`.
+
 # 6.0.0 [2017-04-21]
 
 ## Modificado

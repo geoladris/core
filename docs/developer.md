@@ -1,3 +1,16 @@
+# Preparación del proyecto
+
+Lo primero que hay que hacer al clonar el repositorio es preparar las dependencias JavaScript. Podemos hacerlo usando Maven:
+
+```bash
+$ mvn generate-resources
+```
+o con `yarn`:
+
+```bash
+$ yarn install
+```
+
 # Formateo del código
 
 Se utiliza el [estilo](https://google.github.io/styleguide/eclipse-java-google-style.xml) de Google para formatear el código Java.
@@ -68,3 +81,9 @@ así que incluyendo ese parámetro en la instrucción `.travis.yml` y configuran
 	</settings>
 
 estaremos haciendo uso de los parámetros anteriores para hacer el deploy sin que estos estén expuestos públicamente.
+
+# Depurando JavaScript en el navegador
+
+Por defecto, se utilizan recursos minificados en el cliente. Los recursos minificados forman parte del [empaquetado](packaging.md).
+
+También es posible utilizar recursos *no* minificados añadiendo el parámetro `debug=true` a la petición HTML. Por ejemplo: http://localhost:8080/demo/?debug=true.
