@@ -2,9 +2,7 @@ package org.geoladris.servlet;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -17,53 +15,46 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.geoladris.Geoladris;
 import org.geoladris.PluginDescriptor;
-import org.geoladris.PluginDirsAnalyzer;
 import org.geoladris.config.Config;
 
 public class RedirectFilter implements Filter {
   private Config config;
+  private ServletContext context;
 
   @Override
   public void init(FilterConfig filterConfig) throws ServletException {
-    this.config = (Config) filterConfig.getServletContext().getAttribute(Geoladris.ATTR_CONFIG);
+    this.context = filterConfig.getServletContext();
+    this.config = (Config) this.context.getAttribute(Geoladris.ATTR_CONFIG);
   }
 
   @Override
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
       throws IOException, ServletException {
     HttpServletRequest req = (HttpServletRequest) request;
-    Locale locale = (Locale) req.getAttribute(Geoladris.ATTR_LOCALE);
 
     String path = req.getRequestURI().substring(req.getContextPath().length() + 1);
-    String[] parts = path.split("/");
-
-    String pluginName = null;
-    if (parts.length == 1) {
-      // installInRoot
-      PluginDescriptor[] plugins = this.config.getPluginConfig(locale, req);
-      Map<String, String> moduleRootPluginMap = new HashMap<>();
-      for (PluginDescriptor plugin : plugins) {
-        if (plugin.isInstallInRoot()) {
-          for (String module : plugin.getModules()) {
-            moduleRootPluginMap.put(module + ".js", plugin.getName());
-          }
-        }
-      }
-
-      pluginName = moduleRootPluginMap.get(path);
-    } else {
-      pluginName = parts[0];
-      path = path.substring(path.indexOf('/') + 1);
-    }
-
-    String configPath = pluginName + "/" + PluginDirsAnalyzer.MODULES + "/" + path;
-    File configFile = new File(this.config.getDir(), Config.DIR_PLUGINS + "/" + configPath);
-    if (configFile.exists()) {
-      request.getRequestDispatcher("/" + Geoladris.PATH_PLUGINS_FROM_CONFIG + configPath)
-          .forward(request, response);
-    } else {
+    if (path.indexOf('/') < 0) {
       chain.doFilter(request, response);
+      return;
     }
+
+    Locale locale = (Locale) req.getAttribute(Geoladris.ATTR_LOCALE);
+    PluginDescriptor[] plugins = this.config.getPluginConfig(locale, req);
+    for (PluginDescriptor plugin : plugins) {
+      String qualifiedPath = plugin.isInstallInRoot() ? plugin.getName() + "/" + path : path;
+      String warPath = "/" + Geoladris.PATH_PLUGINS_FROM_WAR + "/" + qualifiedPath;
+      File configFile = new File(this.config.getDir(), Config.DIR_PLUGINS + "/" + qualifiedPath);
+      if (configFile.exists()) {
+        String configPath = "/" + Geoladris.PATH_PLUGINS_FROM_CONFIG + "/" + qualifiedPath;
+        request.getRequestDispatcher(configPath).forward(request, response);
+        return;
+      } else if (this.context.getResource(warPath) != null) {
+        request.getRequestDispatcher(warPath).forward(request, response);
+        return;
+      }
+    }
+
+    chain.doFilter(request, response);
   }
 
   @Override
