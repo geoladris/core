@@ -17,7 +17,7 @@ public class CSSOverridesUpdater implements Runnable {
 
   private Config config;
 
-  public CSSOverridesUpdater(Config config) throws IOException {
+  public CSSOverridesUpdater(Config config) {
     this.config = config;
   }
 
