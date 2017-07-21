@@ -23,7 +23,7 @@ import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.geoladris.PluginDescriptor;
+import org.geoladris.Plugin;
 
 public interface Config {
   String PROPERTY_CLIENT_MODULES = "client.modules";
@@ -48,6 +48,8 @@ public interface Config {
 
   ResourceBundle getMessages(Locale locale) throws ConfigException;
 
+  String localize(String template);
+
   /**
    * Returns the property as an array or null if the property does not exist
    * 
@@ -63,15 +65,14 @@ public interface Config {
   String getDefaultLang();
 
   /**
-   * Plugin configuration provided by the list of {@link ModuleConfigurationProvider}. Only
-   * configuration for the active plugins are provided. Any disabled plugins won't be contained in
-   * the array.
+   * Plugin configuration provided by the list of {@link PluginConfigProvider}. Only configuration
+   * for the active plugins are provided. Any disabled plugins won't be contained in the array.
    * 
    * @param locale
    * @param request
    * @return
    */
-  PluginDescriptor[] getPluginConfig(Locale locale, HttpServletRequest request);
+  Plugin[] getPluginConfig(Locale locale, HttpServletRequest request);
 
   /**
    * Gets the folder in the configuration directory where no-java plugins are to be found
@@ -80,9 +81,9 @@ public interface Config {
    */
   File getNoJavaPluginRoot();
 
-  void setPlugins(Set<PluginDescriptor> plugins);
+  void setPlugins(Set<Plugin> plugins);
 
-  void addModuleConfigurationProvider(ModuleConfigurationProvider provider);
+  void addPluginConfigProvider(PluginConfigProvider provider);
 
-  List<ModuleConfigurationProvider> getModuleConfigurationProviders();
+  List<PluginConfigProvider> getPluginConfigProviders();
 }

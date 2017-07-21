@@ -11,10 +11,10 @@ import org.junit.Test;
 
 import net.sf.json.JSONObject;
 
-public class PluginDescriptorTest {
+public class PluginTest {
   public void cannotHaveNullName() {
     try {
-      new PluginDescriptor(null, false);
+      new Plugin(null, false);
       fail();
     } catch (IllegalArgumentException e) {
     }
@@ -22,7 +22,7 @@ public class PluginDescriptorTest {
 
   @Test
   public void modulesInstalledInRoot() throws Exception {
-    PluginDescriptor descriptor = new PluginDescriptor("p1", true);
+    Plugin descriptor = new Plugin("p1", true);
 
     descriptor.addModule("m1");
 
@@ -34,7 +34,7 @@ public class PluginDescriptorTest {
   @Test
   public void modulesInstalledOutsideRoot() throws Exception {
     String name = "myplugin";
-    PluginDescriptor descriptor = new PluginDescriptor(name, false);
+    Plugin descriptor = new Plugin(name, false);
 
     descriptor.addModule("m1");
 
@@ -45,7 +45,7 @@ public class PluginDescriptorTest {
 
   @Test
   public void qualifiesModuleNames() {
-    PluginDescriptor plugin = new PluginDescriptor("p", false);
+    Plugin plugin = new Plugin("p", false);
     plugin.addModule("m1");
     Set<String> modules = plugin.getModules();
     assertTrue(modules.contains("p/m1"));
@@ -54,32 +54,29 @@ public class PluginDescriptorTest {
 
   @Test
   public void enabledByDefault() {
-    PluginDescriptor plugin = new PluginDescriptor("p", false);
+    Plugin plugin = new Plugin("p", false);
     assertTrue(plugin.isEnabled());
   }
 
   @Test
   public void disablePluginWithConfig() {
-    PluginDescriptor plugin = new PluginDescriptor("p", false);
-    plugin.setConfiguration(
-        JSONObject.fromObject("{'" + PluginDescriptor.CONF_ENABLED + "' : false}"));
+    Plugin plugin = new Plugin("p", false);
+    plugin.setConfiguration(JSONObject.fromObject("{'" + Plugin.CONF_ENABLED + "' : false}"));
     assertFalse(plugin.isEnabled());
   }
 
   @Test
   public void enablePluginWithConfig() {
-    PluginDescriptor plugin = new PluginDescriptor("p", false);
-    plugin.setConfiguration(
-        JSONObject.fromObject("{'" + PluginDescriptor.CONF_ENABLED + "' : false}"));
+    Plugin plugin = new Plugin("p", false);
+    plugin.setConfiguration(JSONObject.fromObject("{'" + Plugin.CONF_ENABLED + "' : false}"));
     assertFalse(plugin.isEnabled());
-    plugin.setConfiguration(
-        JSONObject.fromObject("{'" + PluginDescriptor.CONF_ENABLED + "' : true}"));
+    plugin.setConfiguration(JSONObject.fromObject("{'" + Plugin.CONF_ENABLED + "' : true}"));
     assertTrue(plugin.isEnabled());
   }
 
   @Test
   public void overrideConfig() {
-    PluginDescriptor plugin = new PluginDescriptor("p", false);
+    Plugin plugin = new Plugin("p", false);
 
     JSONObject config = new JSONObject();
     config.element("m1", JSONObject.fromObject("{a : 1}"));
@@ -89,7 +86,7 @@ public class PluginDescriptorTest {
 
     config = new JSONObject();
     config.element("m2", false);
-    config.element(PluginDescriptor.CONF_OVERRIDE, true);
+    config.element(Plugin.CONF_OVERRIDE, true);
     plugin.setConfiguration(config);
 
     JSONObject pluginConfig = plugin.getConfiguration();
@@ -99,7 +96,7 @@ public class PluginDescriptorTest {
 
   @Test
   public void mergeConfigIfSpecified() {
-    PluginDescriptor plugin = new PluginDescriptor("p", false);
+    Plugin plugin = new Plugin("p", false);
 
     JSONObject config = new JSONObject();
     JSONObject m1Config = JSONObject.fromObject("{a : 1}");
@@ -108,7 +105,7 @@ public class PluginDescriptorTest {
 
     config = new JSONObject();
     config.element("m2", false);
-    config.element(PluginDescriptor.CONF_OVERRIDE, false);
+    config.element(Plugin.CONF_OVERRIDE, false);
     plugin.setConfiguration(config);
 
     JSONObject pluginConfig = plugin.getConfiguration();
@@ -118,7 +115,7 @@ public class PluginDescriptorTest {
 
   @Test
   public void mergeConfigByDefault() {
-    PluginDescriptor plugin = new PluginDescriptor("p", false);
+    Plugin plugin = new Plugin("p", false);
 
     JSONObject config = new JSONObject();
     JSONObject m1Config = JSONObject.fromObject("{a : 1}");
@@ -136,11 +133,11 @@ public class PluginDescriptorTest {
 
   @Test
   public void configDoesNotContainEnabledOrOverride() {
-    PluginDescriptor plugin = new PluginDescriptor("p", false);
+    Plugin plugin = new Plugin("p", false);
 
     JSONObject config = new JSONObject();
-    config.element(PluginDescriptor.CONF_ENABLED, true);
-    config.element(PluginDescriptor.CONF_OVERRIDE, false);
+    config.element(Plugin.CONF_ENABLED, true);
+    config.element(Plugin.CONF_OVERRIDE, false);
     config.element("m1", true);
 
     plugin.setConfiguration(config);
@@ -148,17 +145,52 @@ public class PluginDescriptorTest {
     JSONObject pluginConfig = plugin.getConfiguration();
     assertEquals(1, pluginConfig.size());
     assertTrue(pluginConfig.getBoolean("p/m1"));
-    assertFalse(pluginConfig.has(PluginDescriptor.CONF_ENABLED));
-    assertFalse(pluginConfig.has(PluginDescriptor.CONF_OVERRIDE));
+    assertFalse(pluginConfig.has(Plugin.CONF_ENABLED));
+    assertFalse(pluginConfig.has(Plugin.CONF_OVERRIDE));
   }
 
   @Test
   public void keepEnabledStateIfNotSpecified() {
-    PluginDescriptor plugin = new PluginDescriptor("p", false);
-    plugin.setConfiguration(
-        JSONObject.fromObject("{'" + PluginDescriptor.CONF_ENABLED + "' : false}"));
+    Plugin plugin = new Plugin("p", false);
+    plugin.setConfiguration(JSONObject.fromObject("{'" + Plugin.CONF_ENABLED + "' : false}"));
     assertFalse(plugin.isEnabled());
     plugin.setConfiguration(new JSONObject());
     assertFalse(plugin.isEnabled());
+  }
+
+  @Test
+  public void installInRoot() {
+    Plugin plugin = new Plugin("p", false);
+    assertFalse(plugin.isInstallInRoot());
+
+    plugin = new Plugin("p", true);
+    assertTrue(plugin.isInstallInRoot());
+
+    plugin = new Plugin("p", JSONObject.fromObject("{ installInRoot : true}"));
+    assertTrue(plugin.isInstallInRoot());
+
+    plugin = new Plugin("p", JSONObject.fromObject("{ installInRoot : false}"));
+    assertFalse(plugin.isInstallInRoot());
+  }
+
+  @Test
+  public void toStringReturnsName() {
+    String name = "p";
+    assertEquals(name, new Plugin(name, false).toString());
+  }
+
+  @Test
+  public void nameCannotBeNull() {
+    try {
+      new Plugin(null, false);
+      fail();
+    } catch (IllegalArgumentException e) {
+    }
+
+    try {
+      new Plugin("", false);
+      fail();
+    } catch (IllegalArgumentException e) {
+    }
   }
 }

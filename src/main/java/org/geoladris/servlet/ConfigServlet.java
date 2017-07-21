@@ -16,7 +16,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.geoladris.Geoladris;
-import org.geoladris.PluginDescriptor;
+import org.geoladris.Plugin;
 import org.geoladris.config.Config;
 
 import net.sf.json.JSONObject;
@@ -42,7 +42,7 @@ public class ConfigServlet extends HttpServlet {
 
     JSONObject moduleConfig = new JSONObject();
     // Fixed elements
-    PluginDescriptor[] enabledPluginDescriptors = config.getPluginConfig(locale, req);
+    Plugin[] enabledPluginDescriptors = config.getPluginConfig(locale, req);
     moduleConfig.element("customization", buildCustomizationObject(getServletContext(), config,
         locale, title, enabledPluginDescriptors));
     moduleConfig.element("i18n", buildI18NObject(bundle));
@@ -51,7 +51,7 @@ public class ConfigServlet extends HttpServlet {
     JSONObject paths = new JSONObject();
     JSONObject shim = new JSONObject();
 
-    for (PluginDescriptor pluginDescriptor : enabledPluginDescriptors) {
+    for (Plugin pluginDescriptor : enabledPluginDescriptors) {
       JSONObject configuration = pluginDescriptor.getConfiguration();
       if (configuration != null) {
         moduleConfig.putAll(configuration);
@@ -90,7 +90,7 @@ public class ConfigServlet extends HttpServlet {
   }
 
   private JSONObject buildCustomizationObject(ServletContext servletContext, Config config,
-      Locale locale, String title, PluginDescriptor[] plugins) {
+      Locale locale, String title, Plugin[] plugins) {
     JSONObject obj = new JSONObject();
     obj.element("title", title);
     obj.element(Config.PROPERTY_LANGUAGES, config.getLanguages());
@@ -103,7 +103,7 @@ public class ConfigServlet extends HttpServlet {
     if (extraModules != null) {
       Collections.addAll(modules, extraModules);
     }
-    for (PluginDescriptor plugin : plugins) {
+    for (Plugin plugin : plugins) {
       modules.addAll(plugin.getModules());
     }
     obj.element("modules", modules);

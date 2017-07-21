@@ -26,7 +26,7 @@ import java.util.Set;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 
-import org.geoladris.PluginDescriptor;
+import org.geoladris.Plugin;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -50,26 +50,26 @@ public class AbstractConfigTest {
     MockitoAnnotations.initMocks(this);
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void testConfigurationProvidersMerge() throws Exception {
-    Set<PluginDescriptor> plugins = new HashSet<>();
-    PluginDescriptor plugin1 = new PluginDescriptor("1", true);
+    Set<Plugin> plugins = new HashSet<>();
+    Plugin plugin1 = new Plugin("1", true);
     plugins.add(plugin1);
 
     JSONObject conf1 = JSONObject.fromObject("{ module : { a : 1, b : 2 }}");
     JSONObject conf2 = JSONObject.fromObject("{ module : { a : 10, c : 3 }}");
 
-    ModuleConfigurationProvider provider1 = mock(ModuleConfigurationProvider.class);
-    when(provider1.getPluginConfig(any(PortalRequestConfiguration.class),
-        any(HttpServletRequest.class))).thenReturn(Collections.singletonMap("1", conf1));
-    ModuleConfigurationProvider provider2 = mock(ModuleConfigurationProvider.class);
-    when(provider2.getPluginConfig(any(PortalRequestConfiguration.class),
-        any(HttpServletRequest.class))).thenReturn(Collections.singletonMap("1", conf2));
+    PluginConfigProvider p1 = mock(PluginConfigProvider.class);
+    when(p1.getPluginConfig(any(Config.class), any(Map.class), any(HttpServletRequest.class)))
+        .thenReturn(Collections.singletonMap("1", conf1));
+    PluginConfigProvider p2 = mock(PluginConfigProvider.class);
+    when(p2.getPluginConfig(any(Config.class), any(Map.class), any(HttpServletRequest.class)))
+        .thenReturn(Collections.singletonMap("1", conf2));
 
-    Config config =
-        new FilesConfig(folder.getRoot(), Arrays.asList(provider1, provider2), plugins, false, -1);
+    Config config = new FilesConfig(folder.getRoot(), Arrays.asList(p1, p2), plugins, false, -1);
 
-    PluginDescriptor[] c = config.getPluginConfig(Locale.getDefault(), request);
+    Plugin[] c = config.getPluginConfig(Locale.getDefault(), request);
 
     JSONObject pluginConf = c[0].getConfiguration().getJSONObject("module");
 
@@ -141,8 +141,8 @@ public class AbstractConfigTest {
     File portalProperties = new File(folder.getRoot(), "portal.properties");
     firstProperties.store(new FileOutputStream(portalProperties), "");
 
-    Config config = new FilesConfig(folder.getRoot(), new ArrayList<ModuleConfigurationProvider>(),
-        null, useCache, cacheTimeout);
+    Config config = new FilesConfig(folder.getRoot(), new ArrayList<PluginConfigProvider>(), null,
+        useCache, cacheTimeout);
 
     assertTrue(config.getDefaultLang().equals(defaultLang));
     assertTrue(config.getLanguages()[0].get("code").equals("es"));
@@ -170,21 +170,22 @@ public class AbstractConfigTest {
     readPluginConfigurationTwice(false, true, 2);
   }
 
+  @SuppressWarnings("unchecked")
   private void readPluginConfigurationTwice(boolean useCache, boolean canBeCached, int numCalls)
       throws IOException {
     // Install configuration provider
-    ModuleConfigurationProvider provider = mock(ModuleConfigurationProvider.class);
+    PluginConfigProvider provider = mock(PluginConfigProvider.class);
     when(provider.canBeCached()).thenReturn(canBeCached);
 
-    Config config = new FilesConfig(null, Arrays.asList(provider),
-        Collections.<PluginDescriptor>emptySet(), useCache, -1);
+    Config config = new FilesConfig(null, Arrays.asList(provider), Collections.<Plugin>emptySet(),
+        useCache, -1);
 
     // Call twice
     config.getPluginConfig(Locale.getDefault(), request);
     config.getPluginConfig(Locale.getDefault(), request);
 
     // Check num calls
-    verify(provider, times(numCalls)).getPluginConfig(any(PortalRequestConfiguration.class),
+    verify(provider, times(numCalls)).getPluginConfig(any(Config.class), any(Map.class),
         any(HttpServletRequest.class));
   }
 
@@ -193,8 +194,8 @@ public class AbstractConfigTest {
     File portalProperties = new File(folder.getRoot(), "portal.properties");
     new Properties().store(new FileOutputStream(portalProperties), "");
 
-    Config config = new FilesConfig(folder.getRoot(), new ArrayList<ModuleConfigurationProvider>(),
-        Collections.<PluginDescriptor>emptySet(), false, -1);
+    Config config = new FilesConfig(folder.getRoot(), new ArrayList<PluginConfigProvider>(),
+        Collections.<Plugin>emptySet(), false, -1);
     assertNotNull(config.getDir());
     assertNotNull(config.getPluginConfig(Locale.getDefault(), request));
     assertNotNull(config.getProperties());
@@ -202,31 +203,31 @@ public class AbstractConfigTest {
     assertNotNull(config.getDefaultLang());
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void testFailingConfigurationProvider() throws Exception {
-    ModuleConfigurationProvider provider = mock(ModuleConfigurationProvider.class);
-    when(provider.getPluginConfig(any(PortalRequestConfiguration.class),
-        any(HttpServletRequest.class))).thenThrow(new IOException("mock"));
+    PluginConfigProvider provider = mock(PluginConfigProvider.class);
+    when(provider.getPluginConfig(any(Config.class), any(Map.class), any(HttpServletRequest.class)))
+        .thenThrow(new IOException("mock"));
     Config config = new FilesConfig(mock(File.class), Arrays.asList(provider),
-        Collections.<PluginDescriptor>emptySet(), false, -1);
+        Collections.<Plugin>emptySet(), false, -1);
     assertNotNull(config.getPluginConfig(Locale.getDefault(), request));
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void testMergeDoesNotAffectDefaultPluginConfiguration() throws IOException {
-    Set<PluginDescriptor> plugins = new HashSet<PluginDescriptor>();
-    PluginDescriptor pluginDescriptor =
-        new PluginDescriptor("p1", JSONObject.fromObject("{default-conf:{m1:true}}"));
+    Set<Plugin> plugins = new HashSet<Plugin>();
+    Plugin pluginDescriptor = new Plugin("p1", JSONObject.fromObject("{default-conf:{m1:true}}"));
     plugins.add(pluginDescriptor);
 
     Map<String, JSONObject> mergingConfiguration1 = new HashMap<String, JSONObject>();
     mergingConfiguration1.put("p1", JSONObject.fromObject("{m2:true}"));
     Map<String, JSONObject> mergingConfiguration2 = new HashMap<String, JSONObject>();
     mergingConfiguration2.put("p1", JSONObject.fromObject("{}"));
-    ModuleConfigurationProvider provider = mock(ModuleConfigurationProvider.class);
-    when(provider.getPluginConfig(any(PortalRequestConfiguration.class),
-        any(HttpServletRequest.class))).thenReturn(mergingConfiguration1)
-            .thenReturn(mergingConfiguration2);
+    PluginConfigProvider provider = mock(PluginConfigProvider.class);
+    when(provider.getPluginConfig(any(Config.class), any(Map.class), any(HttpServletRequest.class)))
+        .thenReturn(mergingConfiguration1).thenReturn(mergingConfiguration2);
     Config config = new FilesConfig(mock(File.class), Arrays.asList(provider), plugins, false, -1);
 
     JSONObject configuration = config.getPluginConfig(Locale.ROOT, request)[0].getConfiguration();
@@ -238,21 +239,21 @@ public class AbstractConfigTest {
 
   @Test
   public void updatesPlugins() {
-    Set<PluginDescriptor> plugins = new HashSet<PluginDescriptor>();
-    PluginDescriptor plugin = new PluginDescriptor("p1", true);
+    Set<Plugin> plugins = new HashSet<Plugin>();
+    Plugin plugin = new Plugin("p1", true);
     plugin.addModule("m1");
     plugins.add(plugin);
 
-    Config config = new FilesConfig(mock(File.class), new ArrayList<ModuleConfigurationProvider>(),
+    Config config = new FilesConfig(mock(File.class), new ArrayList<PluginConfigProvider>(),
         plugins, false, -1);
-    PluginDescriptor[] pluginConfig = config.getPluginConfig(Locale.getDefault(), request);
+    Plugin[] pluginConfig = config.getPluginConfig(Locale.getDefault(), request);
     assertEquals(1, pluginConfig.length);
     assertEquals("p1", pluginConfig[0].getName());
     assertEquals(1, pluginConfig[0].getModules().size());
     assertEquals("m1", pluginConfig[0].getModules().iterator().next());
 
-    plugins = new HashSet<PluginDescriptor>();
-    plugin = new PluginDescriptor("p2", false);
+    plugins = new HashSet<Plugin>();
+    plugin = new Plugin("p2", false);
     plugin.addModule("m2");
     plugins.add(plugin);
 
@@ -264,45 +265,45 @@ public class AbstractConfigTest {
     assertEquals("p2/m2", pluginConfig[0].getModules().iterator().next());
   }
 
+  @SuppressWarnings("unchecked")
   @Test
   public void ignoresConfigurationForNonExistingPlugins() throws IOException {
-    Set<PluginDescriptor> plugins = Collections.singleton(new PluginDescriptor("p1", true));
+    Set<Plugin> plugins = Collections.singleton(new Plugin("p1", true));
 
 
-    ModuleConfigurationProvider provider = mock(ModuleConfigurationProvider.class);
+    PluginConfigProvider provider = mock(PluginConfigProvider.class);
     Map<String, JSONObject> providerConf =
         Collections.singletonMap("another_plugin", new JSONObject());
-    when(provider.getPluginConfig(any(PortalRequestConfiguration.class),
-        any(HttpServletRequest.class))).thenReturn(providerConf);
+    when(provider.getPluginConfig(any(Config.class), any(Map.class), any(HttpServletRequest.class)))
+        .thenReturn(providerConf);
     Config config = new FilesConfig(mock(File.class), Arrays.asList(provider), plugins, false, -1);
 
-    PluginDescriptor[] pluginConfig = config.getPluginConfig(Locale.getDefault(), request);
+    Plugin[] pluginConfig = config.getPluginConfig(Locale.getDefault(), request);
     assertEquals(1, pluginConfig.length);
   }
 
+  @SuppressWarnings({"unchecked", "rawtypes"})
   @Test
   public void sendsCurrentConfigurationForGetPluginConfig() throws IOException {
 
-    Set<PluginDescriptor> plugins = new HashSet<PluginDescriptor>();
-    PluginDescriptor plugin =
-        new PluginDescriptor("p1", JSONObject.fromObject("{default-conf:{m1:true}}"));
+    Set<Plugin> plugins = new HashSet<Plugin>();
+    Plugin plugin = new Plugin("p1", JSONObject.fromObject("{default-conf:{m1:true}}"));
     plugins.add(plugin);
 
-    ModuleConfigurationProvider p1 = mock(ModuleConfigurationProvider.class);
-    ModuleConfigurationProvider p2 = mock(ModuleConfigurationProvider.class);
+    PluginConfigProvider p1 = mock(PluginConfigProvider.class);
+    PluginConfigProvider p2 = mock(PluginConfigProvider.class);
 
     JSONObject pluginConfig = JSONObject.fromObject("{m1 : { a : true, b : 2}}");
-    when(p1.getPluginConfig(any(PortalRequestConfiguration.class), any(HttpServletRequest.class)))
+    when(p1.getPluginConfig(any(Config.class), any(Map.class), any(HttpServletRequest.class)))
         .thenReturn(Collections.singletonMap(plugin.getName(), pluginConfig));
     Config config = new FilesConfig(mock(File.class), Arrays.asList(p1, p2), plugins, false, -1);
 
     config.getPluginConfig(Locale.ROOT, request);
 
-    ArgumentCaptor<PortalRequestConfiguration> captor =
-        ArgumentCaptor.forClass(PortalRequestConfiguration.class);
-    verify(p2).getPluginConfig(captor.capture(), any(HttpServletRequest.class));
+    ArgumentCaptor<Map> captor = ArgumentCaptor.forClass(Map.class);
+    verify(p2).getPluginConfig(any(Config.class), captor.capture(), any(HttpServletRequest.class));
 
-    Map<String, JSONObject> currentConfiguration = captor.getValue().getCurrentConfiguration();
+    Map<String, JSONObject> currentConfiguration = captor.getValue();
     assertEquals(1, currentConfiguration.size());
     assertEquals(pluginConfig, currentConfiguration.get(plugin.getName()));
   }

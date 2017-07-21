@@ -17,7 +17,7 @@ public class PluginDirsAnalyzer {
   public static final String MODULES = "src";
   public static final String CONF_FILE = "geoladris.json";
 
-  private Set<PluginDescriptor> pluginDescriptors;
+  private Set<Plugin> plugins;
   private File[] pluginsDirs;
 
   public PluginDirsAnalyzer(File... pluginsDirs) {
@@ -26,7 +26,7 @@ public class PluginDirsAnalyzer {
   }
 
   public void reload() {
-    this.pluginDescriptors = new HashSet<>();
+    this.plugins = new HashSet<>();
     for (File pluginsDir : this.pluginsDirs) {
       scanPluginsDir(pluginsDir);
     }
@@ -55,13 +55,13 @@ public class PluginDirsAnalyzer {
         conf = new File(pluginDir, name + "-conf.json");
       }
 
-      PluginDescriptor plugin;
+      Plugin plugin;
       try {
-        plugin = new PluginDescriptor(name, conf);
+        plugin = new Plugin(name, conf);
       } catch (IOException e) {
-        plugin = new PluginDescriptor(name, false);
+        plugin = new Plugin(name, false);
       }
-      this.pluginDescriptors.add(plugin);
+      this.plugins.add(plugin);
 
       File modulesDir = new File(pluginDir, MODULES);
       if (modulesDir.isDirectory()) {
@@ -81,7 +81,7 @@ public class PluginDirsAnalyzer {
     }
   }
 
-  public Set<PluginDescriptor> getPluginDescriptors() {
-    return pluginDescriptors;
+  public Set<Plugin> getPlugins() {
+    return plugins;
   }
 }

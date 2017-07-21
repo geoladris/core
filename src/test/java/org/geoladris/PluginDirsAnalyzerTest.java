@@ -6,6 +6,7 @@ import static org.junit.Assert.assertFalse;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -24,12 +25,12 @@ public class PluginDirsAnalyzerTest {
 
   @Test
   public void checkTest1() {
-    Set<PluginDescriptor> plugins = getPluginDescriptors("test1");
+    Set<Plugin> plugins = getPluginDescriptors("test1");
     assertEquals(1, plugins.size());
 
     List<String> modules = new ArrayList<>();
     JSONObject defaultConf = new JSONObject();
-    for (PluginDescriptor plugin : plugins) {
+    for (Plugin plugin : plugins) {
       modules.addAll(plugin.getModules());
       defaultConf.putAll(plugin.getConfiguration());
     }
@@ -44,9 +45,9 @@ public class PluginDirsAnalyzerTest {
 
   @Test
   public void scanNoJavaPlugins() {
-    Set<PluginDescriptor> plugins = getPluginDescriptors("testNoJava");
+    Set<Plugin> plugins = getPluginDescriptors("testNoJava");
     assertEquals(3, plugins.size());
-    for (PluginDescriptor plugin : plugins) {
+    for (Plugin plugin : plugins) {
       if (plugin.getName().equals("plugin1")) {
         checkList(plugin.getModules(), "plugin1/a", "plugin1/b");
       } else if (plugin.getName().equals("plugin2")) {
@@ -60,15 +61,15 @@ public class PluginDirsAnalyzerTest {
   @Test
   public void scanJavaNonRootModules() {
     String name = "testJavaNonRootModules";
-    Set<PluginDescriptor> plugins = getPluginDescriptors(name);
+    Set<Plugin> plugins = getPluginDescriptors(name);
     checkList(plugins.iterator().next().getModules(), name + "/module1");
   }
 
   @Test
   public void checkPluginDescriptors() {
-    Set<PluginDescriptor> plugins = getPluginDescriptors("test1");
+    Set<Plugin> plugins = getPluginDescriptors("test1");
     assertEquals(1, plugins.size());
-    PluginDescriptor plugin = plugins.iterator().next();
+    Plugin plugin = plugins.iterator().next();
     checkList(plugin.getModules(), "module1", "module2");
     Set<String> modules = plugin.getModules();
     JSONObject defaultConf = plugin.getConfiguration();
@@ -82,9 +83,9 @@ public class PluginDirsAnalyzerTest {
 
   @Test
   public void testResourcesInSubdirectories() {
-    Set<PluginDescriptor> plugins = getPluginDescriptors("testSubdirectories");
+    Set<Plugin> plugins = getPluginDescriptors("testSubdirectories");
     assertEquals(1, plugins.size());
-    PluginDescriptor plugin = plugins.iterator().next();
+    Plugin plugin = plugins.iterator().next();
     checkList(plugin.getModules(), "subdirs/lib/module");
   }
 
@@ -94,7 +95,7 @@ public class PluginDirsAnalyzerTest {
     IOUtils.write("{}", new FileOutputStream(new File(p1, "p1-conf.json")));
 
     PluginDirsAnalyzer analyzer = new PluginDirsAnalyzer(tmp.getRoot());
-    Set<PluginDescriptor> plugins = analyzer.getPluginDescriptors();
+    Set<Plugin> plugins = analyzer.getPlugins();
     assertEquals(1, plugins.size());
     assertEquals("p1", plugins.iterator().next().getName());
 
@@ -102,18 +103,34 @@ public class PluginDirsAnalyzerTest {
     IOUtils.write("{}", new FileOutputStream(new File(p2, "p2-conf.json")));
 
     analyzer.reload();
-    plugins = analyzer.getPluginDescriptors();
+    plugins = analyzer.getPlugins();
     assertEquals(2, plugins.size());
-    for (PluginDescriptor plugin : plugins) {
+    for (Plugin plugin : plugins) {
       assertTrue(plugin.getName().equals("p1") || plugin.getName().equals("p2"));
     }
   }
 
   @Test
   public void testNoPluginDescriptor() {
-    Set<PluginDescriptor> plugins = getPluginDescriptors("testNoPluginDescriptor");
+    Set<Plugin> plugins = getPluginDescriptors("testNoPluginDescriptor");
     assertEquals(1, plugins.size());
     checkList(plugins.iterator().next().getModules(), "plugin/module");
+  }
+
+  @Test
+  public void unreadablePluginDir() {
+    File dir = tmp.newFolder("test");
+    dir.setReadable(false);
+    PluginDirsAnalyzer analyzer = new PluginDirsAnalyzer(dir);
+    assertEquals(0, analyzer.getPlugins().size());
+  }
+
+  @Test
+  public void ignoresTextFilesWithinPluginDir() throws IOException {
+    File dir = tmp.newFolder("test");
+    new File(dir, "test.txt").createNewFile();
+    PluginDirsAnalyzer analyzer = new PluginDirsAnalyzer(dir);
+    assertEquals(0, analyzer.getPlugins().size());
   }
 
   private PluginDirsAnalyzer getAnalyzer(String dir) {
@@ -121,8 +138,8 @@ public class PluginDirsAnalyzerTest {
     return new PluginDirsAnalyzer(new File(root, "WEB-INF/classes"), new File(root, "plugins"));
   }
 
-  private Set<PluginDescriptor> getPluginDescriptors(String dir) {
-    return getAnalyzer(dir).getPluginDescriptors();
+  private Set<Plugin> getPluginDescriptors(String dir) {
+    return getAnalyzer(dir).getPlugins();
   }
 
   private void checkList(Collection<String> result, String... testEntries) {

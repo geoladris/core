@@ -18,18 +18,18 @@ import org.geoladris.CSSOverridesUpdater;
 import org.geoladris.DirectoryWatcher;
 import org.geoladris.Environment;
 import org.geoladris.Geoladris;
-import org.geoladris.PluginDescriptor;
+import org.geoladris.Plugin;
 import org.geoladris.PluginDirsAnalyzer;
 import org.geoladris.PluginUpdater;
 import org.geoladris.config.Config;
 import org.geoladris.config.DBConfig;
-import org.geoladris.config.DBConfigurationProvider;
 import org.geoladris.config.DBDataSource;
 import org.geoladris.config.FilesConfig;
-import org.geoladris.config.ModuleConfigurationProvider;
-import org.geoladris.config.PluginJSONConfigurationProvider;
-import org.geoladris.config.PublicConfProvider;
-import org.geoladris.config.RoleConfigurationProvider;
+import org.geoladris.config.PluginConfigProvider;
+import org.geoladris.config.providers.DBConfigProvider;
+import org.geoladris.config.providers.PluginJSONConfigProvider;
+import org.geoladris.config.providers.PublicConfProvider;
+import org.geoladris.config.providers.RoleConfigProvider;
 
 public class AppContextListener implements ServletContextListener {
   private static final Logger logger = Logger.getLogger(AppContextListener.class);
@@ -48,7 +48,7 @@ public class AppContextListener implements ServletContextListener {
     String pluginsFromWar = servletContext.getRealPath("/" + Geoladris.PATH_PLUGINS_FROM_WAR);
     File[] pluginsDirs = new File[] {new File(pluginsFromWar), pluginsFromConfig};
     PluginDirsAnalyzer analyzer = getAnalyzer(pluginsDirs);
-    Set<PluginDescriptor> plugins = analyzer.getPluginDescriptors();
+    Set<Plugin> plugins = analyzer.getPlugins();
     boolean useCache = Environment.getInstance().getConfigCache();
 
     String timeoutProp = Environment.getInstance().get(Environment.CACHE_TIMEOUT);
@@ -62,7 +62,7 @@ public class AppContextListener implements ServletContextListener {
       }
     }
 
-    List<ModuleConfigurationProvider> providers = new ArrayList<>();
+    List<PluginConfigProvider> providers = new ArrayList<>();
     Config config = null;
     if (isDBEnabled()) {
       try {
@@ -75,8 +75,8 @@ public class AppContextListener implements ServletContextListener {
 
     if (config == null) {
       providers.add(new PublicConfProvider());
-      providers.add(new PluginJSONConfigurationProvider());
-      providers.add(new RoleConfigurationProvider());
+      providers.add(new PluginJSONConfigProvider());
+      providers.add(new RoleConfigProvider());
       config = new FilesConfig(configDir, providers, plugins, useCache, cacheTimeout);
     }
 
@@ -148,8 +148,8 @@ public class AppContextListener implements ServletContextListener {
   /**
    * For testing purposes
    */
-  DBConfigurationProvider getDBProvider(String contextPath) throws IOException {
-    return new DBConfigurationProvider(DBDataSource.getInstance(), contextPath);
+  DBConfigProvider getDBProvider(String contextPath) throws IOException {
+    return new DBConfigProvider(DBDataSource.getInstance(), contextPath);
   }
 
   /**

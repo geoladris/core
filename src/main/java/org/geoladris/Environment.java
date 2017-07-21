@@ -10,7 +10,6 @@ public class Environment {
 
   public static final String CONFIG_CACHE = "GEOLADRIS_CONFIG_CACHE";
   public static final String CONFIG_DIR = "GEOLADRIS_CONFIG_DIR";
-  public static final String MINIFIED = "GEOLADRIS_MINIFIED";
   public static final String CACHE_TIMEOUT = "GEOLADRIS_CACHE_TIMEOUT";
 
   private static final Environment instance = new Environment();
@@ -49,9 +48,5 @@ public class Environment {
    */
   public String getPortalConfigDir(ServletContext context) {
     return get(PORTAL_CONFIG_DIR, context);
-  }
-
-  public boolean getMinified() {
-    return Boolean.parseBoolean(get(MINIFIED));
   }
 }

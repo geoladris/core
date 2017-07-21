@@ -19,7 +19,7 @@ import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.log4j.Logger;
-import org.geoladris.PluginDescriptor;
+import org.geoladris.Plugin;
 
 import net.sf.json.JSONObject;
 
@@ -29,18 +29,19 @@ public abstract class AbstractConfig implements Config {
   private static final String PROPERTY_DEFAULT_LANG = "languages.default";
 
   private File configDir;
-  private Set<PluginDescriptor> plugins;
+  private Set<Plugin> plugins;
   private boolean useCache;
-  private List<ModuleConfigurationProvider> configProviders;
+  private List<PluginConfigProvider> configProviders;
+  private Locale currentLocale;
 
-  private Map<ModuleConfigurationProvider, Map<String, JSONObject>> cachedConfigurations =
-      new HashMap<ModuleConfigurationProvider, Map<String, JSONObject>>();
+  private Map<PluginConfigProvider, Map<String, JSONObject>> cachedConfigurations =
+      new HashMap<PluginConfigProvider, Map<String, JSONObject>>();
   private Map<Locale, ResourceBundle> localeBundles = new HashMap<Locale, ResourceBundle>();
   private Properties properties;
 
 
-  public AbstractConfig(File configDir, List<ModuleConfigurationProvider> configProviders,
-      Set<PluginDescriptor> plugins, boolean useCache, int cacheTimeout) {
+  public AbstractConfig(File configDir, List<PluginConfigProvider> configProviders,
+      Set<Plugin> plugins, boolean useCache, int cacheTimeout) {
     this.configDir = configDir;
     this.plugins = plugins;
     this.useCache = useCache;
@@ -140,65 +141,67 @@ public abstract class AbstractConfig implements Config {
   }
 
   @Override
-  public PluginDescriptor[] getPluginConfig(Locale locale, HttpServletRequest request) {
-    // Get a map: name -> cloned descriptor
-    Map<String, PluginDescriptor> namePluginDescriptor = new HashMap<String, PluginDescriptor>();
-    for (PluginDescriptor pluginDescriptor : this.plugins) {
-      PluginDescriptor clonedDescriptor = pluginDescriptor.cloneDescriptor();
-      namePluginDescriptor.put(clonedDescriptor.getName(), clonedDescriptor);
+  public Plugin[] getPluginConfig(Locale locale, HttpServletRequest request) {
+    this.currentLocale = locale;
+
+    // Get a map: name -> cloned plugin
+    Map<String, Plugin> namePluginMap = new HashMap<String, Plugin>();
+    for (Plugin plugin : this.plugins) {
+      Plugin clone = plugin.clonePlugin();
+      namePluginMap.put(clone.getName(), clone);
     }
 
-    PortalRequestConfigurationImpl requestConfig = new PortalRequestConfigurationImpl(locale);
+    // PortalRequestConfigurationImpl requestConfig = new PortalRequestConfigurationImpl(locale);
+    Map<String, JSONObject> pluginConfig = new HashMap<>();
 
     // Get the providers configuration and merge it
-    List<ModuleConfigurationProvider> providers =
-        (List<ModuleConfigurationProvider>) this.configProviders;
-    for (ModuleConfigurationProvider provider : providers) {
-      requestConfig.currentConfig.clear();
-      for (PluginDescriptor p : namePluginDescriptor.values()) {
+    for (PluginConfigProvider provider : this.configProviders) {
+      pluginConfig.clear();
+      for (Plugin plugin : namePluginMap.values()) {
         JSONObject config = new JSONObject();
-        for (Object key : p.getConfiguration().keySet()) {
-          String unqualified = key.toString().substring(p.getName().length() + 1);
-          config.element(unqualified, p.getConfiguration().get(key));
+        JSONObject c = plugin.getConfiguration();
+        for (Object key : c.keySet()) {
+          String unqualified = key.toString().substring(plugin.getName().length() + 1);
+          config.element(unqualified, c.get(key));
         }
-        requestConfig.currentConfig.put(p.getName(), config);
+        pluginConfig.put(plugin.getName(), config);
       }
 
-      Map<String, JSONObject> providerConfiguration = cachedConfigurations.get(provider);
-      if (providerConfiguration == null || !useCache || !provider.canBeCached()) {
+      Map<String, JSONObject> providerConfig = cachedConfigurations.get(provider);
+      if (providerConfig == null || !useCache || !provider.canBeCached()) {
         try {
-          providerConfiguration = provider.getPluginConfig(requestConfig, request);
-          cachedConfigurations.put(provider, providerConfiguration);
+          providerConfig = provider.getPluginConfig(this, pluginConfig, request);
+          cachedConfigurations.put(provider, providerConfig);
         } catch (IOException e) {
           logger.info("Provider failed to contribute configuration: " + provider.getClass());
         }
       }
 
-      if (providerConfiguration == null) {
+      if (providerConfig == null) {
         continue;
       }
 
       // Merge the configuration in the result
-      for (String pluginName : providerConfiguration.keySet()) {
-        JSONObject pluginConf = providerConfiguration.get(pluginName);
-        PluginDescriptor pluginDescriptor = namePluginDescriptor.get(pluginName);
-        if (pluginDescriptor == null) {
+      for (String pluginName : providerConfig.keySet()) {
+        JSONObject pluginConf = providerConfig.get(pluginName);
+        Plugin plugin = namePluginMap.get(pluginName);
+        if (plugin == null) {
           logger.warn("Configuration has been defined for a non-existing plugin: " + pluginName);
         } else {
-          pluginDescriptor.setConfiguration(pluginConf);
+          plugin.setConfiguration(pluginConf);
         }
       }
     }
 
     // Get only enabled plugins
-    List<PluginDescriptor> enabled = new ArrayList<>();
-    for (PluginDescriptor plugin : namePluginDescriptor.values()) {
+    List<Plugin> enabled = new ArrayList<>();
+    for (Plugin plugin : namePluginMap.values()) {
       if (plugin.isEnabled()) {
         enabled.add(plugin);
       }
     }
 
-    return enabled.toArray(new PluginDescriptor[enabled.size()]);
+    return enabled.toArray(new Plugin[enabled.size()]);
   }
 
   @Override
@@ -207,56 +210,36 @@ public abstract class AbstractConfig implements Config {
   }
 
   @Override
-  public void setPlugins(Set<PluginDescriptor> plugins) {
+  public void setPlugins(Set<Plugin> plugins) {
     this.plugins = plugins;
   }
 
   @Override
-  public void addModuleConfigurationProvider(ModuleConfigurationProvider provider) {
+  public void addPluginConfigProvider(PluginConfigProvider provider) {
     this.configProviders.add(provider);
   }
 
   @Override
-  public List<ModuleConfigurationProvider> getModuleConfigurationProviders() {
+  public List<PluginConfigProvider> getPluginConfigProviders() {
     return this.configProviders;
   }
 
-  private class PortalRequestConfigurationImpl implements PortalRequestConfiguration {
-    private Locale locale;
-    private Map<String, JSONObject> currentConfig;
-
-    public PortalRequestConfigurationImpl(Locale locale) {
-      this.locale = locale;
-      this.currentConfig = new HashMap<>();
-    }
-
-    @Override
-    public String localize(String template) {
-      Pattern patt = Pattern.compile("\\$\\{([\\w.]*)\\}");
-      Matcher m = patt.matcher(template);
-      StringBuffer sb = new StringBuffer(template.length());
-      ResourceBundle messages = getMessages(locale);
-      while (m.find()) {
-        String text;
-        try {
-          text = messages.getString(m.group(1));
-          m.appendReplacement(sb, text);
-        } catch (MissingResourceException e) {
-          // do not replace
-        }
+  @Override
+  public String localize(String template) {
+    Pattern patt = Pattern.compile("\\$\\{([\\w.]*)\\}");
+    Matcher m = patt.matcher(template);
+    StringBuffer sb = new StringBuffer(template.length());
+    ResourceBundle messages = getMessages(this.currentLocale);
+    while (m.find()) {
+      String text;
+      try {
+        text = messages.getString(m.group(1));
+        m.appendReplacement(sb, text);
+      } catch (MissingResourceException e) {
+        // do not replace
       }
-      m.appendTail(sb);
-      return sb.toString();
     }
-
-    @Override
-    public File getConfigDir() {
-      return AbstractConfig.this.configDir;
-    }
-
-    @Override
-    public Map<String, JSONObject> getCurrentConfiguration() {
-      return this.currentConfig;
-    }
+    m.appendTail(sb);
+    return sb.toString();
   }
 }

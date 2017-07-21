@@ -1,4 +1,4 @@
-package org.geoladris.config;
+package org.geoladris.config.providers;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -9,11 +9,13 @@ import static org.mockito.Mockito.when;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.io.IOUtils;
+import org.geoladris.config.Config;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -26,19 +28,19 @@ public class PublicConfProviderTest {
   public TemporaryFolder folder = new TemporaryFolder();
 
   private PublicConfProvider provider;
-  private PortalRequestConfiguration requestConfig;
+  private Config config;
 
   @Before
   public void setup() throws IOException {
     this.provider = new PublicConfProvider();
-    this.requestConfig = mock(PortalRequestConfiguration.class);
-    when(this.requestConfig.getConfigDir()).thenReturn(this.folder.getRoot());
+    this.config = mock(Config.class);
+    when(this.config.getDir()).thenReturn(this.folder.getRoot());
   }
 
   @Test
   public void missingPublicConfFile() throws Exception {
-    Map<String, JSONObject> conf =
-        this.provider.getPluginConfig(this.requestConfig, mock(HttpServletRequest.class));
+    Map<String, JSONObject> conf = this.provider.getPluginConfig(this.config,
+        new HashMap<String, JSONObject>(), mock(HttpServletRequest.class));
     assertNull(conf);
   }
 
@@ -50,8 +52,8 @@ public class PublicConfProviderTest {
     IOUtils.write("{ '" + pluginName + "' : { mymodule : {'a' : true }}}", writer);
     writer.close();
 
-    Map<String, JSONObject> conf =
-        provider.getPluginConfig(this.requestConfig, mock(HttpServletRequest.class));
+    Map<String, JSONObject> conf = provider.getPluginConfig(this.config,
+        new HashMap<String, JSONObject>(), mock(HttpServletRequest.class));
     assertEquals(1, conf.size());
     assertTrue(conf.containsKey(pluginName));
     JSONObject pluginConf = conf.get(pluginName);

@@ -1,4 +1,4 @@
-package org.geoladris.config;
+package org.geoladris.config.providers;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
@@ -18,16 +19,17 @@ import javax.servlet.http.HttpSession;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.geoladris.Geoladris;
+import org.geoladris.config.Config;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import net.sf.json.JSONObject;
 
-public class RoleConfigurationProviderTest {
+public class RoleConfigProviderTest {
   private File configDir, roleDir;
-  private RoleConfigurationProvider provider;
-  private PortalRequestConfiguration requestConfig;
+  private RoleConfigProvider provider;
+  private Config config;
 
   @Before
   public void setup() throws IOException {
@@ -35,13 +37,13 @@ public class RoleConfigurationProviderTest {
     configDir.delete();
     configDir.mkdir();
 
-    roleDir = new File(configDir, RoleConfigurationProvider.ROLE_DIR);
+    roleDir = new File(configDir, RoleConfigProvider.ROLE_DIR);
     roleDir.mkdir();
 
-    provider = new RoleConfigurationProvider();
+    provider = new RoleConfigProvider();
 
-    requestConfig = mock(PortalRequestConfiguration.class);
-    when(requestConfig.getConfigDir()).thenReturn(configDir);
+    config = mock(Config.class);
+    when(config.getDir()).thenReturn(configDir);
   }
 
   @After
@@ -52,14 +54,16 @@ public class RoleConfigurationProviderTest {
   @Test
   public void noRoleOnRequest() throws Exception {
     HttpServletRequest request = mockRequest(null);
-    Map<String, JSONObject> conf = provider.getPluginConfig(requestConfig, request);
+    Map<String, JSONObject> conf =
+        provider.getPluginConfig(config, new HashMap<String, JSONObject>(), request);
     assertNull(conf);
   }
 
   @Test
   public void roleWithoutSpecificConf() throws Exception {
     HttpServletRequest request = mockRequest("role1");
-    Map<String, JSONObject> conf = provider.getPluginConfig(requestConfig, request);
+    Map<String, JSONObject> conf =
+        provider.getPluginConfig(config, new HashMap<String, JSONObject>(), request);
     assertNull(conf);
   }
 
@@ -74,7 +78,8 @@ public class RoleConfigurationProviderTest {
     writer.close();
 
     HttpServletRequest request = mockRequest(role);
-    Map<String, JSONObject> pluginConfs = provider.getPluginConfig(requestConfig, request);
+    Map<String, JSONObject> pluginConfs =
+        provider.getPluginConfig(config, new HashMap<String, JSONObject>(), request);
     assertEquals(1, pluginConfs.size());
     assertTrue(pluginConfs.containsKey(pluginName));
     JSONObject pluginConf = pluginConfs.get(pluginName);

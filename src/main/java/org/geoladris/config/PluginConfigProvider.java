@@ -7,9 +7,9 @@ import javax.servlet.http.HttpServletRequest;
 
 import net.sf.json.JSONObject;
 
-public interface ModuleConfigurationProvider {
+public interface PluginConfigProvider {
   /**
-   * Returns a map where the keys are the configured plugins and the JSONObjects are the
+   * Returns a map where the keys are the configured plugin names and the JSONObjects are the
    * configuration for the modules contained in the plugin.
    * 
    * @param requestConfig
@@ -18,7 +18,7 @@ public interface ModuleConfigurationProvider {
    * @return
    * @throws IOException
    */
-  Map<String, JSONObject> getPluginConfig(PortalRequestConfiguration requestConfig,
+  Map<String, JSONObject> getPluginConfig(Config config, Map<String, JSONObject> currentConfig,
       HttpServletRequest request) throws IOException;
 
   /**

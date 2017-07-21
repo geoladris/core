@@ -17,13 +17,13 @@ import java.util.ResourceBundle;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
-import org.geoladris.PluginDescriptor;
+import org.geoladris.Plugin;
 
 public class FilesConfig extends AbstractConfig {
   private static Logger logger = Logger.getLogger(FilesConfig.class);
 
-  public FilesConfig(File configDir, List<ModuleConfigurationProvider> configProviders,
-      Set<PluginDescriptor> plugins, boolean useCache, int cacheTimeout) throws ConfigException {
+  public FilesConfig(File configDir, List<PluginConfigProvider> configProviders,
+      Set<Plugin> plugins, boolean useCache, int cacheTimeout) throws ConfigException {
     super(configDir, configProviders, plugins, useCache, cacheTimeout);
   }
 

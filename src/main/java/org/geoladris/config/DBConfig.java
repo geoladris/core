@@ -17,7 +17,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.geoladris.Environment;
-import org.geoladris.PluginDescriptor;
+import org.geoladris.Plugin;
 
 public class DBConfig extends AbstractConfig {
   private static final Logger logger = Logger.getLogger(DBConfig.class);
@@ -28,8 +28,8 @@ public class DBConfig extends AbstractConfig {
   private String app;
   private String schema;
 
-  public DBConfig(String app, File configDir, List<ModuleConfigurationProvider> configProviders,
-      Set<PluginDescriptor> plugins, boolean useCache, int cacheTimeout) throws ConfigException {
+  public DBConfig(String app, File configDir, List<PluginConfigProvider> configProviders,
+      Set<Plugin> plugins, boolean useCache, int cacheTimeout) throws ConfigException {
     super(configDir, configProviders, plugins, useCache, cacheTimeout);
 
     this.app = app;

@@ -1,4 +1,4 @@
-package org.geoladris.config;
+package org.geoladris.config.providers;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -13,11 +13,14 @@ import javax.servlet.http.HttpSession;
 import org.apache.log4j.Logger;
 import org.geoladris.Environment;
 import org.geoladris.Geoladris;
+import org.geoladris.config.Config;
+import org.geoladris.config.DBDataSource;
+import org.geoladris.config.PluginConfigProvider;
 
 import net.sf.json.JSONObject;
 
-public class DBConfigurationProvider implements ModuleConfigurationProvider {
-  private static final Logger logger = Logger.getLogger(DBConfigurationProvider.class);
+public class DBConfigProvider implements PluginConfigProvider {
+  private static final Logger logger = Logger.getLogger(DBConfigProvider.class);
 
   static final String SQL = "SELECT conf FROM %sapps WHERE app = ? AND role LIKE ?";
 
@@ -26,7 +29,7 @@ public class DBConfigurationProvider implements ModuleConfigurationProvider {
   private DBDataSource dataSource;
   private String contextPath, schema;
 
-  public DBConfigurationProvider(DBDataSource dataSource, String contextPath) {
+  public DBConfigProvider(DBDataSource dataSource, String contextPath) {
     this.dataSource = dataSource;
     this.contextPath = contextPath;
     this.schema = Environment.getInstance().get(Environment.JDBC_SCHEMA);
@@ -39,8 +42,8 @@ public class DBConfigurationProvider implements ModuleConfigurationProvider {
 
   @SuppressWarnings("unchecked")
   @Override
-  public Map<String, JSONObject> getPluginConfig(PortalRequestConfiguration configurationContext,
-      HttpServletRequest request) throws IOException {
+  public Map<String, JSONObject> getPluginConfig(Config config,
+      Map<String, JSONObject> currentConfig, HttpServletRequest request) throws IOException {
     HttpSession session = request.getSession();
     String role;
     if (session == null) {
@@ -50,8 +53,8 @@ public class DBConfigurationProvider implements ModuleConfigurationProvider {
       role = roleAttr != null ? roleAttr.toString() : DEFAULT_ROLE;
     }
 
-    String config = getConfig(this.contextPath, role);
-    return config != null ? JSONObject.fromObject(config) : null;
+    String ret = getConfig(this.contextPath, role);
+    return ret != null ? JSONObject.fromObject(ret) : null;
   }
 
   private String getConfig(String app, String role) throws IOException {

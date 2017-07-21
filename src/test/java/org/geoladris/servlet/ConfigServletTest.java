@@ -24,7 +24,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.geoladris.Geoladris;
-import org.geoladris.PluginDescriptor;
+import org.geoladris.Plugin;
 import org.geoladris.TestingServletContext;
 import org.geoladris.config.Config;
 import org.junit.Before;
@@ -75,7 +75,7 @@ public class ConfigServletTest {
     when(config.getPropertyAsArray(Config.PROPERTY_CLIENT_MODULES)).thenReturn(new String[0]);
 
     when(config.getPluginConfig(any(Locale.class), eq(request)))
-        .thenReturn(new PluginDescriptor[0]);
+        .thenReturn(new Plugin[0]);
 
     request.setAttribute(Geoladris.ATTR_LOCALE, new Locale("es"));
 
@@ -94,10 +94,10 @@ public class ConfigServletTest {
   @Test
   public void usesModulesFromPluginsInConfiguration() throws Exception {
     String defaultConf = "{default-conf:{module1 : {prop1 : 42, prop2 : true}}}";
-    PluginDescriptor plugin1 = new PluginDescriptor("plugin1", JSONObject.fromObject(defaultConf));
+    Plugin plugin1 = new Plugin("plugin1", JSONObject.fromObject(defaultConf));
     plugin1.addModule("module1");
 
-    PluginDescriptor[] plugin = new PluginDescriptor[] {plugin1};
+    Plugin[] plugin = new Plugin[] {plugin1};
     mockEmptyConfig();
     this.request.setAttribute(Geoladris.ATTR_LOCALE, Locale.ROOT);
     when(config.getPluginConfig(Locale.ROOT, request)).thenReturn(plugin);
@@ -115,15 +115,15 @@ public class ConfigServletTest {
 
   @Test
   public void writesRequireJSConfigurationAsReturnedByConfig() throws Exception {
-    PluginDescriptor plugin1 = new PluginDescriptor("plugin1",
+    Plugin plugin1 = new Plugin("plugin1",
         JSONObject.fromObject("{default-conf:{module1 : {prop1 : 42, prop2 : true}}}"));
     plugin1.getModules().add("module1");
-    PluginDescriptor plugin2 = new PluginDescriptor("plugin2", JSONObject
+    Plugin plugin2 = new Plugin("plugin2", JSONObject
         .fromObject("{default-conf:{module2 : {prop3 : 'test'}," + "module3 : [4, 2, 9]}}"));
     plugin2.getModules().add("module2");
     plugin2.getModules().add("module3");
 
-    PluginDescriptor[] plugins = new PluginDescriptor[] {plugin1, plugin2};
+    Plugin[] plugins = new Plugin[] {plugin1, plugin2};
 
     mockEmptyConfig();
     request.setAttribute(Geoladris.ATTR_LOCALE, Locale.ROOT);

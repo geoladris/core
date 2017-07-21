@@ -14,7 +14,7 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 
 import org.geoladris.Geoladris;
-import org.geoladris.PluginDescriptor;
+import org.geoladris.Plugin;
 import org.geoladris.PluginDirsAnalyzer;
 import org.geoladris.config.Config;
 
@@ -55,8 +55,8 @@ public class RedirectFilter implements Filter {
     }
 
     Locale locale = (Locale) req.getAttribute(Geoladris.ATTR_LOCALE);
-    PluginDescriptor[] plugins = this.config.getPluginConfig(locale, req);
-    for (PluginDescriptor plugin : plugins) {
+    Plugin[] plugins = this.config.getPluginConfig(locale, req);
+    for (Plugin plugin : plugins) {
       String qualifiedPath;
       if (plugin.isInstallInRoot() || subdir.equals("jslib")) {
         qualifiedPath = plugin.getName() + "/" + subdir + "/" + path;

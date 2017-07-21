@@ -17,7 +17,7 @@ import net.sf.json.JSONSerializer;
  * 
  * @author fergonco
  */
-public class PluginDescriptor {
+public class Plugin {
   private static final String PROP_REQUIREJS = "requirejs";
   private static final String PROP_DEFAULT_CONF = "default-conf";
   private static final String PROP_INSTALL_IN_ROOT = "installInRoot";
@@ -29,19 +29,19 @@ public class PluginDescriptor {
   private HashSet<String> modules = new HashSet<String>();
   private String name;
   private boolean installInRoot, enabled;
-  private final JSONObject originalContent;
+  private final JSONObject descriptor;
 
-  public PluginDescriptor(String name, File configFile) throws IOException {
+  public Plugin(String name, File configFile) throws IOException {
     this(name, (JSONObject) JSONSerializer.toJSON(IOUtils.toString(configFile.toURI())));
   }
 
-  public PluginDescriptor(String name, JSONObject config) throws IOException {
-    this.installInRoot = config.optBoolean(PROP_INSTALL_IN_ROOT, false);
+  public Plugin(String name, JSONObject descriptor) {
+    this.installInRoot = descriptor.optBoolean(PROP_INSTALL_IN_ROOT, false);
     this.name = name;
     this.enabled = true;
-    this.originalContent = config;
-    if (config.has(PROP_DEFAULT_CONF)) {
-      setConfiguration(config.getJSONObject(PROP_DEFAULT_CONF));
+    this.descriptor = descriptor;
+    if (descriptor.has(PROP_DEFAULT_CONF)) {
+      setConfiguration(descriptor.getJSONObject(PROP_DEFAULT_CONF));
     }
   }
 
@@ -50,19 +50,19 @@ public class PluginDescriptor {
    * 
    * @param name The name of the plugin. It cannot be null or empty.
    */
-  public PluginDescriptor(String name, boolean installInRoot) {
+  public Plugin(String name, boolean installInRoot) {
     this(name, installInRoot, new JSONObject());
   }
 
 
-  public PluginDescriptor(String name, boolean installInRoot, JSONObject config) {
+  public Plugin(String name, boolean installInRoot, JSONObject descriptor) {
     if (name == null || name.length() == 0) {
       throw new IllegalArgumentException("Plugin name cannot be null or empty");
     }
     this.name = name;
     this.installInRoot = installInRoot;
     this.enabled = true;
-    this.originalContent = config;
+    this.descriptor = descriptor;
   }
 
   public String getName() {
@@ -130,9 +130,8 @@ public class PluginDescriptor {
   }
 
   @SuppressWarnings("unchecked")
-  public PluginDescriptor cloneDescriptor() {
-    PluginDescriptor ret = new PluginDescriptor(this.name, this.installInRoot,
-        JSONObject.fromObject(this.originalContent));
+  public Plugin clonePlugin() {
+    Plugin ret = new Plugin(this.name, this.installInRoot, JSONObject.fromObject(this.descriptor));
     ret.configuration = JSONObject.fromObject(this.configuration);
     ret.modules = (HashSet<String>) this.modules.clone();
     return ret;
@@ -144,6 +143,6 @@ public class PluginDescriptor {
   }
 
   public JSONObject getRequireJS() {
-    return this.originalContent.getJSONObject(PROP_REQUIREJS);
+    return this.descriptor.getJSONObject(PROP_REQUIREJS);
   }
 }

@@ -1,4 +1,4 @@
-package org.geoladris.config;
+package org.geoladris.config.providers;
 
 import java.io.File;
 import java.io.IOException;
@@ -9,6 +9,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 import org.geoladris.Geoladris;
+import org.geoladris.config.Config;
+import org.geoladris.config.PluginConfigProvider;
 
 import de.csgis.commons.JSONContentProvider;
 import net.sf.json.JSONObject;
@@ -26,16 +28,16 @@ import net.sf.json.JSONObject;
  * 
  * @author victorzinho
  */
-public class RoleConfigurationProvider implements ModuleConfigurationProvider {
+public class RoleConfigProvider implements PluginConfigProvider {
   public static final String ROLE_DIR = "role_conf";
 
   private Map<File, JSONContentProvider> contents = new HashMap<>();
 
   @SuppressWarnings("unchecked")
   @Override
-  public Map<String, JSONObject> getPluginConfig(PortalRequestConfiguration requestConfig,
-      HttpServletRequest request) throws IOException {
-    File dir = new File(requestConfig.getConfigDir(), ROLE_DIR);
+  public Map<String, JSONObject> getPluginConfig(Config config,
+      Map<String, JSONObject> currentConfig, HttpServletRequest request) throws IOException {
+    File dir = new File(config.getDir(), ROLE_DIR);
     JSONContentProvider jsonContent = contents.get(dir);
     if (jsonContent == null) {
       jsonContent = new JSONContentProvider(dir.getAbsolutePath());

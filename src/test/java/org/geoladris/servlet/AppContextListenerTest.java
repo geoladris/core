@@ -21,14 +21,14 @@ import javax.naming.NamingException;
 
 import org.geoladris.Environment;
 import org.geoladris.Geoladris;
-import org.geoladris.PluginDescriptor;
+import org.geoladris.Plugin;
 import org.geoladris.PluginDirsAnalyzer;
 import org.geoladris.TestingServletContext;
 import org.geoladris.config.Config;
-import org.geoladris.config.DBConfigurationProvider;
-import org.geoladris.config.ModuleConfigurationProvider;
-import org.geoladris.config.PluginJSONConfigurationProvider;
-import org.geoladris.config.PublicConfProvider;
+import org.geoladris.config.PluginConfigProvider;
+import org.geoladris.config.providers.DBConfigProvider;
+import org.geoladris.config.providers.PluginJSONConfigProvider;
+import org.geoladris.config.providers.PublicConfProvider;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -44,7 +44,7 @@ public class AppContextListenerTest {
   private TestingServletContext context;
   @Rule
   public TemporaryFolder folder = new TemporaryFolder();
-  private Set<PluginDescriptor> plugins;
+  private Set<Plugin> plugins;
 
   @Before
   public void setup() throws IOException {
@@ -76,7 +76,7 @@ public class AppContextListenerTest {
 
     plugins = new HashSet<>();
     PluginDirsAnalyzer analyzer = mock(PluginDirsAnalyzer.class);
-    when(analyzer.getPluginDescriptors()).thenReturn(plugins);
+    when(analyzer.getPlugins()).thenReturn(plugins);
     doReturn(analyzer).when(listener).getAnalyzer(any(File[].class));
   }
 
@@ -88,42 +88,42 @@ public class AppContextListenerTest {
     this.listener.contextInitialized(this.context.event);
 
     assertTrue(hasProvider(PublicConfProvider.class));
-    assertTrue(hasProvider(PluginJSONConfigurationProvider.class));
-    assertFalse(hasProvider(DBConfigurationProvider.class));
+    assertTrue(hasProvider(PluginJSONConfigProvider.class));
+    assertFalse(hasProvider(DBConfigProvider.class));
   }
 
   @Test
   public void disabledDBProvider() throws Exception {
     this.context.setContextPath(CONTEXT_PATH);
-    DBConfigurationProvider dbProvider = mock(DBConfigurationProvider.class);
+    DBConfigProvider dbProvider = mock(DBConfigProvider.class);
     when(this.listener.isDBEnabled()).thenReturn(false);
     doReturn(dbProvider).when(this.listener).getDBProvider(anyString());
 
     this.listener.contextInitialized(this.context.event);
 
     assertTrue(hasProvider(PublicConfProvider.class));
-    assertTrue(hasProvider(PluginJSONConfigurationProvider.class));
-    assertFalse(hasProvider(DBConfigurationProvider.class));
+    assertTrue(hasProvider(PluginJSONConfigProvider.class));
+    assertFalse(hasProvider(DBConfigProvider.class));
   }
 
   @Test
   public void enabledDBProvider() throws Exception {
     this.context.setContextPath(CONTEXT_PATH);
-    DBConfigurationProvider dbProvider = mock(DBConfigurationProvider.class);
+    DBConfigProvider dbProvider = mock(DBConfigProvider.class);
     when(this.listener.isDBEnabled()).thenReturn(true);
     doReturn(dbProvider).when(this.listener).getDBProvider(anyString());
 
     this.listener.contextInitialized(this.context.event);
 
     assertFalse(hasProvider(PublicConfProvider.class));
-    assertFalse(hasProvider(PluginJSONConfigurationProvider.class));
-    assertTrue(hasProvider(DBConfigurationProvider.class));
+    assertFalse(hasProvider(PluginJSONConfigProvider.class));
+    assertTrue(hasProvider(DBConfigProvider.class));
   }
 
   @Test
   public void trailingSlashInContextPath() throws Exception {
     this.context.setContextPath("/" + CONTEXT_PATH);
-    DBConfigurationProvider dbProvider = mock(DBConfigurationProvider.class);
+    DBConfigProvider dbProvider = mock(DBConfigProvider.class);
     when(this.listener.isDBEnabled()).thenReturn(true);
     doReturn(dbProvider).when(this.listener).getDBProvider(anyString());
 
@@ -162,9 +162,9 @@ public class AppContextListenerTest {
     assertEquals(defaultConfig, config.getDir());
   }
 
-  private boolean hasProvider(Class<? extends ModuleConfigurationProvider> c) {
+  private boolean hasProvider(Class<? extends PluginConfigProvider> c) {
     Config config = (Config) this.context.servletContext.getAttribute(Geoladris.ATTR_CONFIG);
-    for (ModuleConfigurationProvider provider : config.getModuleConfigurationProviders()) {
+    for (PluginConfigProvider provider : config.getPluginConfigProviders()) {
       if (c.isInstance(provider)) {
         return true;
       }

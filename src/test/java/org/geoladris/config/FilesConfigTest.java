@@ -11,7 +11,7 @@ import java.util.Properties;
 import java.util.ResourceBundle;
 
 import org.apache.commons.io.IOUtils;
-import org.geoladris.PluginDescriptor;
+import org.geoladris.Plugin;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -25,8 +25,8 @@ public class FilesConfigTest {
 
   @Before
   public void setup() {
-    config = new FilesConfig(folder.getRoot(), new ArrayList<ModuleConfigurationProvider>(),
-        new HashSet<PluginDescriptor>(), false, -1);
+    config = new FilesConfig(folder.getRoot(), new ArrayList<PluginConfigProvider>(),
+        new HashSet<Plugin>(), false, -1);
   }
 
   @Test

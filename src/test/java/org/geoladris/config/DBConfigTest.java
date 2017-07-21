@@ -20,7 +20,7 @@ import java.util.Locale;
 import java.util.Properties;
 import java.util.ResourceBundle;
 
-import org.geoladris.PluginDescriptor;
+import org.geoladris.Plugin;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -40,8 +40,8 @@ public class DBConfigTest {
 
   @Before
   public void setup() throws Exception {
-    config = spy(new DBConfig(APP, folder.getRoot(), new ArrayList<ModuleConfigurationProvider>(),
-        new HashSet<PluginDescriptor>(), false, -1));
+    config = spy(new DBConfig(APP, folder.getRoot(), new ArrayList<PluginConfigProvider>(),
+        new HashSet<Plugin>(), false, -1));
 
     this.result = mock(ResultSet.class);
 

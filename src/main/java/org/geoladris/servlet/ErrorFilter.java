@@ -49,11 +49,10 @@ public class ErrorFilter implements Filter {
       }
       response.setContentType("application/json");
       response.setCharacterEncoding("utf8");
-      if (errorMsg != null) {
-        HashMap<String, String> doc = new HashMap<String, String>();
-        doc.put("message", errorMsg);
-        response.getOutputStream().write(JSONSerializer.toJSON(doc).toString(0).getBytes());
-      }
+
+      HashMap<String, String> doc = new HashMap<String, String>();
+      doc.put("message", errorMsg);
+      response.getOutputStream().write(JSONSerializer.toJSON(doc).toString(0).getBytes());
     }
   }
 

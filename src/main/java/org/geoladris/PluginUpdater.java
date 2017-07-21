@@ -14,6 +14,6 @@ public class PluginUpdater implements Runnable {
   @Override
   public void run() {
     this.analyzer.reload();
-    this.config.setPlugins(this.analyzer.getPluginDescriptors());
+    this.config.setPlugins(this.analyzer.getPlugins());
   }
 }
