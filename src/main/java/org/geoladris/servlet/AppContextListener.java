@@ -82,28 +82,30 @@ public class AppContextListener implements ServletContextListener {
 
     servletContext.setAttribute(Geoladris.ATTR_CONFIG, config);
 
-    try {
-      DirectoryWatcher.watch(new PluginUpdater(analyzer, config), pluginsDirs);
-    } catch (IOException e) {
-      logger.warn("Cannot start plugin updater. Plugins descriptor won't be updated");
-    }
-
     File staticDir = new File(configDir, Config.DIR_STATIC);
-    try {
-      DirectoryWatcher.watch(new CSSOverridesUpdater(config), staticDir, pluginsFromConfig);
-    } catch (IOException e) {
-      logger.warn("Cannot start overrides.css updater. It won't be updated");
-    }
+    addDirectoryWatcher(new PluginUpdater(analyzer, config), pluginsDirs);
+    addDirectoryWatcher(new CSSOverridesUpdater(config), staticDir, pluginsFromConfig);
 
+    WebResourceRoot resourcesRoot =
+        (WebResourceRoot) servletContext.getAttribute(Globals.RESOURCES_ATTR);
+    addStaticResources(resourcesRoot, "/" + Geoladris.PATH_STATIC, staticDir);
+    addStaticResources(resourcesRoot, "/" + Geoladris.PATH_PLUGINS_FROM_CONFIG, pluginsFromConfig);
+  }
+
+  private void addDirectoryWatcher(Runnable action, File... dirs) {
     try {
-      WebResourceRoot resourcesRoot =
-          (WebResourceRoot) servletContext.getAttribute(Globals.RESOURCES_ATTR);
-      DirResourceSet staticResources = new DirResourceSet(resourcesRoot,
-          "/" + Geoladris.PATH_STATIC, staticDir.getAbsolutePath(), "/");
-      DirResourceSet pluginsResources = new DirResourceSet(resourcesRoot,
-          "/" + Geoladris.PATH_PLUGINS_FROM_CONFIG, pluginsFromConfig.getAbsolutePath(), "/");
-      resourcesRoot.addPreResources(staticResources);
-      resourcesRoot.addPreResources(pluginsResources);
+      DirectoryWatcher.watch(action, dirs);
+    } catch (IOException e) {
+      logger.warn("Cannot start updater: " + action.getClass().getCanonicalName()
+          + ". It won't be updated");
+    }
+  }
+
+  private void addStaticResources(WebResourceRoot resourcesRoot, String urlPath, File dir) {
+    try {
+      DirResourceSet resourceSet =
+          new DirResourceSet(resourcesRoot, urlPath, dir.getAbsolutePath(), "/");
+      resourcesRoot.addPreResources(resourceSet);
     } catch (Throwable e) {
       logger.error("Cannot add static resources", e);
     }

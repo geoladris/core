@@ -48,14 +48,31 @@ public class ConfigServlet extends HttpServlet {
     moduleConfig.element("i18n", buildI18NObject(bundle));
     moduleConfig.element("url-parameters", JSONSerializer.toJSON(req.getParameterMap()));
 
+    JSONObject paths = new JSONObject();
+    JSONObject shim = new JSONObject();
+
     for (PluginDescriptor pluginDescriptor : enabledPluginDescriptors) {
       JSONObject configuration = pluginDescriptor.getConfiguration();
       if (configuration != null) {
         moduleConfig.putAll(configuration);
       }
+
+      JSONObject requirejs = pluginDescriptor.getRequireJS();
+      if (requirejs != null && !requirejs.isNullObject()) {
+        if (requirejs.has("paths")) {
+          paths.putAll(requirejs.getJSONObject("paths"));
+        }
+        if (requirejs.has("shim")) {
+          shim.putAll(requirejs.getJSONObject("shim"));
+        }
+      }
     }
 
-    String json = new JSONObject().element("config", moduleConfig).toString();
+    JSONObject ret = new JSONObject();
+    ret.element("config", moduleConfig);
+    ret.element("paths", paths);
+    ret.element("shim", shim);
+    String json = ret.toString();
 
     resp.setContentType("application/javascript");
     resp.setCharacterEncoding("utf8");

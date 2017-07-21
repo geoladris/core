@@ -18,6 +18,7 @@ import net.sf.json.JSONSerializer;
  * @author fergonco
  */
 public class PluginDescriptor {
+  private static final String PROP_REQUIREJS = "requirejs";
   private static final String PROP_DEFAULT_CONF = "default-conf";
   private static final String PROP_INSTALL_IN_ROOT = "installInRoot";
 
@@ -28,6 +29,7 @@ public class PluginDescriptor {
   private HashSet<String> modules = new HashSet<String>();
   private String name;
   private boolean installInRoot, enabled;
+  private final JSONObject originalContent;
 
   public PluginDescriptor(String name, File configFile) throws IOException {
     this(name, (JSONObject) JSONSerializer.toJSON(IOUtils.toString(configFile.toURI())));
@@ -37,6 +39,7 @@ public class PluginDescriptor {
     this.installInRoot = config.optBoolean(PROP_INSTALL_IN_ROOT, false);
     this.name = name;
     this.enabled = true;
+    this.originalContent = config;
     if (config.has(PROP_DEFAULT_CONF)) {
       setConfiguration(config.getJSONObject(PROP_DEFAULT_CONF));
     }
@@ -48,12 +51,18 @@ public class PluginDescriptor {
    * @param name The name of the plugin. It cannot be null or empty.
    */
   public PluginDescriptor(String name, boolean installInRoot) {
+    this(name, installInRoot, new JSONObject());
+  }
+
+
+  public PluginDescriptor(String name, boolean installInRoot, JSONObject config) {
     if (name == null || name.length() == 0) {
       throw new IllegalArgumentException("Plugin name cannot be null or empty");
     }
     this.name = name;
     this.installInRoot = installInRoot;
     this.enabled = true;
+    this.originalContent = config;
   }
 
   public String getName() {
@@ -122,7 +131,8 @@ public class PluginDescriptor {
 
   @SuppressWarnings("unchecked")
   public PluginDescriptor cloneDescriptor() {
-    PluginDescriptor ret = new PluginDescriptor(this.name, this.installInRoot);
+    PluginDescriptor ret = new PluginDescriptor(this.name, this.installInRoot,
+        JSONObject.fromObject(this.originalContent));
     ret.configuration = JSONObject.fromObject(this.configuration);
     ret.modules = (HashSet<String>) this.modules.clone();
     return ret;
@@ -131,5 +141,9 @@ public class PluginDescriptor {
   @Override
   public String toString() {
     return name;
+  }
+
+  public JSONObject getRequireJS() {
+    return this.originalContent.getJSONObject(PROP_REQUIREJS);
   }
 }

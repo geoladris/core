@@ -15,6 +15,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.geoladris.Geoladris;
 import org.geoladris.PluginDescriptor;
+import org.geoladris.PluginDirsAnalyzer;
 import org.geoladris.config.Config;
 
 public class RedirectFilter implements Filter {
@@ -33,15 +34,38 @@ public class RedirectFilter implements Filter {
     HttpServletRequest req = (HttpServletRequest) request;
 
     String path = req.getRequestURI().substring(req.getContextPath().length() + 1);
-    if (path.indexOf('/') < 0) {
+
+    if (this.context.getResource(path) != null) {
       chain.doFilter(request, response);
       return;
+    }
+
+    int index = path.indexOf('/');
+    if (index < 0 && !path.endsWith(".js")) {
+      chain.doFilter(request, response);
+      return;
+    }
+
+    String subdir;
+    if (path.startsWith("css") || path.startsWith("jslib")) {
+      subdir = path.substring(0, index);
+      path = path.substring(index + 1);
+    } else {
+      subdir = PluginDirsAnalyzer.MODULES;
     }
 
     Locale locale = (Locale) req.getAttribute(Geoladris.ATTR_LOCALE);
     PluginDescriptor[] plugins = this.config.getPluginConfig(locale, req);
     for (PluginDescriptor plugin : plugins) {
-      String qualifiedPath = plugin.isInstallInRoot() ? plugin.getName() + "/" + path : path;
+      String qualifiedPath;
+      if (plugin.isInstallInRoot() || subdir.equals("jslib")) {
+        qualifiedPath = plugin.getName() + "/" + subdir + "/" + path;
+      } else {
+        index = Math.max(0, path.indexOf('/'));
+        String pluginName = path.substring(0, index);
+        qualifiedPath = pluginName + "/" + subdir + "/" + path.substring(index + 1);
+      }
+
       String warPath = "/" + Geoladris.PATH_PLUGINS_FROM_WAR + "/" + qualifiedPath;
       File configFile = new File(this.config.getDir(), Config.DIR_PLUGINS + "/" + qualifiedPath);
       if (configFile.exists()) {
