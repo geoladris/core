@@ -103,6 +103,10 @@ public class AppContextListener implements ServletContextListener {
 
   private void addStaticResources(WebResourceRoot resourcesRoot, String urlPath, File dir) {
     try {
+      if (!dir.exists()) {
+        dir.mkdirs();
+      }
+
       DirResourceSet resourceSet =
           new DirResourceSet(resourcesRoot, urlPath, dir.getAbsolutePath(), "/");
       resourcesRoot.addPreResources(resourceSet);
