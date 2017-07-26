@@ -32,10 +32,7 @@ function isCSS(file) {
 	return file.indexOf('.css', file.length - 4) !== -1;
 }
 
-function buildApp() {
-	var packageJson = JSON.parse(fs.readFileSync('package.json'));
-	var plugins = Object.keys(packageJson.dependencies);
-
+function buildApp(plugins) {
 	var requirejsConfig = {
 		paths: {},
 		shim: {},
@@ -142,13 +139,14 @@ function buildApp() {
 	fs.writeFile(path.join(WEBAPP_DIR, 'index.html'), contents);
 
 	// Generate build.js
-	console.log('Generating build.js...');
+	console.log('Generating .requirejs-build.js...');
 	delete requirejsConfig.paths.require;
-	fs.writeFile('build.js', JSON.stringify(requirejsConfig));
+	fs.writeFile('.requirejs-build.js', JSON.stringify(requirejsConfig));
 }
 
 module.exports = buildApp;
 
 if (require.main === module) {
-	buildApp();
+	var packageJson = JSON.parse(fs.readFileSync('package.json'));
+	buildApp(Object.keys(packageJson.dependencies));
 }
