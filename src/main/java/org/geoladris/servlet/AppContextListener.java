@@ -83,13 +83,15 @@ public class AppContextListener implements ServletContextListener {
     servletContext.setAttribute(Geoladris.ATTR_CONFIG, config);
 
     File staticDir = new File(configDir, Config.DIR_STATIC);
-    addDirectoryWatcher(new PluginUpdater(analyzer, config), pluginsDirs);
-    addDirectoryWatcher(new CSSOverridesUpdater(config), staticDir, pluginsFromConfig);
-
     WebResourceRoot resourcesRoot =
         (WebResourceRoot) servletContext.getAttribute(Globals.RESOURCES_ATTR);
     addStaticResources(resourcesRoot, "/" + Geoladris.PATH_STATIC, staticDir);
     addStaticResources(resourcesRoot, "/" + Geoladris.PATH_PLUGINS_FROM_CONFIG, pluginsFromConfig);
+
+    CSSOverridesUpdater cssOverridesUpdater = new CSSOverridesUpdater(config);
+    cssOverridesUpdater.run();
+    addDirectoryWatcher(new PluginUpdater(analyzer, config), pluginsDirs);
+    addDirectoryWatcher(cssOverridesUpdater, staticDir, pluginsFromConfig);
   }
 
   private void addDirectoryWatcher(Runnable action, File... dirs) {
