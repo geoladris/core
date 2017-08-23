@@ -14,7 +14,7 @@ import org.apache.catalina.Globals;
 import org.apache.catalina.WebResourceRoot;
 import org.apache.catalina.webresources.DirResourceSet;
 import org.apache.log4j.Logger;
-import org.geoladris.CSSOverridesUpdater;
+import org.geoladris.CSSPluginImportsUpdater;
 import org.geoladris.DirectoryWatcher;
 import org.geoladris.Environment;
 import org.geoladris.Geoladris;
@@ -88,7 +88,7 @@ public class AppContextListener implements ServletContextListener {
     addStaticResources(resourcesRoot, "/" + Geoladris.PATH_STATIC, staticDir);
     addStaticResources(resourcesRoot, "/" + Geoladris.PATH_PLUGINS_FROM_CONFIG, pluginsFromConfig);
 
-    CSSOverridesUpdater cssOverridesUpdater = new CSSOverridesUpdater(config);
+    CSSPluginImportsUpdater cssOverridesUpdater = new CSSPluginImportsUpdater(config);
     cssOverridesUpdater.run();
     addDirectoryWatcher(new PluginUpdater(analyzer, config), pluginsDirs);
     addDirectoryWatcher(cssOverridesUpdater, staticDir, pluginsFromConfig);

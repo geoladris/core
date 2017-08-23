@@ -16,22 +16,22 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-public class CSSOverridesUpdaterTest {
+public class CSSPluginImportsUpdaterTest {
   @Rule
   public TemporaryFolder tmp = new TemporaryFolder();
 
-  private CSSOverridesUpdater updater;
+  private CSSPluginImportsUpdater updater;
   private File pluginsDir, staticDir, overridesCss;
 
   @Before
   public void setup() {
     Config config = mock(Config.class);
     when(config.getDir()).thenReturn(tmp.getRoot());
-    this.updater = new CSSOverridesUpdater(config);
+    this.updater = new CSSPluginImportsUpdater(config);
 
     this.pluginsDir = tmp.newFolder(Config.DIR_PLUGINS);
     this.staticDir = tmp.newFolder(Config.DIR_STATIC);
-    this.overridesCss = new File(staticDir, "overrides.css");
+    this.overridesCss = new File(staticDir, CSSPluginImportsUpdater.FILE);
   }
 
   @Test

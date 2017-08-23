@@ -20,7 +20,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import org.apache.log4j.Logger;
 
 public class DirectoryWatcher implements Runnable {
-  private static final Logger logger = Logger.getLogger(CSSOverridesUpdater.class);
+  private static final Logger logger = Logger.getLogger(DirectoryWatcher.class);
 
   private WatchService watcher;
   private SimpleFileVisitor<Path> registerDir;

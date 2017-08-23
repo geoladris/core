@@ -12,12 +12,14 @@ import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.log4j.Logger;
 import org.geoladris.config.Config;
 
-public class CSSOverridesUpdater implements Runnable {
-  private static final Logger logger = Logger.getLogger(CSSOverridesUpdater.class);
+public class CSSPluginImportsUpdater implements Runnable {
+  private static final Logger logger = Logger.getLogger(CSSPluginImportsUpdater.class);
+
+  static final String FILE = "plugin_imports.css";
 
   private Config config;
 
-  public CSSOverridesUpdater(Config config) {
+  public CSSPluginImportsUpdater(Config config) {
     this.config = config;
   }
 
@@ -26,15 +28,14 @@ public class CSSOverridesUpdater implements Runnable {
     File staticDir = new File(this.config.getDir(), Config.DIR_STATIC);
     File pluginsDir = new File(this.config.getDir(), Config.DIR_PLUGINS);
 
-    String content = getCssFromDir(staticDir, "");
-    content += getCssFromDir(pluginsDir, "../" + Geoladris.PATH_PLUGINS_FROM_CONFIG + "/");
+    String content = getCssFromDir(pluginsDir, "../" + Geoladris.PATH_PLUGINS_FROM_CONFIG + "/");
 
     try {
-      FileWriter writer = new FileWriter(new File(staticDir, "overrides.css"));
+      FileWriter writer = new FileWriter(new File(staticDir, FILE));
       IOUtils.write(content, writer);
       writer.close();
     } catch (IOException e) {
-      logger.error("Cannot update overrides.css", e);
+      logger.error("Cannot update " + FILE, e);
     }
   }
 
@@ -45,7 +46,7 @@ public class CSSOverridesUpdater implements Runnable {
       @Override
       public boolean accept(File dir, String name) {
         String lower = name.toLowerCase();
-        return lower.endsWith(".css") && (!lower.equals("overrides.css") || !dir.equals(staticDir));
+        return lower.endsWith(".css") && (!lower.equals(FILE) || !dir.equals(staticDir));
       }
     }, TrueFileFilter.TRUE);
 

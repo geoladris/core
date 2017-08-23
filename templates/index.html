@@ -21,6 +21,7 @@
 
 	<link rel="icon" type="image/png" href="static/img/favicon.png">
 	<link rel="stylesheet" type="text/css" href="static/overrides.css">
+	<link rel="stylesheet" type="text/css" href="static/plugin_imports.css">
 	<title>$title</title>
 
 	<script src="config.js"></script>
@@ -32,7 +33,7 @@
 			link.rel = 'stylesheet';
 			link.href = css;
 
-			document.head.appendChild(link);
+			document.head.insertBefore(link, document.head.childNodes[0]);
 		}
 
 		function getURLParameter(name) {
