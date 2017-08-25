@@ -21,11 +21,13 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
+import java.util.ResourceBundle;
 import java.util.Set;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.commons.io.IOUtils;
 import org.geoladris.Plugin;
 import org.junit.Before;
 import org.junit.Rule;
@@ -37,7 +39,7 @@ import org.mockito.MockitoAnnotations;
 
 import net.sf.json.JSONObject;
 
-public class AbstractConfigTest {
+public class ConfigTest {
   @Mock
   private HttpServletRequest request;
   @Mock
@@ -67,7 +69,7 @@ public class AbstractConfigTest {
     when(p2.getPluginConfig(any(Config.class), any(Map.class), any(HttpServletRequest.class)))
         .thenReturn(Collections.singletonMap("1", conf2));
 
-    Config config = new FilesConfig(folder.getRoot(), Arrays.asList(p1, p2), plugins, false, -1);
+    Config config = new ConfigImpl(folder.getRoot(), Arrays.asList(p1, p2), plugins, false, -1);
 
     Plugin[] c = config.getPluginConfig(Locale.getDefault(), request);
 
@@ -141,7 +143,7 @@ public class AbstractConfigTest {
     File portalProperties = new File(folder.getRoot(), "portal.properties");
     firstProperties.store(new FileOutputStream(portalProperties), "");
 
-    Config config = new FilesConfig(folder.getRoot(), new ArrayList<PluginConfigProvider>(), null,
+    Config config = new ConfigImpl(folder.getRoot(), new ArrayList<PluginConfigProvider>(), null,
         useCache, cacheTimeout);
 
     assertTrue(config.getDefaultLang().equals(defaultLang));
@@ -177,8 +179,8 @@ public class AbstractConfigTest {
     PluginConfigProvider provider = mock(PluginConfigProvider.class);
     when(provider.canBeCached()).thenReturn(canBeCached);
 
-    Config config = new FilesConfig(null, Arrays.asList(provider), Collections.<Plugin>emptySet(),
-        useCache, -1);
+    Config config =
+        new ConfigImpl(null, Arrays.asList(provider), Collections.<Plugin>emptySet(), useCache, -1);
 
     // Call twice
     config.getPluginConfig(Locale.getDefault(), request);
@@ -194,7 +196,7 @@ public class AbstractConfigTest {
     File portalProperties = new File(folder.getRoot(), "portal.properties");
     new Properties().store(new FileOutputStream(portalProperties), "");
 
-    Config config = new FilesConfig(folder.getRoot(), new ArrayList<PluginConfigProvider>(),
+    Config config = new ConfigImpl(folder.getRoot(), new ArrayList<PluginConfigProvider>(),
         Collections.<Plugin>emptySet(), false, -1);
     assertNotNull(config.getDir());
     assertNotNull(config.getPluginConfig(Locale.getDefault(), request));
@@ -209,7 +211,7 @@ public class AbstractConfigTest {
     PluginConfigProvider provider = mock(PluginConfigProvider.class);
     when(provider.getPluginConfig(any(Config.class), any(Map.class), any(HttpServletRequest.class)))
         .thenThrow(new IOException("mock"));
-    Config config = new FilesConfig(mock(File.class), Arrays.asList(provider),
+    Config config = new ConfigImpl(mock(File.class), Arrays.asList(provider),
         Collections.<Plugin>emptySet(), false, -1);
     assertNotNull(config.getPluginConfig(Locale.getDefault(), request));
   }
@@ -228,7 +230,7 @@ public class AbstractConfigTest {
     PluginConfigProvider provider = mock(PluginConfigProvider.class);
     when(provider.getPluginConfig(any(Config.class), any(Map.class), any(HttpServletRequest.class)))
         .thenReturn(mergingConfiguration1).thenReturn(mergingConfiguration2);
-    Config config = new FilesConfig(mock(File.class), Arrays.asList(provider), plugins, false, -1);
+    Config config = new ConfigImpl(mock(File.class), Arrays.asList(provider), plugins, false, -1);
 
     JSONObject configuration = config.getPluginConfig(Locale.ROOT, request)[0].getConfiguration();
     assertEquals(2, configuration.keySet().size());
@@ -244,8 +246,8 @@ public class AbstractConfigTest {
     plugin.addModule("m1");
     plugins.add(plugin);
 
-    Config config = new FilesConfig(mock(File.class), new ArrayList<PluginConfigProvider>(),
-        plugins, false, -1);
+    Config config =
+        new ConfigImpl(mock(File.class), new ArrayList<PluginConfigProvider>(), plugins, false, -1);
     Plugin[] pluginConfig = config.getPluginConfig(Locale.getDefault(), request);
     assertEquals(1, pluginConfig.length);
     assertEquals("p1", pluginConfig[0].getName());
@@ -276,7 +278,7 @@ public class AbstractConfigTest {
         Collections.singletonMap("another_plugin", new JSONObject());
     when(provider.getPluginConfig(any(Config.class), any(Map.class), any(HttpServletRequest.class)))
         .thenReturn(providerConf);
-    Config config = new FilesConfig(mock(File.class), Arrays.asList(provider), plugins, false, -1);
+    Config config = new ConfigImpl(mock(File.class), Arrays.asList(provider), plugins, false, -1);
 
     Plugin[] pluginConfig = config.getPluginConfig(Locale.getDefault(), request);
     assertEquals(1, pluginConfig.length);
@@ -296,7 +298,7 @@ public class AbstractConfigTest {
     JSONObject pluginConfig = JSONObject.fromObject("{m1 : { a : true, b : 2}}");
     when(p1.getPluginConfig(any(Config.class), any(Map.class), any(HttpServletRequest.class)))
         .thenReturn(Collections.singletonMap(plugin.getName(), pluginConfig));
-    Config config = new FilesConfig(mock(File.class), Arrays.asList(p1, p2), plugins, false, -1);
+    Config config = new ConfigImpl(mock(File.class), Arrays.asList(p1, p2), plugins, false, -1);
 
     config.getPluginConfig(Locale.ROOT, request);
 
@@ -306,5 +308,45 @@ public class AbstractConfigTest {
     Map<String, JSONObject> currentConfiguration = captor.getValue();
     assertEquals(1, currentConfiguration.size());
     assertEquals(pluginConfig, currentConfiguration.get(plugin.getName()));
+  }
+
+  @Test
+  public void missingPropertiesFile() {
+    Config config = new ConfigImpl(folder.getRoot(), new ArrayList<PluginConfigProvider>(),
+        new HashSet<Plugin>(), false, -1);
+    Properties properties = config.getProperties();
+    assertEquals(0, properties.size());
+  }
+
+  @Test
+  public void validPropertiesFile() throws Exception {
+    Config config = new ConfigImpl(folder.getRoot(), new ArrayList<PluginConfigProvider>(),
+        new HashSet<Plugin>(), false, -1);
+    File file = new File(config.getDir(), "portal.properties");
+    IOUtils.write("a=1", new FileOutputStream(file));
+
+    Properties properties = config.getProperties();
+    assertEquals(1, properties.size());
+    assertEquals("1", properties.getProperty("a"));
+  }
+
+  @Test
+  public void missingMessagesFile() throws Exception {
+    Config config = new ConfigImpl(folder.getRoot(), new ArrayList<PluginConfigProvider>(),
+        new HashSet<Plugin>(), false, -1);
+    folder.newFolder("messages");
+    ResourceBundle bundle = config.getMessages(Locale.ENGLISH);
+    assertEquals(0, bundle.keySet().size());
+  }
+
+  @Test
+  public void validMessagesFile() throws Exception {
+    Config config = new ConfigImpl(folder.getRoot(), new ArrayList<PluginConfigProvider>(),
+        new HashSet<Plugin>(), false, -1);
+    File file = new File(folder.newFolder("messages"), "messages_en.properties");
+    IOUtils.write("a=1\n", new FileOutputStream(file));
+    ResourceBundle bundle = config.getMessages(Locale.ENGLISH);
+    assertEquals(1, bundle.keySet().size());
+    assertEquals("1", bundle.getString("a"));
   }
 }

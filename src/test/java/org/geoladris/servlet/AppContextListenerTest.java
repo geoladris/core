@@ -1,23 +1,17 @@
 package org.geoladris.servlet;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
-
-import javax.naming.NamingException;
 
 import org.geoladris.Environment;
 import org.geoladris.Geoladris;
@@ -26,9 +20,6 @@ import org.geoladris.PluginDirsAnalyzer;
 import org.geoladris.TestingServletContext;
 import org.geoladris.config.Config;
 import org.geoladris.config.PluginConfigProvider;
-import org.geoladris.config.providers.DBConfigProvider;
-import org.geoladris.config.providers.PluginJSONConfigProvider;
-import org.geoladris.config.providers.PublicConfProvider;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -78,58 +69,6 @@ public class AppContextListenerTest {
     PluginDirsAnalyzer analyzer = mock(PluginDirsAnalyzer.class);
     when(analyzer.getPlugins()).thenReturn(plugins);
     doReturn(analyzer).when(listener).getAnalyzer(any(File[].class));
-  }
-
-  @Test
-  public void exceptionObtainingDBProvider() throws Exception {
-    this.context.setContextPath(CONTEXT_PATH);
-    doThrow(NamingException.class).when(this.listener).getDBProvider(anyString());
-
-    this.listener.contextInitialized(this.context.event);
-
-    assertTrue(hasProvider(PublicConfProvider.class));
-    assertTrue(hasProvider(PluginJSONConfigProvider.class));
-    assertFalse(hasProvider(DBConfigProvider.class));
-  }
-
-  @Test
-  public void disabledDBProvider() throws Exception {
-    this.context.setContextPath(CONTEXT_PATH);
-    DBConfigProvider dbProvider = mock(DBConfigProvider.class);
-    when(this.listener.isDBEnabled()).thenReturn(false);
-    doReturn(dbProvider).when(this.listener).getDBProvider(anyString());
-
-    this.listener.contextInitialized(this.context.event);
-
-    assertTrue(hasProvider(PublicConfProvider.class));
-    assertTrue(hasProvider(PluginJSONConfigProvider.class));
-    assertFalse(hasProvider(DBConfigProvider.class));
-  }
-
-  @Test
-  public void enabledDBProvider() throws Exception {
-    this.context.setContextPath(CONTEXT_PATH);
-    DBConfigProvider dbProvider = mock(DBConfigProvider.class);
-    when(this.listener.isDBEnabled()).thenReturn(true);
-    doReturn(dbProvider).when(this.listener).getDBProvider(anyString());
-
-    this.listener.contextInitialized(this.context.event);
-
-    assertFalse(hasProvider(PublicConfProvider.class));
-    assertFalse(hasProvider(PluginJSONConfigProvider.class));
-    assertTrue(hasProvider(DBConfigProvider.class));
-  }
-
-  @Test
-  public void trailingSlashInContextPath() throws Exception {
-    this.context.setContextPath("/" + CONTEXT_PATH);
-    DBConfigProvider dbProvider = mock(DBConfigProvider.class);
-    when(this.listener.isDBEnabled()).thenReturn(true);
-    doReturn(dbProvider).when(this.listener).getDBProvider(anyString());
-
-    this.listener.contextInitialized(this.context.event);
-
-    verify(this.listener).getDBProvider(CONTEXT_PATH);
   }
 
   @Test

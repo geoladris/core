@@ -24,10 +24,11 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import org.geoladris.config.Config;
-import org.geoladris.config.FilesConfig;
+import org.geoladris.config.ConfigImpl;
 import org.geoladris.config.PluginConfigProvider;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+
 
 public class TestingServletContext {
   public ServletContext servletContext;
@@ -104,7 +105,7 @@ public class TestingServletContext {
     File pluginsDir = new File(configDir, "plugins");
     PluginDirsAnalyzer analyzer =
         new PluginDirsAnalyzer(new File(servletContext.getRealPath("/plugins")), pluginsDir);
-    Config config = new FilesConfig(configDir, new ArrayList<PluginConfigProvider>(),
+    Config config = new ConfigImpl(configDir, new ArrayList<PluginConfigProvider>(),
         analyzer.getPlugins(), false, -1);
     when(this.servletContext.getAttribute(Geoladris.ATTR_CONFIG)).thenReturn(config);
 

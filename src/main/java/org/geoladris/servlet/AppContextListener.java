@@ -22,14 +22,12 @@ import org.geoladris.Plugin;
 import org.geoladris.PluginDirsAnalyzer;
 import org.geoladris.PluginUpdater;
 import org.geoladris.config.Config;
-import org.geoladris.config.DBConfig;
-import org.geoladris.config.DBDataSource;
-import org.geoladris.config.FilesConfig;
+import org.geoladris.config.ConfigImpl;
 import org.geoladris.config.PluginConfigProvider;
-import org.geoladris.config.providers.DBConfigProvider;
 import org.geoladris.config.providers.PluginJSONConfigProvider;
 import org.geoladris.config.providers.PublicConfProvider;
 import org.geoladris.config.providers.RoleConfigProvider;
+
 
 public class AppContextListener implements ServletContextListener {
   private static final Logger logger = Logger.getLogger(AppContextListener.class);
@@ -63,22 +61,10 @@ public class AppContextListener implements ServletContextListener {
     }
 
     List<PluginConfigProvider> providers = new ArrayList<>();
-    Config config = null;
-    if (isDBEnabled()) {
-      try {
-        providers.add(getDBProvider(root));
-        config = new DBConfig(root, configDir, providers, plugins, useCache, cacheTimeout);
-      } catch (IOException e) {
-        // Cannot obtain config from database. Ignore and use files.
-      }
-    }
-
-    if (config == null) {
-      providers.add(new PublicConfProvider());
-      providers.add(new PluginJSONConfigProvider());
-      providers.add(new RoleConfigProvider());
-      config = new FilesConfig(configDir, providers, plugins, useCache, cacheTimeout);
-    }
+    providers.add(new PublicConfProvider());
+    providers.add(new PluginJSONConfigProvider());
+    providers.add(new RoleConfigProvider());
+    Config config = new ConfigImpl(configDir, providers, plugins, useCache, cacheTimeout);
 
     servletContext.setAttribute(Geoladris.ATTR_CONFIG, config);
 
@@ -149,20 +135,6 @@ public class AppContextListener implements ServletContextListener {
     logger.info("============================================================================");
 
     return configDir;
-  }
-
-  /**
-   * For testing purposes
-   */
-  DBConfigProvider getDBProvider(String contextPath) throws IOException {
-    return new DBConfigProvider(DBDataSource.getInstance(), contextPath);
-  }
-
-  /**
-   * For testing purposes
-   */
-  boolean isDBEnabled() {
-    return DBDataSource.getInstance().isEnabled();
   }
 
   /**
