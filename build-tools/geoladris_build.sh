@@ -247,7 +247,7 @@ for plugin in ${plugins}; do
   pluginName=`echo ${plugin} | cut -s -d: -f 2`
   pluginVersion=`echo ${plugin} | cut -s -d: -f 3`
   if [ -z "${pluginGroup}" -o -z "${pluginName}" -o -z "${pluginVersion}" ]; then
-    pluginGroup="org.fao.unredd"
+    pluginGroup="org.geoladris"
     pluginName=${plugin}
     pluginVersion=${geoladrisVersion}
   fi
