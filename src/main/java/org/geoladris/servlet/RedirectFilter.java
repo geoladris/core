@@ -2,6 +2,7 @@ package org.geoladris.servlet;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.Locale;
 
 import javax.servlet.Filter;
@@ -35,7 +36,12 @@ public class RedirectFilter implements Filter {
 
     String path = req.getRequestURI().substring(req.getContextPath().length() + 1);
 
-    if (this.context.getResource(path) != null) {
+    try {
+      if (this.context.getResource(path) != null) {
+        chain.doFilter(request, response);
+        return;
+      }
+    } catch (MalformedURLException e) {
       chain.doFilter(request, response);
       return;
     }
