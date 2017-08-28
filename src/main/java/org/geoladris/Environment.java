@@ -44,7 +44,7 @@ public class Environment {
   /**
    * @deprecated Use {@link #getConfigDir(ServletContext)}.
    * @param context
-   * @return
+   * @return path for portal config dir.
    */
   public String getPortalConfigDir(ServletContext context) {
     return get(PORTAL_CONFIG_DIR, context);

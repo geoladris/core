@@ -14,7 +14,7 @@ import net.sf.json.JSONSerializer;
 /**
  * Contains all information about the plugin that may be necessary to make a geoladris application
  * work: modules, requirejs paths and shims, configuration, etc.
- * 
+ *
  * @author fergonco
  */
 public class Plugin {
@@ -47,7 +47,7 @@ public class Plugin {
 
   /**
    * Creates a new plugin descriptor with the given name.
-   * 
+   *
    * @param name The name of the plugin. It cannot be null or empty.
    */
   public Plugin(String name, boolean installInRoot) {
@@ -72,8 +72,8 @@ public class Plugin {
   /**
    * Get the modules. It returns a new copied set each time; if you want to add a new module use
    * {@link #addModule(String)}.
-   * 
-   * @return
+   *
+   * @return the modules.
    */
   public Set<String> getModules() {
     Set<String> ret = new HashSet<>();
@@ -85,7 +85,7 @@ public class Plugin {
    * <p>
    * Adds a new module to the plugin.
    * </p>
-   * 
+   *
    * @param module The module to add to the plugin. It is simply the path for the JS within the
    *        plugin. This class takes care of qualifying the path with the plugin name.
    */

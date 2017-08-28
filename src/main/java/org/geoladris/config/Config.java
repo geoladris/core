@@ -38,10 +38,8 @@ public interface Config {
   String localize(String template);
 
   /**
-   * Returns the property as an array or null if the property does not exist
-   * 
    * @param property
-   * @return
+   * @return the property as an array or null if the property does not exist.
    */
   String[] getPropertyAsArray(String property);
 
@@ -52,19 +50,16 @@ public interface Config {
   String getDefaultLang();
 
   /**
-   * Plugin configuration provided by the list of {@link PluginConfigProvider}. Only configuration
-   * for the active plugins are provided. Any disabled plugins won't be contained in the array.
-   * 
    * @param locale
    * @param request
-   * @return
+   * @return plugin configuration provided by the list of {@link PluginConfigProvider}. Only
+   *         configuration for the active plugins are provided. Any disabled plugins won't be
+   *         contained in the array.
    */
   Plugin[] getPluginConfig(Locale locale, HttpServletRequest request);
 
   /**
-   * Gets the folder in the configuration directory where no-java plugins are to be found
-   * 
-   * @return
+   * @return the folder in the configuration directory where client plugins are to be found.
    */
   File getNoJavaPluginRoot();
 
