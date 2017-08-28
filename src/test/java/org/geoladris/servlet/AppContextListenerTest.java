@@ -19,7 +19,6 @@ import org.geoladris.Plugin;
 import org.geoladris.PluginDirsAnalyzer;
 import org.geoladris.TestingServletContext;
 import org.geoladris.config.Config;
-import org.geoladris.config.PluginConfigProvider;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -99,17 +98,6 @@ public class AppContextListenerTest {
     File defaultConfig = new File(folder.getRoot(), DEFAULT_CONFIG);
     Config config = init("/");
     assertEquals(defaultConfig, config.getDir());
-  }
-
-  private boolean hasProvider(Class<? extends PluginConfigProvider> c) {
-    Config config = (Config) this.context.servletContext.getAttribute(Geoladris.ATTR_CONFIG);
-    for (PluginConfigProvider provider : config.getPluginConfigProviders()) {
-      if (c.isInstance(provider)) {
-        return true;
-      }
-    }
-
-    return false;
   }
 
   private Config init(String path) throws Exception {
