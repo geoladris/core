@@ -12,6 +12,7 @@ import java.io.IOException;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletOutputStream;
+import javax.servlet.WriteListener;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -41,6 +42,14 @@ public class ErrorFilterTest {
       @Override
       public void write(int b) throws IOException {
         out.write(b);
+      }
+      @Override
+      public boolean isReady() {
+        return true;
+      }
+
+      @Override
+      public void setWriteListener(WriteListener arg0) {
       }
     });
   }

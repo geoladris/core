@@ -19,6 +19,7 @@ import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletOutputStream;
+import javax.servlet.WriteListener;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -76,6 +77,13 @@ public class TestingServletContext {
           @Override
           public void write(int b) throws IOException {
             out.write(b);
+          }
+          @Override
+          public boolean isReady() {
+            return true;
+          }
+          @Override
+          public void setWriteListener(WriteListener arg0) {
           }
         };
       }
