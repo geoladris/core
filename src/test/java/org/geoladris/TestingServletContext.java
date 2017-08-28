@@ -24,6 +24,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.apache.catalina.Context;
+import org.apache.catalina.Globals;
+import org.apache.catalina.webresources.StandardRoot;
 import org.geoladris.config.Config;
 import org.geoladris.config.ConfigImpl;
 import org.geoladris.config.PluginConfigProvider;
@@ -78,13 +81,14 @@ public class TestingServletContext {
           public void write(int b) throws IOException {
             out.write(b);
           }
+
           @Override
           public boolean isReady() {
             return true;
           }
+
           @Override
-          public void setWriteListener(WriteListener arg0) {
-          }
+          public void setWriteListener(WriteListener arg0) {}
         };
       }
     });
@@ -97,6 +101,9 @@ public class TestingServletContext {
         return servletAttributes.get(invocation.getArguments()[0].toString());
       }
     });
+    StandardRoot root = new StandardRoot();
+    root.setContext(mock(Context.class));
+    when(this.servletContext.getAttribute(Globals.RESOURCES_ATTR)).thenReturn(root);
     doAnswer(new Answer<Void>() {
       @Override
       public Void answer(InvocationOnMock invocation) throws Throwable {
