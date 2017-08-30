@@ -82,7 +82,6 @@ public class ClientContentServletTest {
       }
     };
     when(servletContext.getRealPath(startsWith("/WEB-INF/"))).then(answer);
-    when(servletContext.getRealPath(startsWith("WEB-INF/"))).then(answer);
 
     config = context.mockConfig(new File(folder));
     System.setProperty(Environment.CONFIG_DIR, confDir);

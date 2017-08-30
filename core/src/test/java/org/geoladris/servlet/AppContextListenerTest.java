@@ -58,7 +58,7 @@ public class AppContextListenerTest {
 
     context = new TestingServletContext();
     context.setContextPath("/" + CONTEXT_PATH);
-    when(context.servletContext.getRealPath("WEB-INF/default_config"))
+    when(context.servletContext.getRealPath("/WEB-INF/default_config"))
         .thenReturn(defaultConfig.getAbsolutePath());
 
     System.clearProperty(Environment.CONFIG_DIR);
@@ -67,7 +67,7 @@ public class AppContextListenerTest {
     when(context.servletContext.getRealPath(anyString())).then(new Answer<String>() {
       @Override
       public String answer(InvocationOnMock invocation) throws Throwable {
-        if (invocation.getArguments()[0].toString().startsWith("WEB-INF/default_config")) {
+        if (invocation.getArguments()[0].toString().startsWith("/WEB-INF/default_config")) {
           return defaultConfig.getAbsolutePath();
         } else {
           return folder.getRoot().getAbsolutePath();
