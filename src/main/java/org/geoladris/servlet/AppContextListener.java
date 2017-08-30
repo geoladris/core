@@ -119,7 +119,7 @@ public class AppContextListener implements ServletContextListener {
       }
     }
 
-    File defaultDir = new File(servletContext.getRealPath("WEB-INF/default_config"));
+    File defaultDir = new File(servletContext.getRealPath("/WEB-INF/default_config"));
     if (configDir == null) {
       configDir = defaultDir;
       logger.warn("GEOLADRIS_CONFIG_DIR and PORTAL_CONFIG_DIR properties not found. Using "
