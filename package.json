@@ -1,11 +1,14 @@
 {
 	"name": "@geoladris/core",
-	"version": "7.0.0-2017-08-11T11.08.06Z",
+	"version": "7.0.0-alpha.1",
 	"license": "MIT",
 	"description": "Geoladris Core",
 	"repository": "git@github.com:geoladris/core.git",
 	"author": "Víctor González <victor.gonzalez@geomati.co>",
-	"contributors": ["Fernando González <fernando.gonzalez@geomati.co> (http://www.fergonco.org/)", "Micho García <micho.garcia.geomati.co> (http://michogarcia.org/)"],
+	"contributors": [
+		"Fernando González <fernando.gonzalez@geomati.co> (http://www.fergonco.org/)",
+		"Micho García <micho.garcia.geomati.co> (http://michogarcia.org/)"
+	],
 	"main": "build-tools/main.js",
 	"bin": {
 		"gl-build-app.js": "build-tools/buildApp.js"
