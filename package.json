@@ -44,6 +44,7 @@
 	],
 	"scripts": {
 		"test": "karma start",
-		"lint": "eslint src test"
+		"lint": "eslint src test",
+		"publish-dev": "build-tools/publish-js-dev.sh"
 	}
 }
