@@ -326,9 +326,9 @@ cat > "${workDir}/package.json" << EOF
   "name": "${name}",
   "version": "${version}",
   "dependencies": {
-    "@geoladris/geojson": "file:/home/vicgonco/workspace/geoladris/plugins/geojson",
-    "@geoladris/core": "file:/home/vicgonco/workspace/geoladris/core",
-    "ui": "file:/home/vicgonco/workspace/geobricks/geoladris-plugins"
+    "@geoladris/geojson": "dev",
+    "@geoladris/core": "dev",
+    "@csgis-geoladris/ui": "dev"
   },
   "devDependencies": {
     "requirejs": "^2.1.8"
