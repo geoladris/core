@@ -53,7 +53,7 @@ public class RedirectFilter implements Filter {
     }
 
     String subdir;
-    if (path.startsWith("css") || path.startsWith("jslib")) {
+    if (path.startsWith("css") || path.startsWith("jslib") || path.startsWith("node_modules")) {
       subdir = path.substring(0, index);
       path = path.substring(index + 1);
     } else {
@@ -64,7 +64,7 @@ public class RedirectFilter implements Filter {
     Plugin[] plugins = this.config.getPluginConfig(locale, req);
     for (Plugin plugin : plugins) {
       String qualifiedPath;
-      if (plugin.isInstallInRoot() || subdir.equals("jslib")) {
+      if (plugin.isInstallInRoot() || subdir.equals("jslib") || subdir.equals("node_modules")) {
         qualifiedPath = plugin.getName() + "/" + subdir + "/" + path;
       } else {
         index = Math.max(0, path.indexOf('/'));

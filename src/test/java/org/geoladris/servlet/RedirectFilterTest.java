@@ -1,5 +1,6 @@
 package org.geoladris.servlet;
 
+import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -136,6 +137,15 @@ public class RedirectFilterTest {
   }
 
   @Test
+  public void nodeModulesInConfigRootPlugin() throws Exception {
+    mockPlugin("core", true);
+    mockConfigResource("/core/node_modules/lib.js");
+    when(request.getRequestURI()).thenReturn(CONTEXT_PATH + "/node_modules/lib.js");
+
+    verifyDispatcher();
+  }
+
+  @Test
   public void jsInWarNonRootPlugin() throws Exception {
     mockPlugin("p", false);
     mockWarResource("/p/src/module.js");
@@ -185,6 +195,15 @@ public class RedirectFilterTest {
     mockPlugin("p", false);
     mockConfigResource("/p/jslib/lib.js");
     when(request.getRequestURI()).thenReturn(CONTEXT_PATH + "/jslib/lib.js");
+
+    verifyDispatcher();
+  }
+
+  @Test
+  public void nodeModulesInConfigNonRootPlugin() throws Exception {
+    mockPlugin("p", false);
+    mockConfigResource("/p/node_modules/lib.js");
+    when(request.getRequestURI()).thenReturn(CONTEXT_PATH + "/node_modules/lib.js");
 
     verifyDispatcher();
   }
