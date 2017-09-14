@@ -85,7 +85,7 @@ public class AppContextListener implements ServletContextListener {
       DirectoryWatcher.watch(action, dirs);
     } catch (IOException e) {
       logger.warn("Cannot start updater: " + action.getClass().getCanonicalName()
-          + ". It won't be updated");
+          + ". It won't be updated", e);
     }
   }
 
