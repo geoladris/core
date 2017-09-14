@@ -46,7 +46,8 @@ public class CSSPluginImportsUpdater implements Runnable {
       @Override
       public boolean accept(File dir, String name) {
         String lower = name.toLowerCase();
-        return lower.endsWith(".css") && (!lower.equals(FILE) || !dir.equals(staticDir));
+        return !dir.getPath().contains("node_modules") && lower.endsWith(".css")
+            && (!lower.equals(FILE) || !dir.equals(staticDir));
       }
     }, TrueFileFilter.TRUE);
 

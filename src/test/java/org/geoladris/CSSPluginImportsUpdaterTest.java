@@ -56,4 +56,16 @@ public class CSSPluginImportsUpdaterTest {
 
     assertEquals(contents, IOUtils.toString(new FileReader(overridesCss)));
   }
+
+  @Test
+  public void ignoresNodeModulesDir() throws IOException {
+    File nodeModules = new File(pluginsDir, "node_modules");
+    nodeModules.mkdir();
+    new File(nodeModules, "test.css").createNewFile();
+
+    updater.run();
+
+    String contents = IOUtils.toString(new FileReader(overridesCss));
+    assertEquals("", contents.trim());
+  }
 }
