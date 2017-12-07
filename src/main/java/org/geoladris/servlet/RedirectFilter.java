@@ -28,6 +28,12 @@ public class RedirectFilter implements Filter {
     this.config = (Config) this.context.getAttribute(Geoladris.ATTR_CONFIG);
   }
 
+  private boolean isActualPluginPath(String path) {
+    String pluginNameRegex = "^[^/]+/";
+    return path.matches(pluginNameRegex + PluginDirsAnalyzer.MODULES + "/.*")
+        || path.matches(pluginNameRegex + "css/.*");
+  }
+
   @Override
   public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
       throws IOException, ServletException {
@@ -55,6 +61,11 @@ public class RedirectFilter implements Filter {
     if (path.startsWith("css") || path.startsWith("jslib") || path.startsWith("node_modules")) {
       subdir = path.substring(0, index);
       path = path.substring(index + 1);
+    } else if (isActualPluginPath(path)) {
+      int first = path.indexOf('/');
+      int second = path.indexOf('/', first + 1);
+      subdir = path.substring(first + 1, second);
+      path = path.replace("/" + subdir, "");
     } else {
       subdir = PluginDirsAnalyzer.MODULES;
     }

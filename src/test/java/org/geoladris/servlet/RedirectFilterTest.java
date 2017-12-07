@@ -208,6 +208,24 @@ public class RedirectFilterTest {
   }
 
   @Test
+  public void cssSubdirInWarNonRootPlugin() throws Exception {
+    mockPlugin("p", false);
+    mockConfigResource("/p/css/style.css");
+    when(request.getRequestURI()).thenReturn(CONTEXT_PATH + "/p/css/style.css");
+
+    verifyDispatcher();
+  }
+
+  @Test
+  public void srcSubdirInWarNonRootPlugin() throws Exception {
+    mockPlugin("p", false);
+    mockConfigResource("/p/src/module.js");
+    when(request.getRequestURI()).thenReturn(CONTEXT_PATH + "/p/src/module.js");
+
+    verifyDispatcher();
+  }
+
+  @Test
   public void resourceNotInPlugins() throws Exception {
     mockPlugin("core", true);
     when(request.getRequestURI()).thenReturn(CONTEXT_PATH + "/static/header.png");
