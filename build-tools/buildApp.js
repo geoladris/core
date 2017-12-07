@@ -126,7 +126,7 @@ function buildApp(plugins) {
 		return (b.split('/').length === 2 || a.split('/')[2] === THEME) ? 1 : -1;
 	});
 
-	var minifiedCSS = new CleanCSS().minify(stylesheets.map(css => path.join(WEBAPP_DIR, css)));
+	var minifiedCSS = new CleanCSS({ rebaseTo: BUILD_DIR }).minify(stylesheets.map(css => path.join(WEBAPP_DIR, css)));
 	console.log('  ' + minifiedCSS.inlinedStylesheets.join('\n  '));
 	console.log('\n  Warnings: \n    ' + minifiedCSS.warnings.join('\n    '));
 	fs.writeFileSync(path.join(WEBAPP_DIR, 'app.min.css'), minifiedCSS.styles);
