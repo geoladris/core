@@ -6,8 +6,8 @@ script:
 after_success:
 - |
   if [ "$TRAVIS_BRANCH" = 'master' ] && [ "$TRAVIS_PULL_REQUEST" == 'false' ]; then \
-    openssl aes-256-cbc -K $encrypted_f06ce5567527_key -iv $encrypted_f06ce5567527_iv -in ci/signingkey.asc.enc -out ci/signingkey.asc -d && \
-    gpg --import ci/signingkey.asc && \
+    openssl aes-256-cbc -K $encrypted_f06ce5567527_key -iv $encrypted_f06ce5567527_iv -in ci/signing.asc.enc -out ci/signing.asc -d && \
+    gpg2 --import ci/signing.asc && \
     mvn deploy -P sign --settings ci/settings.xml
   fi
 notifications:
@@ -15,13 +15,4 @@ notifications:
     recipients:
     - victor.gonzalez@geomati.co
   on_success: always
-env:
-  global:
-  # GPG_PASSPHRASE
-  - secure: "MeCQS/W58hDFLPxUMHKHCXCXTViveXnff08y6LzFxz1IbtfjjJ73btH52AnFjbEDJ+h76X1e2AtnKy0Iv3ml40b4/nR/Co0367nYV/xB72BnySVSv85qKccRQzl1N5Jugi0Rp6o+vhCYPpDttXJRDebLX6SWu6jYCxIcX3L1bq2j/5+7x/L36FfKvWNa20lVDBqRFUP96PXHSwl3OkWlH2Na98+8LvzFBj4MUO2vBM6tsuitKrVoi9EWJcgyofN6rXsxRVNP3jMZ5tLBeivZDFneL30wFmt+ESPZrmTA0dpdKViAXeUuwHvOt8GDF8/5zh4B6AosLCMG0/Mz1oH8N+wEoiUm1DGvdXnWESjv1SeqwWC2Azc/soOXshRqxHdqvYUhUsLZkHH3arkX6+xYUVsYbz8qWb29Isu3Y5X6zW2Qc/FF7FIgkP2F7MggqYXbs5BFphVMvPfar9rCYAmt6H9sOKFRrjEye8BnRd0ozj3zDfExjIPVpZCoLz8+W1xGGLyr6iP279CtmrBFA3y39YBYYl5RutRwyqD1VMFUZ/WyQxZWpeWwnee8glDkBZLWmp6MkFUxXHIvzdNj1Zysk3hbpXyFMO+0ggDOvw4+0GwT22+TYyUWhYmcxGdR49hzdv/tLonS1pN65azMYsn6BsgSga/qsPeqUkuXwyV0BG8="
-  # GPG_KEY_NAME
-  - secure: "eeuWtmU4Ng0TCfU4CBTRGcqyxNumS6rqOyphaw1pKlPk2HAgJKqwddDTKz+LA5SqWBHBbhzMXSNfStg/BxIb9seOwhzFjf5lPYUx0bNNychq54ddYkfeHZpKNAhfHXd029amoqW1oaKvcuYarxx26llc1SmzVJHN8DmFj2Oyk9RPI0vmyKyM8qhOuvnM4qnDNDw8MXU4XloebS93l60ItAZj4TA6MgE7repsLr5j1nZVD18XB71wpVf3AU6PW+eSTi6RBJf731mqKh11Ader0SDDxApMkUVWN5Gc1g+ZHudlERmiFlbGBr+Vg2oMRG3O/+BDFOOIK++cstGfdPXpIl/9n6G+DMZNYQVQq522rdnQpruUtjby39Guy+v0H2tytLNj23+NbMtKUbpp8rB9vWTrbvPEm/pkyiK9NmfbZFaZ9qmZbEefRcBnLPjpKPspdOnFJ6HL3z3qYrxiNlGSj4JUXclFmX1q33hH4wQ9I0v0SsZW6NWJul2Rs3yZf9MZ2FSvo8y3dODzKibKU7fAG0z5t/Dm8eOKo5dGz09fWiYDEDDiqapVtHGhT+jPeVBaxCFkjKu/b4D0UDzZeUylXlpupTUfxveTKBgtHTN1Kz8M134TVtVFElnzSME5THJvbCKWW1sOoQ4I3CL4FC9RpBEUSmS3buZdwNyZ9GAVcXY="
-  # OSSRH_JIRA_USERNAME
-  - secure: "ESe5G6xLcQH9AgGa3MZEtRe/lSD11108jIySPI5ps9qottpBlxws0I9eeUa8pumaKtk91SlsNxQNxrT8zHq5laBi4pACDuEAx5CKAdhsaJPMK4lbuis4uKsGq4UnaW4xUpx7PrAYHYh2whPLh4sSVUNvjOhWY2nn2mcb+carcUW0JF41oadII5Rr/uIultzLfLSzBgJiZ3xGyaBVfi0WQ9ATRT6p+nk2pLdC1zM2sczmyn0qK3D/y4B/S4zEyWU0ZWv6TJ4rCIS1pb9c/Sqh4irHQaS7dW8iRtLKFUlbi6nGVdVIDbdq8iQS1JLdwH1HvScQJAJM3gO/UBtB9pQxSH5f3wzbYq65eZNOwEsSoTD8nQUbMIBXtXWhk19m6p1VQwJJd+XQqvCG37RsnuLzRW7NJmwe+HkhOUwu9o30LKn9YlhVYcnou/JdWY8EvxliTDe5RoX8kbnIsoiuG5lG0CrLkrm8rbbudKUK1W1+K+ubxvriojgVMuTINfno3noNdDrBNOGd6JmLDORaEMhkMa6l/yqV0l0mL354iTSuBHU0EQ/5sEBqDjhP0iZQHLzm9gAF1zTUEumaN3Y2eWWg9tIlWj+hlBadED40NuL7OrAuAezXdBec4kXmlioB2gboba706eecUNsCGdnTc+VOwxXyNHAmm85WRc2t73AnxRI="
-  # OSSRH_JIRA_PASSWORD
-  - secure: "tdFNZ0bP5flCZZpHmh8Xn7amlPbfw3st+8q0uccD0pS7eU7xhObLgWfj4c7a0iLnNSVOZLUSRvkkmOD3FChQ2yPCxS0fvLw8bWLGHutziDw9irZHy8+r1Qzb4nnB8lxmKN9hG4C0+jXkC+zjdXTSqvOKqcqg3ZLsoOIZSmrBzdx9JWqyLZ//eY9AhLRLPcB8RtQaGNiKHr9n7JxZgM3JSkcoksW2LoVNcLE4r/GbaSEAelyG0ljaA1wss8dnM186AhlCxPJpq9L3oLpDu69Lo8q8XDsfZi4e5sKVVJBNmzggcy/8Wp/QXpM5gcWOY85tre8FO05awQLlcGi0vt6x5aIk0PNmOsyEQiezLU6bMu2Iq9hXtU6cNnaFbmjXgutLtGKpOmlvdqV3GjeTb+z8EgrrDpSLw9TH/hv/Y6JFKOwgqpudk1wGcWETj0JIVp6idpmWI/wDdGkkwDH5MMB5r+Sn/3mt4woaZSYOJNvxEv/Q5OQ5MvwM6aJ7uBgQUdBejTVhcgflRqWKATXT9AxihXd84kCSjyNxc7W1bsNyC2rkyJDSYr9fcWfuuJZtrM/dgHB7L6gCmBTRglegydspeTF4f50/OOSN/GWGHttQJj84MTjnUwCIXSQvbfzD6WOc48JFwIXmwGbi5WLpGsFpxentS0g8jGIuUxzYg/arlQ0="
+
