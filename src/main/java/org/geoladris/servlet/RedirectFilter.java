@@ -70,7 +70,7 @@ public class RedirectFilter implements Filter {
       subdir = PluginDirsAnalyzer.MODULES;
     }
 
-    Locale locale = (Locale) req.getAttribute(Geoladris.ATTR_LOCALE);
+    Locale locale = (Locale) req.getSession().getAttribute(Geoladris.ATTR_LOCALE);
     Plugin[] plugins = this.config.getPluginConfig(locale, req);
     for (Plugin plugin : plugins) {
       String qualifiedPath;

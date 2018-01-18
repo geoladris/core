@@ -32,6 +32,7 @@ import org.geoladris.config.ConfigImpl;
 import org.geoladris.config.PluginConfigProvider;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.mockito.stubbing.Stubber;
 
 
 public class TestingServletContext {
@@ -48,6 +49,7 @@ public class TestingServletContext {
 
   private Map<String, Object> servletAttributes;
   private Map<String, Object> requestAttributes;
+  private Map<String, Object> sessionAttributes;
 
   public TestingServletContext() throws IOException {
     this.event = mock(ServletContextEvent.class);
@@ -58,6 +60,7 @@ public class TestingServletContext {
     this.response = mock(HttpServletResponse.class);
 
     this.servletAttributes = new HashMap<>();
+    this.sessionAttributes = new HashMap<>();
 
     when(this.event.getServletContext()).thenReturn(this.servletContext);
 
@@ -95,23 +98,16 @@ public class TestingServletContext {
 
     when(this.session.getServletContext()).thenReturn(this.servletContext);
 
-    when(this.servletContext.getAttribute(anyString())).then(new Answer<Object>() {
-      @Override
-      public Object answer(InvocationOnMock invocation) throws Throwable {
-        return servletAttributes.get(invocation.getArguments()[0].toString());
-      }
-    });
+    when(this.servletContext.getAttribute(anyString())).then(answerGetAttribute(servletAttributes));
     StandardRoot root = new StandardRoot();
     root.setContext(mock(Context.class));
     when(this.servletContext.getAttribute(Globals.RESOURCES_ATTR)).thenReturn(root);
-    doAnswer(new Answer<Void>() {
-      @Override
-      public Void answer(InvocationOnMock invocation) throws Throwable {
-        Object[] args = invocation.getArguments();
-        servletAttributes.put(args[0].toString(), args[1]);
-        return null;
-      }
-    }).when(this.servletContext).setAttribute(anyString(), any());
+    answerSetAttribute(servletAttributes).when(this.servletContext).setAttribute(anyString(),
+        any());
+
+    when(this.session.getAttribute(anyString())).then(answerGetAttribute(sessionAttributes));
+    answerSetAttribute(sessionAttributes).when(this.session).setAttribute(anyString(), any());
+
 
     resetRequest();
   }
@@ -137,23 +133,31 @@ public class TestingServletContext {
     this.requestAttributes = new HashMap<>();
 
     when(this.request.getSession()).thenReturn(this.session);
-    when(this.request.getAttribute(anyString())).then(new Answer<Object>() {
-      @Override
-      public Object answer(InvocationOnMock invocation) throws Throwable {
-        return requestAttributes.get(invocation.getArguments()[0].toString());
-      }
-    });
-    doAnswer(new Answer<Void>() {
-      @Override
-      public Void answer(InvocationOnMock invocation) throws Throwable {
-        Object[] args = invocation.getArguments();
-        requestAttributes.put(args[0].toString(), args[1]);
-        return null;
-      }
-    }).when(this.request).setAttribute(anyString(), any());
+    when(this.request.getAttribute(anyString())).then(answerGetAttribute(requestAttributes));
+    answerSetAttribute(requestAttributes).when(this.request).setAttribute(anyString(), any());
 
     String path = this.servletContext.getContextPath();
     when(this.request.getContextPath()).thenReturn(path);
+  }
+
+  private static Stubber answerSetAttribute(final Map<String, Object> map) {
+    return doAnswer(new Answer<Void>() {
+      @Override
+      public Void answer(InvocationOnMock invocation) throws Throwable {
+        Object[] args = invocation.getArguments();
+        map.put(args[0].toString(), args[1]);
+        return null;
+      }
+    });
+  }
+
+  private static Answer<Object> answerGetAttribute(final Map<String, Object> map) {
+    return new Answer<Object>() {
+      @Override
+      public Object answer(InvocationOnMock invocation) throws Throwable {
+        return map.get(invocation.getArguments()[0].toString());
+      }
+    };
   }
 
   public String getResponse() {

@@ -77,7 +77,7 @@ public class ConfigServletTest {
     when(config.getPluginConfig(any(Locale.class), eq(request)))
         .thenReturn(new Plugin[0]);
 
-    request.setAttribute(Geoladris.ATTR_LOCALE, new Locale("es"));
+    request.getSession().setAttribute(Geoladris.ATTR_LOCALE, new Locale("es"));
 
     servlet.doGet(request, this.response);
 
@@ -99,7 +99,7 @@ public class ConfigServletTest {
 
     Plugin[] plugin = new Plugin[] {plugin1};
     mockEmptyConfig();
-    this.request.setAttribute(Geoladris.ATTR_LOCALE, Locale.ROOT);
+    this.request.getSession().setAttribute(Geoladris.ATTR_LOCALE, Locale.ROOT);
     when(config.getPluginConfig(Locale.ROOT, request)).thenReturn(plugin);
 
     servlet.doGet(this.request, response);
@@ -126,7 +126,7 @@ public class ConfigServletTest {
     Plugin[] plugins = new Plugin[] {plugin1, plugin2};
 
     mockEmptyConfig();
-    request.setAttribute(Geoladris.ATTR_LOCALE, Locale.ROOT);
+    request.getSession().setAttribute(Geoladris.ATTR_LOCALE, Locale.ROOT);
     when(config.getPluginConfig(Locale.ROOT, request)).thenReturn(plugins);
 
     servlet.doGet(request, response);

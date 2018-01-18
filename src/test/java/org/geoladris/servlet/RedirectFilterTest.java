@@ -18,6 +18,7 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import org.geoladris.Geoladris;
 import org.geoladris.Plugin;
@@ -61,6 +62,10 @@ public class RedirectFilterTest {
     this.chain = mock(FilterChain.class);
 
     when(this.request.getContextPath()).thenReturn(CONTEXT_PATH);
+
+    HttpSession session = mock(HttpSession.class);
+    when(session.getAttribute(Geoladris.ATTR_LOCALE)).thenReturn(Locale.getDefault());
+    when(this.request.getSession()).thenReturn(session);
   }
 
   @Test

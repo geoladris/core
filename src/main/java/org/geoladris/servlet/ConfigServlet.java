@@ -29,7 +29,7 @@ public class ConfigServlet extends HttpServlet {
   protected void doGet(HttpServletRequest req, HttpServletResponse resp)
       throws ServletException, IOException {
     Config config = (Config) getServletContext().getAttribute(Geoladris.ATTR_CONFIG);
-    Locale locale = (Locale) req.getAttribute(Geoladris.ATTR_LOCALE);
+    Locale locale = (Locale) req.getSession().getAttribute(Geoladris.ATTR_LOCALE);
 
     ResourceBundle bundle = config.getMessages(locale);
 
