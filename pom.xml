@@ -35,12 +35,6 @@
 		</developer>
 	</developers>
 
-	<repositories>
-		<repository>
-			<id>csgis-releases</id>
-			<url>http://service.csgis.de/mvn/repository/releases/</url>
-		</repository>
-	</repositories>
 	<scm>
 		<connection>scm:git:git://github.com/geoladris/core.git</connection>
 		<developerConnection>scm:git:ssh://github.com:geoladris/core.git</developerConnection>
