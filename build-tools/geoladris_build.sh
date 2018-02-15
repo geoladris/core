@@ -7,33 +7,31 @@ geoladrisVersion="7.0.0-SNAPSHOT"
 USAGE="""
 usage: $0 [-d <dir>] [-v geoladris_version] [-s]
 
+Creates a new Geoladris application from a directory of resources.
+The directory may contain the following files/directories:
+  - build.json   File containing the description of the application (see below).
+  - config       Directory with the application configuration
+                 (see https://geoladris.github.io/doc/user/config/).
+  - context.xml  Context file to be used by Tomcat (see
+                 https://tomcat.apache.org/tomcat-8.0-doc/config/context.html).
 Options:
   -d <dir>      Directory to use for building. It must contain a build.json
                 descriptor and a default_config directory; default is the
-                current directory
-  -p            Performs deployment; default is false. Note that in order to 
-                deploy, not only this switch must be used, but also the
-                distribution_management section in build.json must be valid.
+                current directory.
   -v <version>  Geoladris version for plugins without a version; default is
-                ${geoladrisVersion}
+                ${geoladrisVersion}.
 
 build.json must contain a JSON object with the following properties:
 
-  - group                    Artifact group, only required for deploying;
-                             default is 'org.geoladris'.
-  - name                     Application's name; default is 'demo'.
-  - version                  Application's version; default is '1.0.0-SNAPSHOT'.
-  - plugins                  An array of strings; each string has this format
-                             [groupId:]pluginId[:version].
-                             groupId is optional; default is geoladris group ids.
-                             version is optional; default is '${geoladrisVersion}'
-  - repositories             A JSON object containing extra repositories for
-                             plugins. Keys are repository names; values are
-                             repository URLs.
-  - distribution_management  A JSON object containing two JSON objects:
-                             'releases' and 'snapshots'. Each object must have
-                             'id' and 'url' keys. All objects and keys are
-                             mandatory.
+  - name          Application's name; default is 'demo'.
+  - version       Application's version; default is '1.0.0'.
+  - plugins       An array of strings; each string has this format
+                  [groupId:]pluginId[:version].
+                  groupId is optional; default is geoladris group ids.
+                  version is optional; default is '${geoladrisVersion}'
+  - repositories  A JSON object containing extra repositories for
+                  plugins. Keys are repository names; values are
+                  repository URLs.
 
 Minimal example:
 
@@ -44,26 +42,15 @@ Minimal example:
 Complete example:
 
 {
-  \"group\" : \"org.geoladris\",
   \"name\" : \"demo\",
   \"version\" : \"1.0.0\",
   \"plugins\" : [
     \"base\",
-    \"de.csgis:myplugin:0.14.1\"
+    \"mygroup:myplugin:1.0.0\"
   ],
   \"maven_repositories\" : {
-    \"geobricks-releases\" : \"http://example.com/repository/releases/\",
-    \"geobricks-snapshots\" : \"http://example.com/repository/snapshots/\"
-  },
-  \"distribution_management\" : {
-    \"releases\" : {
-      \"id\" : \"csgis-releases\",
-      \"url\" : \"http://example.com/repository/releases/\"
-    },
-    \"snapshots\" : {
-      \"id\" : \"csgis-snapshots\",
-      \"url\" : \"http://example.com/repository/snapshots/\"
-    }
+    \"example-releases\" : \"http://example.com/repository/releases/\",
+    \"example-snapshots\" : \"http://example.com/repository/snapshots/\"
   }
 }
 """
@@ -76,9 +63,6 @@ while getopts ":hpv:d:" opt; do
     h)
       echo "$USAGE"
       exit 0
-      ;;
-    s)
-      deploy="true"
       ;;
     v)
       geoladrisVersion="$OPTARG"
@@ -94,7 +78,7 @@ while getopts ":hpv:d:" opt; do
 done
 
 buildJson="$dir/build.json"
-defaultConfig="$dir/default_config"
+configDir="$dir/config"
 workDir="$dir/.geoladris"
 log="$dir/geoladris.log"
 
@@ -112,9 +96,10 @@ echo "[INFO] Generating directories..."
 rm -rf ${workDir}
 mkdir ${workDir}
 mkdir -p "${workDir}/src/main/webapp/WEB-INF"
+mkdir -p "${workDir}/src/main/webapp/META-INF"
 
-if [ -d "${defaultConfig}" ]; then
-  cp -r ${defaultConfig} "${workDir}/src/main/webapp/WEB-INF"
+if [ -d "${configDir}" ]; then
+  cp -r ${configDir} "${workDir}/src/main/webapp/WEB-INF/default_config"
 fi
 
 function getOpt {
@@ -127,8 +112,7 @@ function getOpt {
 }
 
 name=`getOpt ".name" "demo"`
-version=`getOpt ".version" "1.0.0-SNAPSHOT"`
-group=`getOpt ".group" "org.geoladris"`
+version=`getOpt ".version" "1.0.0"`
 plugins=`jq -r '.plugins[]' ${buildJson} 2> /dev/null`
 
 if [ -z "${plugins}" ]; then
@@ -148,37 +132,18 @@ cat >> ${pom} << EOF
 	xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 	<modelVersion>4.0.0</modelVersion>
 
-	<groupId>${group}</groupId>
+	<groupId>com.github.geoladris</groupId>
 	<artifactId>${name}</artifactId>
 	<version>${version}</version>
 	<packaging>war</packaging>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<!-- See https://nodejs.org/en/download/ for latest node version -->
-		<node.version>v6.10.1</node.version>
-		<!-- See https://yarnpkg.com/ for latest yarn version -->
-		<yarn.version>v0.23.2</yarn.version>
+		<node.version>v8.9.4</node.version>
+		<yarn.version>v1.3.2</yarn.version>
 	</properties>
 
-	<repositories>
-		<repository>
-		<id>geoladris-releases</id>
-			<url>http://nullisland.geomati.co:8082/repository/releases/</url>
-			</repository>
-		<repository>
-			<id>geoladris-snapshots</id>
-			<url>http://nullisland.geomati.co:8082/repository/snapshots/</url>
-		</repository>
-		<repository>
-			<id>csgis releases</id>
-			<url>http://service.csgis.de/mvn/repository/releases/</url>
-		</repository>
-		<repository>
-			<id>csgis snapshots</id>
-			<url>http://service.csgis.de/mvn/repository/snapshots/</url>
-		</repository>
-
+  <repositories>
 EOF
 
 # Extra repositories
@@ -198,44 +163,6 @@ cat >> ${pom} << EOF
 	</repositories>
 EOF
 
-# Distribution management
-distributionSnapshots=`jq -r '.distribution_management.snapshots' "${buildJson}" 2> /dev/null | sed '/null/d'`
-distributionReleases=`jq -r '.distribution_management.releases' "${buildJson}" 2> /dev/null | sed '/null/d'`
-
-if [ -n "${distributionSnapshots}" -o -n "${distributionReleases}" ]; then
-cat >> ${pom} << EOF
-	<distributionManagement>
-EOF
-fi
-
-if [ -n "${distributionReleases}" ]; then
-repoId=`jq -r '.distribution_management.releases.id' "${buildJson}"`
-repoUrl=`jq -r '.distribution_management.releases.url' "${buildJson}"`
-cat >> ${pom} << EOF
-		<repository>
-			<id>${repoId}</id>
-			<url>${repoUrl}</url>
-		</repository>
-EOF
-fi
-
-if [ -n "${distributionSnapshots}" ]; then
-repoId=`jq -r '.distribution_management.snapshots.id' "${buildJson}"`
-repoUrl=`jq -r '.distribution_management.snapshots.url' "${buildJson}"`
-cat >> ${pom} << EOF
-		<snapshotRepository>
-			<id>${repoId}</id>
-			<url>${repoUrl}</url>
-		</snapshotRepository>
-EOF
-fi
-
-if [ -n "${distributionSnapshots}" -o -n "${distributionReleases}" ]; then
-cat >> ${pom} << EOF
-	</distributionManagement>
-EOF
-fi
-
 # Dependencies
 cat >> ${pom} << EOF
 	<dependencies>
@@ -247,7 +174,7 @@ for plugin in ${plugins}; do
   pluginName=`echo ${plugin} | cut -s -d: -f 2`
   pluginVersion=`echo ${plugin} | cut -s -d: -f 3`
   if [ -z "${pluginGroup}" -o -z "${pluginName}" -o -z "${pluginVersion}" ]; then
-    pluginGroup="org.geoladris"
+    pluginGroup="com.github.geoladris.plugins"
     pluginName=${plugin}
     pluginVersion=${geoladrisVersion}
   fi
@@ -273,12 +200,11 @@ set -e
 cat >> ${pom} << 'EOF'
 	</dependencies>
 	<build>
-		<finalName>${project.artifactId}</finalName>
 		<plugins>
 			<plugin>
 				<groupId>com.github.eirslett</groupId>
 				<artifactId>frontend-maven-plugin</artifactId>
-				<version>1.4</version>
+				<version>1.6</version>
 				<executions>
 					<execution>
 						<id>install-node-and-yarn</id>
@@ -328,7 +254,7 @@ cat > "${workDir}/package.json" << EOF
   "dependencies": {
     "@geoladris/geojson": "dev",
     "@geoladris/core": "dev",
-    "@csgis-geoladris/ui": "dev"
+    "@csgis-geoladris/ui": "1.0.0-alpha.2"
   },
   "devDependencies": {
     "requirejs": "^2.1.8"
@@ -347,17 +273,17 @@ echo >> $log
 set +e
 
 for plugin in ${plugins}; do
-  a=`echo ${plugin} | cut -s -d: -f 1`
-  b=`echo ${plugin} | cut -s -d: -f 2`
-  c=`echo ${plugin} | cut -s -d: -f 3`
-  if [ -z "$a$b$c" ]; then
-    dep="@geoladris/${plugin}@${geoladrisVersion}"
+  pluginOrg=`echo ${plugin} | cut -s -d: -f 1`
+  pluginName=`echo ${plugin} | cut -s -d: -f 2`
+  pluginVersion=`echo ${plugin} | cut -s -d: -f 3`
+  if [ -z "${pluginOrg}${pluginName}${pluginVersion}" ]; then
+    dep="@geoladris/${plugin}@dev"
   else
-    dep=${plugin}
+    dep=@${pluginOrg}/${pluginName}@${pluginVersion}
   fi
   echo >> $log
   echo "Adding ${dep} with yarn..." >> $log
-  ${workDir}/node/yarn/dist/bin/yarn add "${dep}" >> $log 2>> $log 
+  ${workDir}/node/yarn/dist/bin/yarn add --non-interactive --cwd "${workDir}" "${dep}" >> $log 2>> $log
   if [ $? != 0 ]; then
     echo "[WARN] Invalid JavaScript dependency: ${dep}"
   fi
@@ -369,12 +295,47 @@ set -e
 ###########
 # web.xml #
 ###########
+if [ -f "${dir}/web.xml" ]; then
+  cp "${dir}/web.xml" "${workDir}/src/main/webapp/WEB-INF/web.xml"
+else
 cat > "${workDir}/src/main/webapp/WEB-INF/web.xml" << 'EOF'
 <?xml version="1.0" encoding="UTF-8"?>
 <web-app version="2.5" xmlns="http://java.sun.com/xml/ns/javaee"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd">
+	<!-- GeoSolutions Proxy Servlet -->
+	<context-param>
+		<param-name>proxyPropPath</param-name>
+		<param-value>/proxy.properties</param-value>
+	</context-param>
+	<servlet>
+		<servlet-name>HttpProxy</servlet-name>
+		<servlet-class>it.geosolutions.httpproxy.HTTPProxy</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>HttpProxy</servlet-name>
+		<url-pattern>/proxy</url-pattern>
+	</servlet-mapping>
+
+	<!-- Database -->
+	<resource-ref>
+		<description>Application database</description>
+		<res-ref-name>jdbc/geoladris</res-ref-name>
+		<res-type>javax.sql.DataSource</res-type>
+		<res-auth>Container</res-auth>
+	</resource-ref>
 </web-app>
+EOF
+fi
+
+###############
+# context.xml #
+###############
+cat > "${workDir}/src/main/webapp/META-INF/context.xml" << 'EOF'
+<Context copyXML="true" mapperContextRootRedirectEnabled="true">
+<WatchedResource>WEB-INF/web.xml</WatchedResource>
+<Resource name="jdbc/geoladris" auth="Container" type="javax.sql.DataSource" driverClassName="org.postgresql.Driver" url="${GEOLADRIS_DB_URL}" username="${GEOLADRIS_DB_USER}" password="${GEOLADRIS_DB_PASS}" maxActive="20" maxIdle="10" maxWait="-1"/>
+</Context>
 EOF
 
 #########
@@ -382,14 +343,8 @@ EOF
 #########
 echo "[INFO] Packaging..."
 echo "Building with Maven..." >> $log
-if [ $deploy = "true" -a -n "${distributionSnapshots}" -a -n "${distributionReleases}" ]; then
-  mvn -f ${pom} deploy >> $log
-else
-  mvn -f ${pom} package >> $log
-fi
-
+mvn -f ${pom} package >> $log
 cp ${workDir}/target/*.war ${workDir}/../
 rm -rf ${workDir}
 
 echo "[INFO] Done."
-
