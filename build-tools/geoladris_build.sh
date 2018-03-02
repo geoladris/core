@@ -2,7 +2,7 @@
 
 set -e
 
-geoladrisVersion="7.0.0-SNAPSHOT"
+geoladrisVersion="7.1.0-SNAPSHOT"
 
 USAGE="""
 usage: $0 [-d <dir>] [-v geoladris_version] [-s]
