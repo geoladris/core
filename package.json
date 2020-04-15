@@ -1,6 +1,6 @@
 {
 	"name": "@geoladris/core",
-	"version": "7.1.0-SNAPSHOT",
+	"version": "7.2.0-SNAPSHOT",
 	"license": "MIT",
 	"description": "Geoladris Core",
 	"repository": "git@github.com:geoladris/core.git",

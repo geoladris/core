@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.github.geoladris</groupId>
 	<artifactId>core</artifactId>
-	<version>7.1.0-SNAPSHOT</version>
+	<version>7.2.0-SNAPSHOT</version>
 	<name>Geoladris Core</name>
 	<description>The core of a framework for building modular web applications.</description>
 	<url>https://github.com/geoladris/core</url>
